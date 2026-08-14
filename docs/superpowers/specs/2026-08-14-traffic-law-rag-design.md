@@ -188,7 +188,7 @@ Tight request path. Max 8 chunks to LLM. Early-exit wherever possible.
 See §3 request path diagram above. Key design decisions:
 
 1. **Hard chunk cap**: Maximum 8 chunks sent to LLM context (configurable). Never more, regardless of retrieval count. "More context ≠ better results."
-2. **Decompose optimization**: For simple queries, decomposer may return `[{"query": original}]` to skip an unnecessary LLM call. Threshold-based (length/token count) or integrated into router decision.
+2. **Decompose optimization**: The decomposer prompt itself decides sub-query count. For simple queries it returns a single sub-query `[{"query": original}]` (the NLP-LegalQA prompt already instructs "câu đơn giản thì 1 subquery là đủ"), avoiding a wasteful multi-search fan-out. No separate threshold/router integration needed.
 3. **Metadata filter mandatory**: Every Qdrant query carries payload filters. No raw full-collection ANN ever.
 4. **Early-exit patterns**:
    - Cache hit → skip search + rerank + gen.
