@@ -203,32 +203,26 @@ def bm25_search(
 # ---------------------------------------------------------------------------
 
 
-def fuse_rrf(
-    vector_hits: list[Hit],
-    bm25_hits: list[Hit],
+def fuse_weighted(
+    legs: list[tuple[list[Hit], float]],
     k: int,
     *,
     rrf_k: int = RRF_K,
-    vector_weight: float = 1.0,
-    bm25_weight: float = 1.0,
 ) -> list[Hit]:
-    """Reciprocal Rank Fusion: sum of weight/(rank+rrf_k) across strategies.
+    """Reciprocal Rank Fusion over any number of weighted result lists.
 
-    The weights exist because the legs are not equally good. Measured here,
-    vector beats BM25 at every depth; weighting them equally let BM25's ordering
-    pull the fused list below plain vector search. Defaults keep the unweighted
-    textbook behaviour — callers pass the measured weights from settings.
+    ``legs`` pairs each ranked list with its weight. Two legs is the usual case
+    (vector + BM25); query decomposition produces two per sub-query, and fusing
+    them all is what lets a sub-query surface a provision the original phrasing
+    missed. Measured on the 17 questions that decomposed: recall@30 0.794 -> 0.882.
     """
     scores: dict[str, float] = {}
     by_uid: dict[str, Hit] = {}
 
-    for rank, hit in enumerate(vector_hits):
-        scores[hit.uid] = scores.get(hit.uid, 0.0) + vector_weight / (rank + 1 + rrf_k)
-        by_uid.setdefault(hit.uid, hit)
-
-    for rank, hit in enumerate(bm25_hits):
-        scores[hit.uid] = scores.get(hit.uid, 0.0) + bm25_weight / (rank + 1 + rrf_k)
-        by_uid.setdefault(hit.uid, hit)
+    for hits, weight in legs:
+        for rank, hit in enumerate(hits):
+            scores[hit.uid] = scores.get(hit.uid, 0.0) + weight / (rank + 1 + rrf_k)
+            by_uid.setdefault(hit.uid, hit)
 
     fused = [
         Hit(
@@ -242,6 +236,27 @@ def fuse_rrf(
         for uid, score in sorted(scores.items(), key=lambda x: x[1], reverse=True)
     ]
     return fused[:k]
+
+
+def fuse_rrf(
+    vector_hits: list[Hit],
+    bm25_hits: list[Hit],
+    k: int,
+    *,
+    rrf_k: int = RRF_K,
+    vector_weight: float = 1.0,
+    bm25_weight: float = 1.0,
+) -> list[Hit]:
+    """Fuse one vector list with one BM25 list.
+
+    The weights exist because the legs are not equally good. Measured here,
+    vector beats BM25 at every depth; weighting them equally let BM25's ordering
+    pull the fused list below plain vector search. Defaults keep the unweighted
+    textbook behaviour — callers pass the measured weights from settings.
+    """
+    return fuse_weighted(
+        [(vector_hits, vector_weight), (bm25_hits, bm25_weight)], k, rrf_k=rrf_k
+    )
 
 
 @lru_cache(maxsize=2)
@@ -321,6 +336,7 @@ class HybridRetriever:
         k: int = 10,
         strategy: Literal["hybrid", "vector", "bm25"] = "hybrid",
         fetch_k: int | None = None,
+        sub_queries: list[str] | None = None,
     ) -> SearchResult:
         """Run retrieval with the chosen strategy.
 
@@ -329,26 +345,37 @@ class HybridRetriever:
         rank and throws away the depth where the answer often sits. Measured on
         the 94-question set, widening the pool alone moved recall@5 from 0.598
         to 0.636 without touching the ranking.
+
+        ``sub_queries`` runs one retrieval pass per phrasing and fuses them all.
+        A decomposed question can surface provisions the original wording misses,
+        which is the only route past the single-query ceiling. Measured on the 17
+        questions that decomposed: recall@5 0.676 -> 0.794, recall@30 0.794 ->
+        0.882. Pass the original query in the list to keep its own pass.
         """
         pool = max(fetch_k or self._settings.fetch_k, k)
+        phrasings = sub_queries or [query]
 
         with self._client.session() as session:
             if strategy == "vector":
-                hits = vector_search(session, self._embedder, query, pool)
+                legs = [
+                    (vector_search(session, self._embedder, q, pool), 1.0)
+                    for q in phrasings
+                ]
             elif strategy == "bm25":
-                hits = bm25_search(session, query, pool)
+                legs = [(bm25_search(session, q, pool), 1.0) for q in phrasings]
             else:  # hybrid
-                vec = vector_search(session, self._embedder, query, pool)
-                bm25 = bm25_search(session, query, pool)
-                hits = fuse_rrf(
-                    vec,
-                    bm25,
-                    pool,
-                    rrf_k=self._settings.rrf_k,
-                    vector_weight=self._settings.rrf_vector_weight,
-                    bm25_weight=self._settings.rrf_bm25_weight,
-                )
+                legs = []
+                for q in phrasings:
+                    legs.append((
+                        vector_search(session, self._embedder, q, pool),
+                        self._settings.rrf_vector_weight,
+                    ))
+                    legs.append((
+                        bm25_search(session, q, pool),
+                        self._settings.rrf_bm25_weight,
+                    ))
 
+        hits = fuse_weighted(legs, pool, rrf_k=self._settings.rrf_k)
         return SearchResult(query=query, hits=hits[:k], strategy=strategy)
 
     def search_and_rerank(

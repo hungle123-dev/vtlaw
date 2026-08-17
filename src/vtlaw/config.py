@@ -38,6 +38,13 @@ class Settings(BaseSettings):
     llm_model: str = "google/gemini-2.5-flash"
     llm_timeout_s: float = 60.0
 
+    # Rate-limit retry. Gemini's free tier allows 10 requests/minute, and a burst
+    # past it answers 429 with the wait in `retryDelay` — so a 429 is a "come back
+    # shortly", not a failure. Without a retry, a loop over a dataset gives up on
+    # the first burst and a live /chat request 500s on a transient limit.
+    llm_max_retries: int = Field(default=5, ge=0, le=10)
+    llm_retry_base_s: float = Field(default=2.0, gt=0.0, le=60.0)
+
     embed_model: str = "bkai-foundation-models/vietnamese-bi-encoder"
     rerank_model: str = "AITeamVN/Vietnamese_Reranker"
     embed_device: Literal["auto", "cpu", "cuda"] = "auto"

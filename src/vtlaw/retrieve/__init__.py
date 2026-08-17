@@ -42,7 +42,13 @@ from vtlaw.retrieve.heuristics import (
 from vtlaw.retrieve.query_parser import QueryDecomposer, SubQuery
 from vtlaw.retrieve.query_rewriter import ChatMessage, QueryRewriter
 from vtlaw.retrieve.router import IntentType, QueryRouter
-from vtlaw.retrieve.search import Hit, HybridRetriever, RetrievalResult, SearchResult
+from vtlaw.retrieve.search import (
+    Hit,
+    HybridRetriever,
+    RetrievalResult,
+    SearchResult,
+    fuse_weighted,
+)
 from vtlaw.retrieve.text2cypher import TextToCypher
 
 __all__ = [
@@ -69,4 +75,5 @@ __all__ = [
     "fetch_doc_effect_dates",
     "fetch_hierarchy",
     "fetch_sibling_points",
+    "fuse_weighted",
 ]
