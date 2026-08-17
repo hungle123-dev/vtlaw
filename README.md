@@ -20,28 +20,37 @@ of the committed corpus. The implementation here is independent.
 | 7 | `api` — HTTP surface | done, `/chat` `/health` `/metrics` |
 | 8 | `eval` — recall@k, MRR, latency | done, 94-question dataset |
 
-263 offline tests plus 13 that need Neo4j, all passing.
+280 offline tests plus 13 that need Neo4j, all passing.
 
-Four modules are written but wired to nothing: `QueryRouter`, `QueryDecomposer`,
-`QueryRewriter`, `TextToCypher`. They have tests and no callers. The async
-worker in `ingest/worker.py` does not run — it is scaffolding, not working code.
-There is no CI and no frontend.
+Three modules are written but wired to nothing: `QueryRouter`, `QueryRewriter`,
+`TextToCypher`. They have tests and no callers. The async worker in
+`ingest/worker.py` does not run — it is scaffolding, not working code. There is
+no CI and no frontend.
 
 ## Measured retrieval quality
 
 94 questions, `data/evaluation/qa/QA_NLP.csv`, hybrid strategy:
 
-| | recall@1 | recall@3 | recall@5 | MRR | p50 |
+| | recall@1 | recall@5 | recall@30 | MRR | p50 |
 |---|---|---|---|---|---|
-| hybrid | 0.359 | 0.588 | 0.681 | 0.504 | 0.28s |
-| hybrid + cross-encoder rerank | 0.255 | 0.527 | 0.609 | 0.421 | 17.0s |
+| single query | 0.359 | 0.681 | 0.780 | 0.515 | 0.25s |
+| sub-queries only | 0.332 | 0.710 | 0.826 | 0.529 | 0.32s |
+| **both** (default) | **0.402** | **0.734** | **0.849** | **0.568** | 0.52s |
 
-**Rerank is off by default because these numbers do not justify it.** It helps 10
-questions and hurts 11. The pattern in the regressions is legible: the reranker
-promotes `168/2024/NĐ-CP` above `100/2019/NĐ-CP`, which is legally correct — the
-2024 decree replaced the 2019 one — but the dataset is labelled against the older
-law, so the reranker is penalised for being right. Re-measure after the labels
-are reconciled.
+Query decomposition asks the same question several ways — one LLM call turns
+"vượt đèn đỏ" into "không chấp hành hiệu lệnh của đèn tín hiệu giao thông" and
+splits a multi-violation question into one sub-query per violation — then fuses a
+retrieval pass per phrasing.
+
+Sub-queries *alone* lose at rank 1: paraphrasing into legal vocabulary finds more
+overall but discards the exact wording that made the top hit land. Retrieving
+with the original phrasing **and** its sub-queries recovers rank 1 and keeps the
+reach, so that is the default.
+
+recall@30 is the number to watch. Reranking can only reorder what the first stage
+found, so the share of questions with no correct provision anywhere in 30
+candidates — 22% single, **15% with decomposition** — is only reachable by asking
+a different question.
 
 Per-leg recall at fetch depth 30 is what set the fusion weights:
 
@@ -56,13 +65,16 @@ fusing lifts recall@30 above either leg alone. Weighting the two equally, though
 let BM25's ordering drag the fused list *below plain vector search* at k=1 and
 k=5. Hence `rrf_vector_weight` / `rrf_bm25_weight`, defaulting 3:1.
 
+**Cross-encoder rerank is off by default.** Measured before decomposition landed:
+recall@1 0.255 against 0.359 without it, MRR 0.421 against 0.473, p50 17s against
+0.24s. It helped 10 questions and hurt 11. The regressions are legible — the
+reranker promotes `168/2024/NĐ-CP` above `100/2019/NĐ-CP`, which is legally
+correct since the 2024 decree replaced the 2019 one, but the dataset is labelled
+against the older law. Worth re-measuring once the labels are reconciled.
+
 One caveat applies to every number above: 85 of the 94 questions have their ground
 truth in one document (`100/2019/NĐ-CP`), so this measures coverage of one decree,
 not of the corpus.
-
-The first-stage ceiling is the real constraint: recall@30 is 0.817, so **18% of
-questions have no correct provision anywhere in 30 candidates**. No amount of
-reranking reaches those; only better first-stage retrieval does.
 
 
 ## Why a graph
@@ -121,7 +133,7 @@ src/vtlaw/
 ├── parse/      stage 2 — Điều / Khoản / Điểm extraction
 ├── graph/      stage 3 — Neo4j schema, import, AMENDS edges
 ├── embed/      stage 4 — vietnamese-bi-encoder vectors
-├── retrieve/   stage 5 — vector + BM25 → RRF → rerank → legal heuristic
+├── retrieve/   stage 5 — decompose → vector + BM25 → RRF → rerank → heuristic
 ├── generate/   stage 6 — graph-walk context → LLM with citations
 ├── api/        stage 7 — FastAPI
 ├── eval/       stage 8 — recall@k, MRR, latency
@@ -138,7 +150,7 @@ committed snapshot.
 ## Testing
 
 ```bash
-pytest -m "not integration"    # 252 tests, no services needed
+pytest -m "not integration"    # 280 tests, no services needed
 pytest -m integration          # 13 tests, needs Neo4j running
 ```
 
