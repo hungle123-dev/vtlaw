@@ -1,0 +1,114 @@
+{
+  "docGUId": "401141b3-0118-9100-0919-2e1ba27538ff",
+  "docName": "Luật Xử lý vi phạm hành chính của Quốc hội, số 15/2012/QH13",
+  "docIdentity": "15/2012/QH13",
+  "issueDate": "2012-06-20T00:00:00",
+  "effectDate": "2013-07-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "479&480 - 08/2012",
+  "gazetteDate": "2012-08-06T00:00:00",
+  "updDateTime": "2012-07-05T11:16:25.42",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 403,
+      "signerName": "Nguyễn Sinh Hùng"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-xu-ly-vi-pham-hanh-chinh-2012-71744-d1/2012/12217286.pdf.aspx",
+      "dataSourceId": 18,
+      "fileType": {
+        "fileTypeId": 2,
+        "fileTypeName": "Văn bản chính thức"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "be7662a9-0116-a300-88e9-b53bdc233761",
+      "docName": "Nghị định 52/2012/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực phòng cháy và chữa cháy",
+      "docIdentity": "52/2012/NĐ-CP",
+      "fieldName": "Vi phạm hành chính"
+    },
+    {
+      "docGUId": "ed24d293-0115-b000-c49c-0ab0053506ca",
+      "docName": "Thông tư liên tịch 14/2012/TTLT-BLĐTBXH-BCA của Bộ Lao động Thương binh và Xã hội, Bộ Công an về việc quy định chi tiết chế độ áp dụng biện pháp xử lý hành chính đưa vào cơ sở chữa bệnh và chế độ áp dụng đối với người chưa thành niên, người tự nguyện vào cơ sở chữa bệnh",
+      "docIdentity": "14/2012/TTLT-BLĐTBXH-BCA",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "4caf1ab1-0114-3e00-8350-58f19744fba4",
+      "docName": "Thông tư 78/2012/TT-BTC của Bộ Tài chính về việc hướng dẫn một số điều của Nghị định 84/2011/NĐ-CP ngày 20/09/2011 của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực giá",
+      "docIdentity": "78/2012/TT-BTC",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "2acb6195-0111-ea00-05e5-9bec292f9b90",
+      "docName": "Nghị định 37/2012/NĐ-CP của Chính phủ quy định về việc xử phạt vi phạm hành chính trong lĩnh vực thể dục, thể thao",
+      "docIdentity": "37/2012/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "d960e35d-0110-6500-8d91-095cca069237",
+      "docName": "Thông tư liên tịch 61/2012/TTLT-BTC-BCA của Bộ Tài chính, Bộ Công an về việc quản lý và sử dụng tiền thu từ xử phạt vi phạm hành chính trong lĩnh vực an ninh và trật tự, an toàn xã hội",
+      "docIdentity": "61/2012/TTLT-BTC-BCA",
+      "fieldName": "Tài chính-Ngân hàng, An ninh trật tự, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "f8190f4f-0110-c900-46fc-94145e154e32",
+      "docName": "Quyết định 295/QĐ-BXD của Bộ Xây dựng về việc thành lập Ban soạn thảo và Tổ biên tập Nghị định sửa đổi, bổ sung  một số điều của Nghị định 23/2009/NĐ-CP ngày 27/02/2009 của Chính phủ về xử phạt vi phạm hành chính trong hoạt động xây dựng; kinh doanh bất động sản; khai thác, sản xuất, kinh doanh vật liệu xây dựng; quản lý công trình hạ tầng kỹ thuật; quản lý phát triển nhà và công sở",
+      "docIdentity": "295/QĐ-BXD",
+      "fieldName": "Xây dựng, Cơ cấu tổ chức, Vi phạm hành chính, Tư pháp-Hộ tịch"
+    },
+    {
+      "docGUId": "b69b98f6-010d-d300-e7a7-37a2ade0632d",
+      "docName": "Chỉ thị 07/CT-BCT của Bộ Công Thương về việc tăng cường kiểm tra, kiểm soát và xử lý vi phạm pháp luật trong kinh doanh xăng dầu và khí dầu mỏ hóa lỏng",
+      "docIdentity": "07/CT-BCT",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo, Xăng dầu"
+    },
+    {
+      "docGUId": "56ef6a9c-010d-8d00-9050-cb1ae7e1a9e7",
+      "docName": "Nghị định 19/2012/NĐ-CP của Chính phủ về quy định xử phạt vi phạm hành chính trong lĩnh vực bảo vệ quyền lợi người tiêu dùng",
+      "docIdentity": "19/2012/NĐ-CP",
+      "fieldName": "Vi phạm hành chính"
+    },
+    {
+      "docGUId": "9d24bf7d-010c-c700-d47b-9e231a693921",
+      "docName": "Nghị định 16/2012/NĐ-CP của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực du lịch",
+      "docIdentity": "16/2012/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "286fb039-0107-0e00-5e28-07e6bb922845",
+      "docName": "Quyết định 65/QĐ-XPHC của Thanh tra Bộ Giáo dục và Đào tạo về việc xử phạt vi phạm hành chính trong lĩnh vực giáo dục",
+      "docIdentity": "65/QĐ-XPHC",
+      "fieldName": "Giáo dục-Đào tạo-Dạy nghề, Vi phạm hành chính"
+    }
+  ]
+}

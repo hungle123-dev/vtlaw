@@ -1,0 +1,64 @@
+[project]
+name = "vtlaw"
+version = "0.1.0"
+description = "Vietnamese traffic-law graph RAG — temporal-aware retrieval over Neo4j"
+requires-python = ">=3.12"
+
+# Only what the implemented stages import. Later stages add their own extras
+# rather than making every install pay for a torch download up front.
+dependencies = [
+    "httpx>=0.28.0",              # scrape: HTTP client
+    "beautifulsoup4>=4.12.0",     # scrape: HTML to text
+    "pydantic>=2.10.0",           # parse: domain models
+    "pydantic-settings>=2.7.0",   # config from env
+    "neo4j>=5.28.0",              # graph: driver
+    "redis>=5.0.0",               # cache: Redis-backed caching layer
+]
+
+[project.optional-dependencies]
+# stage 4 (embed) + stage 5 (retrieve): heavy ML wheels, installed on demand
+embed = [
+    "sentence-transformers>=3.3.0",
+    "pyvi>=0.1.1",
+    # The reranker (AITeamVN/Vietnamese_Reranker) is XLM-RoBERTa: its tokenizer
+    # is a sentencepiece.bpe.model. Without these two, CrossEncoder raises
+    # "Unrecognized processing class" and rerank is silently skipped —
+    # retrieval keeps working at materially worse quality.
+    "sentencepiece>=0.2.0",
+    "tiktoken>=0.8.0",
+]
+# stage 6 (generate) + stage 7 (api)
+serve = [
+    "openai>=1.59.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "prometheus-client>=0.21.0",   # api: /metrics
+]
+dev = [
+    "pytest>=8.3.0",
+    "ruff>=0.9.0",
+]
+
+[project.scripts]
+vtlaw = "vtlaw.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vtlaw"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "integration: requires a running Neo4j (deselect with -m 'not integration')",
+]

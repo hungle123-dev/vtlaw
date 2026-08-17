@@ -1,0 +1,131 @@
+{
+  "docGUId": "77246c27-059a-a500-3db7-70f2ceab2ebb",
+  "docName": "Nghị định 119/2024/NĐ-CP của Chính phủ quy định về thanh toán điện tử giao thông đường bộ",
+  "docIdentity": "119/2024/NĐ-CP",
+  "issueDate": "2024-09-30T00:00:00",
+  "effectDate": "2024-10-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "1107&1108-10/2024",
+  "gazetteDate": "2024-10-11T00:00:00",
+  "updDateTime": "2024-10-02T08:36:40.223",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 11,
+    "docTypeName": "Nghị định"
+  },
+  "effectStatus": {
+    "effectStatusId": 4,
+    "effectStatusName": "Còn Hiệu lực"
+  },
+  "fields": [
+    {
+      "fieldId": 4,
+      "fieldName": "Thuế-Phí-Lệ phí"
+    },
+    {
+      "fieldId": 2,
+      "fieldName": "Tài chính-Ngân hàng"
+    },
+    {
+      "fieldId": 28,
+      "fieldName": "Giao thông"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 93,
+      "organName": "Chính phủ"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 1074,
+      "signerName": "Trần Hồng Hà"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-119-2024-nd-cp-cua-chinh-phu-quy-dinh-ve-thanh-toan-dien-tu-giao-thong-duong-bo-367223-d1/uploaded/vietlawfile/2024/10/119_2024_nd_cp_021024102327.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-119-2024-nd-cp-cua-chinh-phu-quy-dinh-ve-thanh-toan-dien-tu-giao-thong-duong-bo-367223-d1/uploaded/vietlawfile/2024/10/s_119_2024_nd_cp_021024102756.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "b81fb00e-05d5-ba00-2684-34ead31dac6f",
+      "docName": "Quyết định 2292/QĐ-BTC của Bộ Tài chính về việc công bố thủ tục hành chính mới ban hành lĩnh vực quản lý công sản thuộc phạm vi chức năng quản lý của Bộ Tài chính",
+      "docIdentity": "2292/QĐ-BTC",
+      "fieldName": "Tài chính-Ngân hàng, Hành chính"
+    },
+    {
+      "docGUId": "f50f088c-0599-e000-1d3b-49aa9928529f",
+      "docName": "Quyết định 2281/QĐ-BTC của Bộ Tài chính về việc công bố công khai dự toán ngân sách năm 2024 của Bộ Tài chính",
+      "docIdentity": "2281/QĐ-BTC",
+      "fieldName": "Tài chính-Ngân hàng"
+    },
+    {
+      "docGUId": "01573fca-0598-1e00-beaa-0b19ee6e8831",
+      "docName": "Quyết định 1153/QĐ-BGTVT của Bộ Giao thông Vận tải về việc điều chỉnh dự toán chi ngân sách Nhà nước năm 2024 - nguồn chi quản lý Nhà nước, đảng, đoàn thể và sự nghiệp kinh tế khác",
+      "docIdentity": "1153/QĐ-BGTVT",
+      "fieldName": "Tài chính-Ngân hàng"
+    },
+    {
+      "docGUId": "cedcb4a6-0597-4500-2a92-2b783063d796",
+      "docName": "Quyết định 2752/QÐ-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch về việc tổ chức Lớp tập huấn nghiệp vụ thực hiện Tổng kiểm kê tài sản công cho các cơ quan, đơn vị thuộc Bộ tại miền Bắc và miền Nam",
+      "docIdentity": "2752/QĐ-BVHTTDL",
+      "fieldName": "Tài chính-Ngân hàng, Cơ cấu tổ chức"
+    },
+    {
+      "docGUId": "bd46d84f-059b-9c00-7088-910975052cff",
+      "docName": "Quyết định 1754/QĐ-TLĐ của Tổng Liên đoàn Lao động Việt Nam về việc ban hành Quy định về nguyên tắc xây dựng và giao dự toán tài chính công đoàn năm 2025",
+      "docIdentity": "1754/QĐ-TLĐ",
+      "fieldName": "Tài chính-Ngân hàng, Lao động-Tiền lương"
+    },
+    {
+      "docGUId": "feea0f83-0598-c500-b8c2-e084071520b2",
+      "docName": "Quyết định 2740/QÐ-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch phê duyệt Dự toán chi tiết nhiệm vụ “Tổ chức Chương trình Xúc tiến Du lịch - Điện ảnh Việt Nam tại Hoa Kỳ” từ nguồn ngân sách nhà nước cấp cho Quỹ hỗ trợ phát triển du lịch thực hiện Kế hoạch xúc tiến, quảng bá và hỗ trợ phát triển du lịch năm 2024",
+      "docIdentity": "2740/QĐ-BVHTTDL",
+      "fieldName": "Tài chính-Ngân hàng, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "eb719cab-0596-e300-846f-0dcfa0b33122",
+      "docName": "Quyết định 1000/QĐ-TTg của Thủ tướng Chính phủ về việc bổ sung dự toán chi thường xuyên ngân sách Nhà nước năm 2024 của Bộ Y tế để thực hiện hoạt động tiêm chủng mở rộng",
+      "docIdentity": "1000/QĐ-TTg",
+      "fieldName": "Tài chính-Ngân hàng, Y tế-Sức khỏe"
+    },
+    {
+      "docGUId": "194f209f-0607-1500-cf31-9934a9788eaa",
+      "docName": "Quyết định 1938/QĐ-NHNN của Ngân hàng Nhà nước Việt Nam về việc quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước chi nhánh Thành phố Hà Nội",
+      "docIdentity": "1938/QĐ-NHNN",
+      "fieldName": "Tài chính-Ngân hàng, Cơ cấu tổ chức"
+    },
+    {
+      "docGUId": "189eb635-0607-9500-4288-e869cd43edcf",
+      "docName": "Quyết định 1939/QĐ-NHNN của Ngân hàng Nhà nước Việt Nam về việc quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ngân hàng Nhà nước chi nhánh Thành phố Hồ Chí Minh",
+      "docIdentity": "1939/QĐ-NHNN",
+      "fieldName": "Tài chính-Ngân hàng, Cơ cấu tổ chức"
+    },
+    {
+      "docGUId": "edccdbf4-0596-7d00-3782-1f2d88dda792",
+      "docName": "Quyết định 1141/QĐ-BGTVT của Bộ Giao thông Vận tải về việc công bố công khai quyết toán vốn đầu tư công nguồn ngân sách Nhà nước theo niên độ ngân sách năm 2023 của Bộ Giao thông Vận tải",
+      "docIdentity": "1141/QĐ-BGTVT",
+      "fieldName": "Đầu tư, Tài chính-Ngân hàng"
+    }
+  ]
+}

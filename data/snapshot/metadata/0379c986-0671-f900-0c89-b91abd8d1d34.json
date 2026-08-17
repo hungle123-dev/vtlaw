@@ -1,0 +1,127 @@
+{
+  "docGUId": "0379c986-0671-f900-0c89-b91abd8d1d34",
+  "docName": "Luật sửa đổi, bổ sung một số điều của 10 Luật có liên quan đến an ninh, trật tự của Quốc hội, số 118/2025/QH15",
+  "docIdentity": "118/2025/QH15",
+  "issueDate": "2025-12-10T00:00:00",
+  "effectDate": "2026-07-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "35-01/2026",
+  "gazetteDate": "2026-01-21T00:00:00",
+  "updDateTime": "2025-12-23T17:17:13.453",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 6,
+    "effectStatusName": "Chưa áp dụng"
+  },
+  "fields": [
+    {
+      "fieldId": 27,
+      "fieldName": "Hành chính"
+    },
+    {
+      "fieldId": 11,
+      "fieldName": "An ninh trật tự"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 2067,
+      "signerName": "Trần Thanh Mẫn"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-so-118-2025-qh15-sua-doi-bo-sung-10-luat-ve-an-ninh-trat-tu-2025-422147-d1/uploaded/vietlawfile/2025/12/118_2025_qh15_231225171710.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-so-118-2025-qh15-sua-doi-bo-sung-10-luat-ve-an-ninh-trat-tu-2025-422147-d1/uploaded/vietlawfile/2025/12/s_118_2025_qh15_231225171710.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "9091de43-067b-0000-6554-3d3637f24a4c",
+      "docName": "Lệnh 48/2025/L-CTN của Chủ tịch nước về việc công bố Luật Tình trạng khẩn cấp",
+      "docIdentity": "48/2025/L-CTN",
+      "fieldName": "An ninh trật tự, Hành chính, An ninh quốc gia"
+    },
+    {
+      "docGUId": "462495f3-0676-e300-7a3e-36879c890b56",
+      "docName": "Pháp lệnh 09/2025/UBTVQH15 của Ủy ban Thường vụ Quốc hội sửa đổi, bổ sung một số điều của Pháp lệnh Cảnh sát môi trường",
+      "docIdentity": "09/2025/UBTVQH15",
+      "fieldName": "An ninh trật tự, Tài nguyên-Môi trường"
+    },
+    {
+      "docGUId": "04ac7816-0671-8b00-0480-d1bbd153c10a",
+      "docName": "Luật Tình trạng khẩn cấp của Quốc hội, số 104/2025/QH15",
+      "docIdentity": "104/2025/QH15",
+      "fieldName": "An ninh trật tự, An ninh quốc gia, Tài nguyên-Môi trường"
+    },
+    {
+      "docGUId": "002ae4d4-066f-aa00-858b-cf9e50859938",
+      "docName": "Thông tư 109/2025/TT-BCA của Bộ Công an quy định về phân công trách nhiệm, quan hệ phối hợp, quy trình xác minh, giải quyết vụ cháy trong Công an nhân dân",
+      "docIdentity": "109/2025/TT-BCA",
+      "fieldName": "An ninh trật tự, Cơ cấu tổ chức"
+    },
+    {
+      "docGUId": "6b5de6dd-0664-4b00-0c0b-7a6bae0b1288",
+      "docName": "Nghị định 297/2025/NĐ-CP của Chính phủ quy định thực hiện liên thông điện tử nhóm thủ tục hành chính: Đăng ký thành lập hộ kinh doanh - cấp Giấy chứng nhận đủ điều kiện về an ninh, trật tự - cấp Giấy phép đủ điều kiện kinh doanh dịch vụ karaoke",
+      "docIdentity": "297/2025/NĐ-CP",
+      "fieldName": "An ninh trật tự, Doanh nghiệp, Hành chính, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "ec18f69b-0660-a700-43bd-c7b27495580f",
+      "docName": "Nghị định 288/2025/NĐ-CP của Chính phủ quy định về quản lý tàu bay không người lái và phương tiện bay khác",
+      "docIdentity": "288/2025/NĐ-CP",
+      "fieldName": "An ninh trật tự, Hành chính, Giao thông"
+    },
+    {
+      "docGUId": "06d457c6-0660-0800-bccf-39b87b98d420",
+      "docName": "Thông tư 103/2025/TT-BCA của Bộ Công an banh hành Quy chuẩn kỹ thuật quốc gia về trang bị, bố trí phương tiện phòng cháy, chữa cháy, cứu nạn, cứu hộ cho nhà và công trình",
+      "docIdentity": "103/2025/TT-BCA",
+      "fieldName": "Đất đai-Nhà ở, An ninh trật tự, Xây dựng"
+    },
+    {
+      "docGUId": "ac767734-065f-e900-73b4-881f8759143c",
+      "docName": "Nghị định 282/2025/NĐ-CP của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực an ninh, trật tự, an toàn xã hội; phòng, chống tệ nạn xã hội; phòng, chống bạo lực gia đình",
+      "docIdentity": "282/2025/NĐ-CP",
+      "fieldName": "An ninh trật tự, Vi phạm hành chính, Hành chính, Hôn nhân gia đình"
+    },
+    {
+      "docGUId": "dff8e642-065c-c200-75e0-27bf9f508be1",
+      "docName": "Thông tư 97/2025/TT-BTC của Bộ Tài chính hướng dẫn thực hiện các chính sách tài chính đối với doanh nghiệp trực tiếp phục vụ quốc phòng, an ninh quy định tại điểm b, c, d, đ, e khoản 1 Điều 7 Nghị định 16/2023/NĐ-CP ngày 25/04/2023 của Chính phủ về tổ chức quản lý và hoạt động của doanh nghiệp trực tiếp phục vụ quốc phòng, an ninh và doanh nghiệp kết hợp kinh tế với quốc phòng, an ninh",
+      "docIdentity": "97/2025/TT-BTC",
+      "fieldName": "Tài chính-Ngân hàng, An ninh trật tự, Doanh nghiệp"
+    },
+    {
+      "docGUId": "b11f9b85-0654-b200-cb67-1cb8bb4cafc1",
+      "docName": "Quyết định 8211/QĐ-BCA của Bộ Công an về việc công bố thủ tục hành chính sửa đổi, bổ sung liên quan đến lực lượng tham gia bảo vệ an ninh, trật tự ở cơ sở thuộc phạm vi, chức năng quản lý Nhà nước của Bộ Công an",
+      "docIdentity": "8211/QĐ-BCA",
+      "fieldName": "An ninh trật tự, Hành chính"
+    }
+  ]
+}

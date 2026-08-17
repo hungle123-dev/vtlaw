@@ -1,0 +1,127 @@
+{
+  "docGUId": "9ed2a463-02ab-f500-2bad-cf5a424c7170",
+  "docName": "Luật Phòng, chống tác hại của rượu, bia của Quốc hội, số 44/2019/QH14",
+  "docIdentity": "44/2019/QH14",
+  "issueDate": "2019-06-14T00:00:00",
+  "effectDate": "2020-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "559&560-07/2019",
+  "gazetteDate": "2019-07-17T00:00:00",
+  "updDateTime": "2019-07-04T10:19:53.85",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 12,
+      "fieldName": "Y tế-Sức khỏe"
+    },
+    {
+      "fieldId": 11,
+      "fieldName": "An ninh trật tự"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 430,
+      "signerName": "Nguyễn Thị Kim Ngân"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-phong-chong-tac-hai-cua-ruou-bia-2019-so-44-2019-qh14-175006-d1/uploaded/VIETLAWFILE/2019/7/44_2019_QH14_050719173807.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-phong-chong-tac-hai-cua-ruou-bia-2019-so-44-2019-qh14-175006-d1/uploaded/VIETLAWFILE/2019/7/44_2019_QH14_050719174353.pdf.aspx",
+      "dataSourceId": 18,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "8daa0e0e-02a2-e500-30c9-0047beb9b80d",
+      "docName": "Quyết định 264/QĐ-UBDT của Ủy ban Dân tộc về việc phê duyệt Kế hoạch tuyên truyền, vận động về phòng, chống tệ nạn ma túy, mại dâm và mua bán người vùng đồng bào dân tộc thiểu số năm 2019",
+      "docIdentity": "264/QĐ-UBDT",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "55bf7368-04b2-a300-523e-f67e92ef3c2d",
+      "docName": "Quyết định 169/QĐ-VKSTC của Viện kiểm sát nhân dân tối cao ban hành Biểu mẫu thống kê về phòng, chống ma tuý",
+      "docIdentity": "169/QĐ-VKSTC",
+      "fieldName": "An ninh trật tự, Hình sự"
+    },
+    {
+      "docGUId": "850e4826-02a3-6400-341c-f29959bc9544",
+      "docName": "Quyết định 1179/QĐ-TCHQ của Tổng cục Hải quan về việc ban hành Nội quy phòng cháy và chữa cháy tại trụ sở cơ quan Tổng cục Hải quan",
+      "docIdentity": "1179/QĐ-TCHQ",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "c9dd8d60-029e-3800-d557-913ed25eb063",
+      "docName": "Quyết định 1180/QÐ-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch về việc tổ chức triển khai thực hiện Đề án \"Phòng ngừa tội phạm và phòng, chống vi phạm pháp luật trong hoạt động văn hóa, thể thao và du lịch\" năm 2019",
+      "docIdentity": "1180/QĐ-BVHTTDL",
+      "fieldName": "An ninh trật tự, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "7a2e5d1d-029f-8e00-3b55-efc761b617a1",
+      "docName": "Thông tư 08/2019/TT-BCA của Bộ Công an về việc ban hành Danh mục sản phẩm, hàng hóa có khả năng gây mất an toàn thuộc trách nhiệm quản lý của Bộ Công an",
+      "docIdentity": "08/2019/TT-BCA",
+      "fieldName": "An ninh trật tự, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "7eac3795-029c-1e00-454b-50b7495eeba3",
+      "docName": "Quyết định 87/QĐ-UBDT của Ủy ban Dân tộc về việc phê duyệt Kế hoạch tuyên truyền, vận động đồng bào dân tộc thiểu số tích cực tham gia vào hoạt động phòng, chống ma túy, HIV/AIDS, mại dâm, chống trồng và tái trồng cây có chứa chất ma túy năm 2019",
+      "docIdentity": "87/QĐ-UBDT",
+      "fieldName": "An ninh trật tự, Chính sách"
+    },
+    {
+      "docGUId": "1f31f173-029c-0c00-48c9-8a1af3eac76e",
+      "docName": "Quyết định 13/2019/QĐ-TTg của Thủ tướng Chính phủ về việc sửa đổi, bổ sung một số điều của Quyết định 127/2009/QĐ-TTg ngày 26/10/2009 của Thủ tướng Chính phủ ban hành Chế độ báo cáo thống kê về phòng, chống ma túy",
+      "docIdentity": "13/2019/QĐ-TTg",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "d034112d-0299-b400-73b1-bb526a14ebe7",
+      "docName": "Chỉ thị 01/CT-BXD của Bộ Xây dựng về việc tổ chức Tết và tăng cường các biện pháp bảo đảm đón Tết Nguyên đán Kỷ Hợi 2019 vui tươi, lành mạnh, an toàn, tiết kiệm",
+      "docIdentity": "01/CT-BXD",
+      "fieldName": "An ninh trật tự, Tiết kiệm-Phòng, chống tham nhũng, lãng phí"
+    },
+    {
+      "docGUId": "2a8f27ab-0299-2600-c5b1-02fd1d3bb0bf",
+      "docName": "Quyết định 170/QĐ-BYT của Bộ Y tế về việc phê duyệt Đề án Phòng ngừa tội phạm và phòng, chống vi phạm pháp luật tại các cơ sở y tế",
+      "docIdentity": "170/QĐ-BYT",
+      "fieldName": "An ninh trật tự, Y tế-Sức khỏe"
+    },
+    {
+      "docGUId": "39f82693-0297-5400-6902-8fcd49a1c924",
+      "docName": "Chỉ thị 34/CT-TTg của Thủ tướng Chính phủ về việc tăng cường các biện pháp bảo đảm đón Tết Nguyên đán Kỷ Hợi 2019 vui tươi, lành mạnh, an toàn, tiết kiệm",
+      "docIdentity": "34/CT-TTg",
+      "fieldName": "An ninh trật tự"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "docGUId": "a23acd3d-0347-de00-7bd0-1da3bdd18347",
+  "docName": "Nghị định 123/2021/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của các Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực hàng hải; giao thông đường bộ, đường sắt; hàng không dân dụng",
+  "docIdentity": "123/2021/NĐ-CP",
+  "issueDate": "2021-12-28T00:00:00",
+  "effectDate": "2022-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "từ 45 đến 48-01/2022",
+  "gazetteDate": "2022-01-10T00:00:00",
+  "updDateTime": "2021-12-30T11:39:57.107",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 11,
+    "docTypeName": "Nghị định"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 28,
+      "fieldName": "Giao thông"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    },
+    {
+      "fieldId": 193,
+      "fieldName": "Hàng không"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 93,
+      "organName": "Chính phủ"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 1992,
+      "signerName": "Lê Văn Thành"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-123-2021-nd-cp-sua-nghi-dinh-100-xu-phat-ve-giao-thong-214946-d1/uploaded/VIETLAWFILE/2021/12/S_123_2021_ND-CP_301221114710.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-123-2021-nd-cp-sua-nghi-dinh-100-xu-phat-ve-giao-thong-214946-d1/uploaded/VIETLAWFILE/2021/12/123_2021_ND-CP_301221114825.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "b0ee3792-0346-a200-d9e2-d241be589319",
+      "docName": "Nghị định 120/2021/NĐ-CP của Chính phủ quy định chế độ áp dụng biện pháp xử lý hành chính giáo dục tại xã, phường, thị trấn",
+      "docIdentity": "120/2021/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Hành chính"
+    },
+    {
+      "docGUId": "2321900f-0347-9700-9bed-af73f216db56",
+      "docName": "Nghị định 118/2021/NĐ-CP của Chính phủ về việc quy định chi tiết một số điều và biện pháp thi hành Luật Xử lý vi phạm hành chính",
+      "docIdentity": "118/2021/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Hành chính"
+    },
+    {
+      "docGUId": "de63ade6-0347-3b00-285d-1a0d71c978b7",
+      "docName": "Nghị định 116/2021/NĐ-CP của Chính phủ về việc quy định chi tiết một số điều của Luật Phòng, chống ma túy, Luật Xử lý vi phạm hành chính về cai nghiện ma túy và quản lý sau cai nghiện ma túy",
+      "docIdentity": "116/2021/NĐ-CP",
+      "fieldName": "An ninh trật tự, Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "11c9f7b4-0346-0a00-93aa-24f3ce8cc99c",
+      "docName": "Quyết định 2162/QĐ-BGTVT của Bộ Giao thông Vận tải về việc ban hành Kế hoạch theo dõi thi hành pháp luật về xử lý vi phạm hành chính năm 2022 của Bộ Giao thông Vận tải",
+      "docIdentity": "2162/QĐ-BGTVT",
+      "fieldName": "Vi phạm hành chính, Giao thông"
+    },
+    {
+      "docGUId": "e10055b4-0581-a800-c5b1-3755aae2e333",
+      "docName": "Quyết định 3278/QÐ-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch ban hành Kế hoạch theo dõi tình hình thi hành pháp luật về xử lý vi phạm hành chính của Bộ Văn hoá, Thể thao và Du lịch năm 2022",
+      "docIdentity": "3278/QĐ-BVHTTDL",
+      "fieldName": "Vi phạm hành chính, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "5e173b3a-0345-d700-d8fa-9167313f77f7",
+      "docName": "Thông tư 20/2021/TT-BCT của Bộ Công Thương về việc sửa đổi, bổ sung một số điều của Thông tư 27/2020/TT-BCT ngày 30/9/2020 của Bộ trưởng Bộ Công Thương quy định về nội dung, trình tự, thủ tục hoạt động kiểm tra, xử lý vi phạm hành chính và thực hiện các biện pháp nghiệp vụ của lực lượng Quản lý thị trường",
+      "docIdentity": "20/2021/TT-BCT",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "53f73c8c-0344-6000-b780-5873986994ad",
+      "docName": "Thông tư 22/2021/TT-BCT của Bộ Công Thương quy định về quản lý, sử dụng biểu mẫu trong hoạt động kiểm tra, xử lý vi phạm hành chính và thực hiện các biện pháp nghiệp vụ của lực lượng Quản lý thị trường",
+      "docIdentity": "22/2021/TT-BCT",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "df50db79-033e-4b00-d0e0-6dada7a42e27",
+      "docName": "Nghị định 102/2021/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của các Nghị định về xử phạt vi phạm hành chính trong lĩnh vực thuế, hóa đơn; hải quan; kinh doanh bảo hiểm, kinh doanh xổ số; quản lý, sử dụng tài sản công; thực hành tiết kiệm, chống lãng phí; dự trữ quốc gia; kho bạc Nhà nước; kế toán, kiểm toán độc lập",
+      "docIdentity": "102/2021/NĐ-CP",
+      "fieldName": "Thuế-Phí-Lệ phí, Xuất nhập khẩu, Vi phạm hành chính, Kế toán-Kiểm toán, Tiết kiệm-Phòng, chống tham nhũng, lãng phí, Bảo hiểm, Bảo hiểm nhân thọ - Phi nhân thọ"
+    },
+    {
+      "docGUId": "4773ebef-033e-ba00-4bfd-75a7d4a06022",
+      "docName": "Nghị định 100/2021/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của Nghị định 95/2016/NĐ-CP ngày 01/7/2016 của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực thống kê",
+      "docIdentity": "100/2021/NĐ-CP",
+      "fieldName": "Tài chính-Ngân hàng, Vi phạm hành chính, Hành chính"
+    },
+    {
+      "docGUId": "d4de6d8d-033a-7800-add0-fb73a4be4673",
+      "docName": "Thông tư 13/2021/TT-BLĐTBXH của Bộ Lao động Thương binh và Xã hội về việc ban hành Bộ chỉ tiêu thống kê về tình hình trẻ em và tình hình xâm hại trẻ em, xử lý vi phạm hành chính đối với các hành vi xâm hại trẻ em",
+      "docIdentity": "13/2021/TT-BLĐTBXH",
+      "fieldName": "Chính sách, Vi phạm hành chính"
+    }
+  ]
+}

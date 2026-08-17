@@ -1,0 +1,127 @@
+{
+  "docGUId": "a366447d-02bd-bc00-3268-f84e46ffb699",
+  "docName": "Nghị định 100/2019/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt",
+  "docIdentity": "100/2019/NĐ-CP",
+  "issueDate": "2019-12-30T00:00:00",
+  "effectDate": "2020-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "21 đến 24-01/2020",
+  "gazetteDate": "2020-01-08T00:00:00",
+  "updDateTime": "2019-12-31T16:31:30.927",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 11,
+    "docTypeName": "Nghị định"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 28,
+      "fieldName": "Giao thông"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 93,
+      "organName": "Chính phủ"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 977,
+      "signerName": "Nguyễn Xuân Phúc"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-100-2019-nd-cp-xu-phat-vi-pham-giao-thong-179619-d1/uploaded/VIETLAWFILE/2019/12/100_2019_ND-CP_311219163132.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-100-2019-nd-cp-xu-phat-vi-pham-giao-thong-179619-d1/uploaded/VIETLAWFILE/2019/12/S_100_2019_ND-CP_311219163132.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "a5459b89-02bd-6100-0772-9dad75a978e1",
+      "docName": "Quyết định 2294/QĐ-BTTTT của Bộ Thông tin và Truyền thông về việc ban hành Kế hoạch triển khai công tác quản lý Nhà nước về thi hành pháp luật xử lý vi phạm hành chính của Bộ Thông tin và Truyền thông năm 2020",
+      "docIdentity": "2294/QĐ-BTTTT",
+      "fieldName": "Vi phạm hành chính, Thông tin-Truyền thông"
+    },
+    {
+      "docGUId": "2dad254b-02bd-ca00-e9a1-d018becd69bf",
+      "docName": "Quyết định 3263/QĐ-BTNMT của Bộ Tài nguyên và Môi trường về việc phê duyệt Kế hoạch Theo dõi thi hành pháp luật về tài nguyên và môi trường và Theo dõi thi hành pháp luật về xử lý vi phạm hành chính trong lĩnh vực tài nguyên và môi trường năm 2020",
+      "docIdentity": "3263/QĐ-BTNMT",
+      "fieldName": "Vi phạm hành chính, Tài nguyên-Môi trường"
+    },
+    {
+      "docGUId": "b1f2cea7-02bc-1000-83f5-b326ebbee6e9",
+      "docName": "Thông tư 87/2019/TT-BTC của Bộ Tài chính về việc hướng dẫn thực hiện xử phạt vi phạm hành chính trong lĩnh vực kho bạc Nhà nước",
+      "docIdentity": "87/2019/TT-BTC",
+      "fieldName": "Tài chính-Ngân hàng, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "de4a2906-02b8-9700-98ad-6e1ddbdc518e",
+      "docName": "Nghị định 91/2019/NĐ-CP của Chính phủ về xử phạt vi phạm hành chính trong lĩnh vực đất đai",
+      "docIdentity": "91/2019/NĐ-CP",
+      "fieldName": "Đất đai-Nhà ở, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "a8ff79c9-02b8-9000-683d-00ee65ccf4bf",
+      "docName": "Nghị định 88/2019/NĐ-CP của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và ngân hàng",
+      "docIdentity": "88/2019/NĐ-CP",
+      "fieldName": "Tài chính-Ngân hàng, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "4dbf4df8-02b7-7300-5f42-a2e09e87db60",
+      "docName": "Nghị định 80/2019/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của Nghị định 73/2016/NĐ-CP ngày 01/7/2016 của Chính phủ quy định chi tiết thi hành Luật Kinh doanh bảo hiểm và Luật sửa đổi, bổ sung một số điều của Luật Kinh doanh bảo hiểm; Nghị định 98/2013/NĐ-CP ngày 28/8/2013 của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực kinh doanh bảo hiểm, kinh doanh xổ số đã được sửa đổi, bổ sung một số điều theo Nghị định 48/2018/NĐ-CP ngày 21/3/2018 của Chính phủ",
+      "docIdentity": "80/2019/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo, Bảo hiểm, Bảo hiểm nhân thọ - Phi nhân thọ"
+    },
+    {
+      "docGUId": "c301970f-02b3-2600-e6c5-a8ba92cf1e62",
+      "docName": "Nghị định 75/2019/NĐ-CP của Chính phủ quy định về xử phạt vi phạm hành chính trong lĩnh vực cạnh tranh",
+      "docIdentity": "75/2019/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Đấu thầu-Cạnh tranh"
+    },
+    {
+      "docGUId": "43f26cb8-02b1-6800-9cdd-1cee170f16dd",
+      "docName": "Nghị định 71/2019/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực hóa chất và vật liệu nổ công nghiệp",
+      "docIdentity": "71/2019/NĐ-CP",
+      "fieldName": "Công nghiệp, Vi phạm hành chính, Hóa chất - Vật liệu nổ công nghiệp"
+    },
+    {
+      "docGUId": "45e1182f-02ad-e600-9166-4f630f879dab",
+      "docName": "Nghị định 65/2019/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của Nghị định 104/2017/NĐ-CP ngày 14/9/2017 của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực phòng, chống thiên tai; khai thác và bảo vệ công trình thủy lợi; đê điều",
+      "docIdentity": "65/2019/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Tài nguyên-Môi trường, Nông nghiệp-Lâm nghiệp"
+    },
+    {
+      "docGUId": "a716bfe3-02ac-3700-2c39-7c2e6161b2ce",
+      "docName": "Nghị định 63/2019/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực quản lý, sử dụng tài sản công; thực hành tiết kiệm, chống lãng phí; dự trữ quốc gia; kho bạc Nhà nước",
+      "docIdentity": "63/2019/NĐ-CP",
+      "fieldName": "Tài chính-Ngân hàng, Vi phạm hành chính, Tiết kiệm-Phòng, chống tham nhũng, lãng phí"
+    }
+  ]
+}

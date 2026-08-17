@@ -1,0 +1,127 @@
+{
+  "docGUId": "e744da74-02fb-2b00-46cf-a539f0c2973e",
+  "docName": "Luật sửa đổi, bổ sung một số điều của Luật Xử lý vi phạm hành chính của Quốc hội, số 67/2020/QH14",
+  "docIdentity": "67/2020/QH14",
+  "issueDate": "2020-11-13T00:00:00",
+  "effectDate": "2022-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "1181&1182-12/2020",
+  "gazetteDate": "2020-12-23T00:00:00",
+  "updDateTime": "2020-12-14T17:29:22.697",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 27,
+      "fieldName": "Hành chính"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 430,
+      "signerName": "Nguyễn Thị Kim Ngân"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-sua-doi-bo-sung-luat-xu-ly-vi-pham-hanh-chinh-2020-195559-d1/uploaded/VIETLAWFILE/2020/12/67_2020_QH14_141220173148.pdf.aspx",
+      "dataSourceId": 45,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-sua-doi-bo-sung-luat-xu-ly-vi-pham-hanh-chinh-2020-195559-d1/uploaded/VIETLAWFILE/2020/12/S_67_2020_QH14_141220173204.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "e134b2a6-02f6-8900-1af7-b81e336aede2",
+      "docName": "Thông tư 90/2020/TT-BTC của Bộ Tài chính về việc quy định các biểu mẫu sử dụng để xử phạt vi phạm hành chính trong lĩnh vực hải quan",
+      "docIdentity": "90/2020/TT-BTC",
+      "fieldName": "Hải quan, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "5c1e9efb-02f2-a300-38a2-c942c8755593",
+      "docName": "Quyết định 4490/QĐ-BYT của Bộ Y tế về việc ban hành Kế hoạch triển khai thi hành Nghị định 117/2020/NĐ-CP ngày 28/9/2020 của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực y tế và các Nghị định quy định xử phạt vi phạm hành chính khác liên quan đến lĩnh vực y tế",
+      "docIdentity": "4490/QĐ-BYT",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "d47ce363-02f0-a900-b3f4-028ca90bde39",
+      "docName": "Nghị định 128/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực hải quan",
+      "docIdentity": "128/2020/NĐ-CP",
+      "fieldName": "Xuất nhập khẩu, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "94cfe41a-02f0-8c00-3b46-4c8bdb7edf99",
+      "docName": "Nghị định 125/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính về thuế, hóa đơn",
+      "docIdentity": "125/2020/NĐ-CP",
+      "fieldName": "Thuế-Phí-Lệ phí, Vi phạm hành chính, Kế toán-Kiểm toán"
+    },
+    {
+      "docGUId": "067eb735-02ee-0f00-a678-8740291f0185",
+      "docName": "Nghị định 119/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong hoạt động báo chí, hoạt động xuất bản",
+      "docIdentity": "119/2020/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Thông tin-Truyền thông, Văn hóa-Thể thao-Du lịch"
+    },
+    {
+      "docGUId": "7fd020fd-02f0-b100-cd7f-43a865e96caf",
+      "docName": "Thông tư 27/2020/TT-BCT của Bộ Công Thương quy định về nội dung, trình tự, thủ tục hoạt động kiểm tra, xử lý vi phạm hành chính và thực hiện các biện pháp nghiệp vụ của lực lượng Quản lý thị trường",
+      "docIdentity": "27/2020/TT-BCT",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "5901c850-02ec-0500-cd71-799aa0e661cd",
+      "docName": "Nghị định 117/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực y tế",
+      "docIdentity": "117/2020/NĐ-CP",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "3f5f1146-02e5-c100-72bf-930aa038ee68",
+      "docName": "Nghị định 98/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong hoạt động thương mại, sản xuất, buôn bán hàng giả, hàng cấm và bảo vệ quyền lợi người tiêu dùng",
+      "docIdentity": "98/2020/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Thương mại-Quảng cáo"
+    },
+    {
+      "docGUId": "3c5e3068-02e5-9500-8d68-eb3fdd5fae0f",
+      "docName": "Nghị định 99/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực dầu khí, kinh doanh xăng dầu và khí",
+      "docIdentity": "99/2020/NĐ-CP",
+      "fieldName": "Công nghiệp, Vi phạm hành chính, Thương mại-Quảng cáo, Tài nguyên-Môi trường, Xăng dầu, Dầu khí"
+    },
+    {
+      "docGUId": "20e06518-02e4-4800-f181-5a184c1c9b98",
+      "docName": "Nghị định 96/2020/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực quản lý, bảo vệ biên giới quốc gia",
+      "docIdentity": "96/2020/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, An ninh quốc gia"
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+NHIỆM VỤ
+Trích xuất các amendments từ mỗi file JSON đầu vào và xuất ra đúng schema chuẩn dưới đây.
+
+MỤC TIÊU
+- Với mỗi file JSON, xác định tất cả các nội dung có tính chất sau đây:
+  - sửa đổi
+  - bổ sung
+  - bãi bỏ
+  - thay thế
+  - sửa đổi, bổ sung
+- Mỗi amend phải được tách thành một object riêng trong mảng "amends".
+
+OUTPUT SCHEMA
+{
+  "amends": [
+    {
+      "amending_doc_identity": "string",
+      "amending_article": "string",
+      "amending_clause": "string",
+      "amend_type": "sửa đổi | bổ sung | bãi bỏ | thay thế | sửa đổi, bổ sung",
+      "target_doc_identity": "string",
+      "target_article": "string",
+      "target_clause": "string",
+      "target_point": "string"
+    }
+  ]
+}
+
+QUY TẮC CHUNG
+
+1. GIỮ RIÊNG THEO TỪNG FILE
+- Mỗi file JSON đầu vào phải được xử lý và xuất riêng, không gộp kết quả của nhiều file vào một JSON chung.
+
+2. LẤY THÔNG TIN TỪ PREAMBLE
+- Tên luật và mã luật được map ở field "preamble" nằm ở cuối file JSON.
+- Phải dùng thông tin trong preamble để xác định:
+  - amending_doc_identity
+  - target_doc_identity
+
+3. CHỈ TRÍCH XUẤT THÔNG TIN CÓ CẤU TRÚC
+- Các trường article, clause, point chỉ được điền bằng số hoặc chữ cái ngắn gọn, ví dụ:
+  - article: "11"
+  - clause: "1"
+  - point: "d", trường này có thể null
+- Không chép nguyên cả đoạn văn bản vào các trường này.
+
+
+4. TÁCH ĐÚNG CẤU TRÚC ĐIỀU / KHOẢN / ĐIỂM
+- Nếu văn bản ghi "khoản 1:...a)" thì hiểu là:
+  - amending_clause = "1"
+  - amending_point = "a"
+- Nếu văn bản ghi "khoản 1:....b)" thì hiểu là:
+  - amending_clause = "1"
+  - amending_point = "b"
+- Đối với trường hợp ví dụ bổ sung điều 18a vào sau điều 18, thì trường hợp này 18a được tiếng là target_clause=18a
+- Không gộp điểm.
+- Ví dụ nếu phần target_point nói về cả điểm c và điểm d, phải tách thành 2 JSON object riêng, ví dụ không được có trường hợp target_point = "c, d".
+
+6. XỬ LÝ TRƯỜNG HỢP NHIỀU AMEND TRONG MỘT ĐIỀU
+- Một điều/khoản có thể chứa nhiều amend khác nhau.
+- Mỗi amend phải là một phần tử riêng trong mảng "amends".
+
+7. GIÁ TRỊ RỖNG
+- Nếu không có target_clause hoặc target_point thì để null.
+- Nếu không xác định được trường nào từ dữ liệu, để null thay vì đoán.
+
+8. ƯU TIÊN ĐỘ CHÍNH XÁC
+- Chỉ xuất những amend có thể xác định rõ ràng từ nội dung.
+- Không suy diễn.
+- Nếu một câu mô tả nhiều hành vi nhưng chỉ là một amend duy nhất, vẫn giữ một object.
+- Nếu một câu mô tả nhiều amend độc lập, phải tách ra.
+
+Các luật chủ yếu là: -Luật Trật tự, an toàn giao thông đường bộ. -Luật đường bộ. -Nghị định số 100/2019/NĐ-CP ngày 30 tháng 12 năm 2019
+
+YÊU CẦU ĐẦU RA
+- Chỉ trả về JSON hợp lệ theo schema.
+- Không thêm giải thích, không thêm markdown, không thêm text ngoài JSON.
+- Đảm bảo JSON sạch, đúng cấu trúc, đúng kiểu dữ liệu.
+
+FEW_SHOT_EXAMPLES = [ { "input": "Điều 1. Sửa đổi, bổ sung một số điều của Luật Chứng khoán\n1. Bổ sung khoản 49 vào sau khoản 48 Điều 4 như sau:\n\"49. Thao túng thị trường chứng khoán là việc thực hiện một trong các hành vi sau đây:\na) Sử dụng một hoặc nhiều tài khoản giao dịch của mình hoặc của người khác...\"", "output": { "amending_article": "1", "amending_clause": "1", "amend_type": "bổ sung", "target_doc_identity": "54/2019/QH14", "target_article": "4", "target_clause": "49", "target_point": None } }, { "input": "Điều 1. Sửa đổi, bổ sung một số điều của Luật Chứng khoán (54/2019/QH14) \n2. Sửa đổi, bổ sung điểm d khoản 1 Điều 9 như sau:\n\"d) Quản lý, thanh tra, kiểm tra, giám sát hoạt động nghiệp vụ chứng khoán của Sở giao dịch chứng khoán Việt Nam...\"", "output": { "amending_article": "1", "amending_clause": "2", "amend_type": "sửa đổi, bổ sung", "target_doc_identity": "54/2019/QH14", "target_article": "9", "target_clause": "1", "target_point": "d" } }, { "input": "Điều 2:..... 3. Bổ sung một số điểm, khoản của Điều 11 Luật chứng khoán như sau:\na) Bổ sung điểm e vào sau điểm đ khoản 1 như sau:\n\"e) Nhà đầu tư nước ngoài là cá nhân có quốc tịch nước ngoài...\"", "output": { "amending_article": "1\2", "amending_clause": "3a", "amend_type": "bổ sung", "target_doc_identity": "54/2019/QH14", "target_article": "11", "target_clause": "1", "target_point": "e" } }, { "input": "Điều 5:.....4. Bổ sung Điều 11a vào sau Điều 11 luật Giao thông đường sắt như sau:\n\"Điều 11a. Trách nhiệm của tổ chức, cá nhân liên quan đến hồ sơ, tài liệu báo cáo...\"", "output": { "amending_article": "5", "amending_clause": "4", "amend_type": "bổ sung", "target_doc_identity": "54/2014/QH15", "target_article": "11a", "target_clause": None, "target_point": None } }, { "input": "5. Sửa đổi, bổ sung khoản 3 Điều 12 Luật chứng khoán như sau:\n\"3. Thực hiện hành vi thao túng thị trường chứng khoán.\"", "output": { "amending_article": "1", "amending_clause": "5", "amend_type": "sửa đổi, bổ sung", "target_doc_identity": "54/2019/QH14", "target_article": "12", "target_clause": "3", "target_point": None } }, ]

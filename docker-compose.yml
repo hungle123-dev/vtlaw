@@ -1,0 +1,53 @@
+name: vtlaw
+
+services:
+  neo4j:
+    image: neo4j:5.26.0-community
+    container_name: vtlaw-neo4j
+    ports:
+      - "127.0.0.1:17474:7474"   # HTTP browser
+      - "127.0.0.1:17687:7687"   # Bolt
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?set NEO4J_PASSWORD in .env}
+      # Neo4j docker env mapping: "." -> "_", a literal "_" -> "__".
+      #   server.memory.heap.initial_size -> server_memory_heap_initial__size
+      #   server.memory.pagecache.size    -> server_memory_pagecache_size
+      NEO4J_server_memory_heap_initial__size: 1G
+      NEO4J_server_memory_heap_max__size: 2G
+      NEO4J_server_memory_pagecache_size: 1G
+      # Vector + fulltext indexes are core Neo4j 5.x; no plugins needed.
+      NEO4J_db_transaction_timeout: 30s
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    healthcheck:
+      # Probe the HTTP discovery endpoint, which answers once the DB is up and
+      # needs no credentials. A cypher-shell probe would need the password —
+      # only NEO4J_AUTH exists in the container, so an empty -p value would fail
+      # auth on every interval and trip Neo4j's AuthenticationRateLimit.
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/ >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: vtlaw-redis
+    ports:
+      - "127.0.0.1:16379:6379"
+    command: redis-server --appendonly yes --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  neo4j_data:
+  neo4j_logs:
+  redis_data:

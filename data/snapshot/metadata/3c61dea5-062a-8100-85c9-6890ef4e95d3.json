@@ -1,0 +1,127 @@
+{
+  "docGUId": "3c61dea5-062a-8100-85c9-6890ef4e95d3",
+  "docName": "Luật sửa đổi, bổ sung một số điều của Luật Xử lý vi phạm hành chính của Quốc hội, số 88/2025/QH15",
+  "docIdentity": "88/2025/QH15",
+  "issueDate": "2025-06-25T00:00:00",
+  "effectDate": "2025-07-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "953&954-07/2025",
+  "gazetteDate": "2025-07-21T00:00:00",
+  "updDateTime": "2025-06-28T08:41:52.587",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 4,
+    "effectStatusName": "Còn Hiệu lực"
+  },
+  "fields": [
+    {
+      "fieldId": 27,
+      "fieldName": "Hành chính"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 2067,
+      "signerName": "Trần Thanh Mẫn"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-xu-ly-vi-pham-hanh-chinh-sua-doi-2025-so-88-2025-qh15-404028-d1/uploaded/vietlawfile/2025/7/88_2025_qh15_220725135403.pdf.aspx",
+      "dataSourceId": 45,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-xu-ly-vi-pham-hanh-chinh-sua-doi-2025-so-88-2025-qh15-404028-d1/uploaded/vietlawfile/2025/7/s_88_2025_qh15_220725135413.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "67e6cb91-0633-6300-d8cc-c30ea76d6f98",
+      "docName": "Quyết định 762/QĐ-CHQ của Cục Hải quan ban hành Sổ tay nghiệp vụ xử phạt vi phạm hành chính trong ngành Hải quan",
+      "docIdentity": "762/QĐ-CHQ",
+      "fieldName": "Xuất nhập khẩu, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "e7cb731a-062a-e700-eced-df1ba31bcf42",
+      "docName": "Quyết định 760/QĐ-CHQ của Cục Hải quan ban hành Hướng dẫn trình tự, thủ tục, nghiệp vụ xử phạt vi phạm hành chính trong ngành Hải quan",
+      "docIdentity": "760/QĐ-CHQ ",
+      "fieldName": "Xuất nhập khẩu, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "dbf9fbc3-0624-b000-848f-5bc672ac3a89",
+      "docName": "Thông tư 39/2025/TT-BCA của Bộ Công an quy định về các biểu mẫu sử dụng để xử phạt vi phạm hành chính thuộc thẩm quyền của Công an nhân dân",
+      "docIdentity": "39/2025/TT-BCA",
+      "fieldName": "Vi phạm hành chính"
+    },
+    {
+      "docGUId": "b8b8e6ca-061c-2000-0a55-dc787892001e",
+      "docName": "Nghị định 106/2025/NĐ-CP của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực phòng cháy, chữa cháy và cứu nạn, cứu hộ",
+      "docIdentity": "106/2025/NĐ-CP",
+      "fieldName": "Đất đai-Nhà ở, An ninh trật tự, Xây dựng, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "8ed14df4-0621-4300-9036-fd781ebc0511",
+      "docName": "Quyết định 19/QĐ-XPHC của Thanh tra Bộ Y tế Xử phạt vi phạm hành chính trong lĩnh vực y tế đối với Công ty Cổ phần Dược phẩm Gia Thuận",
+      "docIdentity": "19/QĐ-XPHC",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "8db717e3-0621-c000-fb72-fd3d67a8e316",
+      "docName": "Quyết định 18/QĐ-XPHC của Thanh tra Bộ Y tế Xử phạt vi phạm hành chính trong lĩnh vực y tế đơi với Công ty Cổ phần Thương mại Dược phẩm Anphaco",
+      "docIdentity": "18/QĐ-XPHC",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "8c25066c-0621-8f00-ac74-0539a163ccd0",
+      "docName": "Quyết định 20/QĐ-XPHC của Thanh tra Bộ Y tế Xử phạt vi phạm hành chính trong lĩnh vực y tế đối với Công ty trách nhiệm hữu hạn Thiết bị y tế và Thương mại dịch vụ Tâm Thành",
+      "docIdentity": "20/QĐ-XPHC",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "8b1afca4-0621-f300-ba01-f2b3937949bc",
+      "docName": "Quyết định 21/QĐ-XPHC của Thanh tra Bộ Y tế Xử phạt vi phạm hành chính trong lĩnh vực y tế đối với Công ty Cổ phần Chăm Sóc Sức khỏe và Sắc đẹp Phú Thái",
+      "docIdentity": "21/QĐ-XPHC",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    },
+    {
+      "docGUId": "15934d07-0616-cd00-0927-e26308a32764",
+      "docName": "Nghị định 93/2025/NĐ-CP của Chính phủ sửa đổi, bổ sung một số điều của Nghị định 19/2020/NĐ-CP ngày 12/02/2020 của Chính phủ về Kiểm tra, xử lý kỷ luật trong thi hành pháp luật về xử lý vi phạm hành chính",
+      "docIdentity": "93/2025/NĐ-CP",
+      "fieldName": "Vi phạm hành chính, Tư pháp-Hộ tịch"
+    },
+    {
+      "docGUId": "83024272-0615-b300-5198-9b2250c044d4",
+      "docName": "Quyết định 17/QĐ-XPHC của Thanh tra Bộ Y tế xử phạt vi phạm hành chính trong lĩnh vực y tế đối với Công ty trách nhiệm hữu hạn mỹ phẩm Bityceuticals",
+      "docIdentity": "17/QĐ-XPHC",
+      "fieldName": "Y tế-Sức khỏe, Vi phạm hành chính"
+    }
+  ]
+}

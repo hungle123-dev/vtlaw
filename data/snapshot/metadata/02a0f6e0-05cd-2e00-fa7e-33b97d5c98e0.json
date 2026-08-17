@@ -1,0 +1,135 @@
+{
+  "docGUId": "02a0f6e0-05cd-2e00-fa7e-33b97d5c98e0",
+  "docName": "Luật sửa đổi, bổ sung một số điều của Luật Chứng khoán, Luật Kế toán, Luật Kiểm toán độc lập, Luật Ngân sách Nhà nước, Luật Quản lý, sử dụng tài sản công, Luật Quản lý thuế, Luật Thuế thu nhập cá nhân, Luật Dự trữ quốc gia, Luật Xử lý vi phạm hành chính của Quốc hội, số 56/2024/QH15",
+  "docIdentity": "56/2024/QH15",
+  "issueDate": "2024-11-29T00:00:00",
+  "effectDate": "2025-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "1523&1524-12/2024",
+  "gazetteDate": "2024-12-29T00:00:00",
+  "updDateTime": "2024-12-17T10:21:19.61",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 4,
+      "fieldName": "Thuế-Phí-Lệ phí"
+    },
+    {
+      "fieldId": 2,
+      "fieldName": "Tài chính-Ngân hàng"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    },
+    {
+      "fieldId": 40,
+      "fieldName": "Kế toán-Kiểm toán"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 2067,
+      "signerName": "Trần Thanh Mẫn"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-sua-doi-9-luat-luat-chung-khoan-luat-ke-toan-luat-quan-ly-thue-luat-thue-thu-nhap-ca-nhan-so-56-2024-qh15-380162-d1/uploaded/vietlawfile/2025/1/56_2024_qh15_090125095713.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-sua-doi-9-luat-luat-chung-khoan-luat-ke-toan-luat-quan-ly-thue-luat-thue-thu-nhap-ca-nhan-so-56-2024-qh15-380162-d1/uploaded/vietlawfile/2025/1/s_56_2024_qh15_090125095713.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "11969240-05ca-bc00-104f-668d0f6a1d4f",
+      "docName": "Luật Thuế giá trị gia tăng của Quốc hội, số 48/2024/QH15",
+      "docIdentity": "48/2024/QH15",
+      "fieldName": "Thuế-Phí-Lệ phí"
+    },
+    {
+      "docGUId": "c9182f80-05b8-7200-8b3f-217a65d60043",
+      "docName": "Quyết định 3527/QĐ-BYT của Bộ Y tế giá dịch vụ khám bệnh, chữa bệnh áp dụng tại Bệnh viện Tâm thần Trung ương 1",
+      "docIdentity": "3527/QĐ-BYT",
+      "fieldName": "Thuế-Phí-Lệ phí"
+    },
+    {
+      "docGUId": "d2a6ecdb-05b8-cc00-b410-80aa4d0e0937",
+      "docName": "Nghị định 153/2024/NĐ-CP của Chính phủ quy định phí bảo vệ môi trường đối với khí thải",
+      "docIdentity": "153/2024/NĐ-CP",
+      "fieldName": "Thuế-Phí-Lệ phí, Công nghiệp, Điện lực, Tài nguyên-Môi trường, Dầu khí"
+    },
+    {
+      "docGUId": "046d16ca-05c2-5700-fd0c-7b17b4722da6",
+      "docName": "Thông tư 44/2024/TT-BGTVT của Bộ Giao thông Vận tải quy định cơ chế, chính sách quản lý giá dịch vụ vận chuyển hàng không nội địa và giá dịch vụ chuyên ngành hàng không",
+      "docIdentity": "44/2024/TT-BGTVT",
+      "fieldName": "Thuế-Phí-Lệ phí, Giao thông, Thương mại-Quảng cáo, Hàng không"
+    },
+    {
+      "docGUId": "cb960e4c-05b3-7600-41b3-4d1d79d6ad63",
+      "docName": "Thông tư 34/2024/TT-BGTVT của Bộ Giao thông Vận tải quy định về hoạt động trạm thu phí đường bộ",
+      "docIdentity": "34/2024/TT-BGTVT",
+      "fieldName": "Thuế-Phí-Lệ phí, Giao thông"
+    },
+    {
+      "docGUId": "6250b33a-05b3-f700-fd59-5e5868538af7",
+      "docName": "Thông tư 20/2024/TT-BKHĐT của Bộ Kế hoạch và Đầu tư quy định Chế độ báo cáo thống kê ngành Thống kê",
+      "docIdentity": "20/2024/TT-BKHĐT",
+      "fieldName": "Tài chính-Ngân hàng, Thuế-Phí-Lệ phí"
+    },
+    {
+      "docGUId": "57c9ddf8-05b2-4f00-0dcc-b9b8ce299b1f",
+      "docName": "Thông tư 32/2024/TT-BGTVT của Bộ Giao thông Vận tải quy định về quản lý giá dịch vụ sử dụng đường bộ của các dự án đầu tư xây dựng đường bộ để kinh doanh, do trung ương quản lý",
+      "docIdentity": "32/2024/TT-BGTVT",
+      "fieldName": "Thuế-Phí-Lệ phí, Giao thông"
+    },
+    {
+      "docGUId": "f2103dff-05b2-2100-a9bf-7d81e9529e11",
+      "docName": "Thông tư 79/2024/TT-BTC của Bộ Tài chính bãi bỏ các Thông tư liên tịch của Bộ trưởng Bộ Tài chính, Bộ trưởng Bộ Tài nguyên và Môi trường ban hành",
+      "docIdentity": "79/2024/TT-BTC",
+      "fieldName": "Thuế-Phí-Lệ phí, Tài nguyên-Môi trường, Khoáng sản"
+    },
+    {
+      "docGUId": "cc2de3cb-05fc-8a00-f3c7-fa2ef334748b",
+      "docName": "Quyết định 1731/QĐ-TCT của Tổng cục Thuế ban hành Quy chế An toàn thông tin mạng và An ninh mạng ngành Thuế",
+      "docIdentity": "1731/QĐ-TCT",
+      "fieldName": "Thuế-Phí-Lệ phí, Thông tin-Truyền thông"
+    },
+    {
+      "docGUId": "fa7b4176-05b3-ca00-810f-d39f26c81565",
+      "docName": "Quyết định 2561QĐ-TCHQ của Tổng cục Hải quan về việc mở rộng địa điểm kinh doanh hàng miễn thuế",
+      "docIdentity": "2561QĐ-TCHQ",
+      "fieldName": "Thuế-Phí-Lệ phí"
+    }
+  ]
+}

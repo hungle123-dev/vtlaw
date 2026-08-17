@@ -1,0 +1,131 @@
+{
+  "docGUId": "a3f7f1a2-05d7-3800-5494-384c43691806",
+  "docName": "Nghị định 168/2024/NĐ-CP của Chính phủ quy định xử phạt vi phạm hành chính về trật tự, an toàn giao thông trong lĩnh vực giao thông đường bộ; trừ điểm, phục hồi điểm giấy phép lái xe",
+  "docIdentity": "168/2024/NĐ-CP",
+  "issueDate": "2024-12-26T00:00:00",
+  "effectDate": "2025-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "từ 75 đến 78-01/2025",
+  "gazetteDate": "2025-01-16T00:00:00",
+  "updDateTime": "2024-12-30T21:38:31.913",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 11,
+    "docTypeName": "Nghị định"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 28,
+      "fieldName": "Giao thông"
+    },
+    {
+      "fieldId": 11,
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "fieldId": 26,
+      "fieldName": "Vi phạm hành chính"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 93,
+      "organName": "Chính phủ"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 1074,
+      "signerName": "Trần Hồng Hà"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-168-2024-nd-cp-xu-phat-vi-pham-hanh-chinh-giao-thong-duong-bo-tru-diem-phuc-hoi-diem-giay-phep-lai-xe-382883-d1/uploaded/vietlawfile/2024/12/s_168_2024_nd_cp_301224213827.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-nghi-dinh-168-2024-nd-cp-xu-phat-vi-pham-hanh-chinh-giao-thong-duong-bo-tru-diem-phuc-hoi-diem-giay-phep-lai-xe-382883-d1/uploaded/vietlawfile/2024/12/168_2024_nd_cp_301224213828.pdf.aspx",
+      "dataSourceId": 45,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "77d134be-05d5-1000-5a81-ebbce6f96ae2",
+      "docName": "Nghị định 164/2024/NĐ-CP của Chính phủ quy định về tổ chức và hoạt động thanh tra Công an nhân dân",
+      "docIdentity": "164/2024/NĐ-CP",
+      "fieldName": "An ninh trật tự, Cơ cấu tổ chức, Hành chính"
+    },
+    {
+      "docGUId": "9da74ce0-05d2-ee00-a278-923eca2f7026",
+      "docName": "Chỉ thị 46/CT-TTg của Thủ tướng Chính phủ về một số giải pháp cấp bách trong công tác phòng cháy, chữa cháy và cứu nạn, cứu hộ tại các cơ sở có nguy hiểm về cháy, nổ, địa điểm tập trung đông người dịp Tết Dương lịch và Tết Nguyên đán năm 2025",
+      "docIdentity": "46/CT-TTg",
+      "fieldName": "Đất đai-Nhà ở, An ninh trật tự"
+    },
+    {
+      "docGUId": "fde4438c-05d1-0800-8818-398e9e014c24",
+      "docName": "Quyết định 1210/QĐ-BXD của Bộ Xây dựng về việc Kiện toàn Đội phòng cháy, chữa cháy cơ sở tại cơ quan Bộ Xây dựng",
+      "docIdentity": "1210/QĐ-BXD",
+      "fieldName": "An ninh trật tự, Xây dựng"
+    },
+    {
+      "docGUId": "532f500a-05d0-0800-2b0e-4ef7e2f45002",
+      "docName": "Chỉ thị 45/CT-TTg của Thủ tướng Chính phủ về việc tăng cường các biện pháp bảo đảm đón Tết Nguyên đán Ất Tỵ năm 2025 vui tươi, lành mạnh, an toàn, tiết kiệm",
+      "docIdentity": "45/CT-TTg",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "9f06297e-05e1-2200-ef19-8cfcec616ddf",
+      "docName": "Lệnh 27/2024/L-CTN của Chủ tịch nước về việc công bố Luật Phòng, chống mua bán người",
+      "docIdentity": "27/2024/L-CTN",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "9bce247c-05dd-3a00-7633-351bdb8775e8",
+      "docName": "Lệnh 29/2024/L-CTN của Chủ tịch nước về việc công bố Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ",
+      "docIdentity": "29/2024/L-CTN",
+      "fieldName": "An ninh trật tự"
+    },
+    {
+      "docGUId": "bfc3ae17-05c8-8700-1131-c09574c8f0a7",
+      "docName": "Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ của Quốc hội, số 55/2024/QH15",
+      "docIdentity": "55/2024/QH15",
+      "fieldName": "Đất đai-Nhà ở, An ninh trật tự, Xây dựng"
+    },
+    {
+      "docGUId": "14c43e9f-05ca-8800-05d4-a58cbcdc78a2",
+      "docName": "Luật Phòng, chống mua bán người của Quốc hội, số 53/2024/QH15",
+      "docIdentity": "53/2024/QH15",
+      "fieldName": "An ninh trật tự, Hình sự"
+    },
+    {
+      "docGUId": "f06142d6-05c3-9600-20b8-3de289058159",
+      "docName": "Nghị quyết 163/2024/QH15 của Quốc hội phê duyệt chủ trương đầu tư Chương trình mục tiêu quốc gia phòng, chống ma túy đến năm 2030",
+      "docIdentity": "163/2024/QH15",
+      "fieldName": "Đầu tư, An ninh trật tự, Chính sách"
+    },
+    {
+      "docGUId": "7426b0bc-05ce-f400-d55b-8c8d4f9467b8",
+      "docName": "Thông tư 88/2024/TT-BCA của Bộ Công an quy định về phân công trách nhiệm, quan hệ phối hợp quy trình xác minh, giải quyết vụ cháy trong Công an nhân dân",
+      "docIdentity": "88/2024/TT-BCA",
+      "fieldName": "An ninh trật tự, Hành chính, Hình sự"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "docGUId": "90bbf4e1-057f-ec00-7fc6-7d7f1c487a66",
+  "docName": "Luật Đường bộ của Quốc hội, số 35/2024/QH15",
+  "docIdentity": "35/2024/QH15",
+  "issueDate": "2024-06-27T00:00:00",
+  "effectDate": "2025-01-01T00:00:00",
+  "expireDate": null,
+  "gazetteNumber": "983&984-08/2024",
+  "gazetteDate": "2024-08-25T00:00:00",
+  "updDateTime": "2024-07-16T21:55:05.2",
+  "docGroup": {
+    "docGroupId": 1,
+    "docGroupName": "Văn bản pháp quy"
+  },
+  "docType": {
+    "docTypeId": 10,
+    "docTypeName": "Luật"
+  },
+  "effectStatus": {
+    "effectStatusId": 2,
+    "effectStatusName": "Hết Hiệu lực một phần"
+  },
+  "fields": [
+    {
+      "fieldId": 28,
+      "fieldName": "Giao thông"
+    }
+  ],
+  "organs": [
+    {
+      "organId": 161,
+      "organName": "Quốc hội"
+    }
+  ],
+  "signers": [
+    {
+      "signerId": 2067,
+      "signerName": "Trần Thanh Mẫn"
+    }
+  ],
+  "docFiles": [
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-duong-bo-2024-so-35-2024-qh15-360336-d1/uploaded/vietlawfile/2024/7/35_2024_qh15_160724215500.pdf.aspx",
+      "dataSourceId": 44,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    },
+    {
+      "languageId": 1,
+      "filePath": "https://static.luatvietnam.vn/xem-file-luat-duong-bo-2024-so-35-2024-qh15-360336-d1/uploaded/vietlawfile/2024/7/s_35_2024_qh15_160724215500.pdf.aspx",
+      "dataSourceId": 48,
+      "fileType": {
+        "fileTypeId": 1,
+        "fileTypeName": "Văn bản gốc"
+      }
+    }
+  ],
+  "docListOther": [
+    {
+      "docGUId": "685fcced-0576-c900-e1b7-594689916dc9",
+      "docName": "Quyết định 775/QĐ-BGTVT của Bộ Giao thông Vận tải về việc điều chỉnh chi hoạt động kinh tế đường thủy nội địa năm 2024 (lần 2)",
+      "docIdentity": "775/QĐ-BGTVT",
+      "fieldName": "Tài chính-Ngân hàng, Giao thông"
+    },
+    {
+      "docGUId": "2768b55f-0584-9e00-5eca-5868fe73cadc",
+      "docName": "Thông tư 26/2024/TT-BCA của Bộ Công an quy định thống kê, tổng hợp, xây dựng, quản lý, khai thác, sử dụng Cơ sở dữ liệu về tai nạn giao thông đường bộ, tai nạn giao thông đường sắt, tai nạn giao thông đường thủy nội địa",
+      "docIdentity": "26/2024/TT-BCA",
+      "fieldName": "Giao thông"
+    },
+    {
+      "docGUId": "c647e018-0571-9600-0ab1-00050a5caec2",
+      "docName": "Quyết định 1675/QÐ-BVHTTDL của Bộ Văn hóa, Thể thao và Du lịch về việc ban hành tiêu chuẩn, định mức sử dụng xe ô tô chuyên dùng cho các cơ quan, đơn vị trực thuộc Bộ Văn hóa, Thể thao và Du lịch (Đợt 1)",
+      "docIdentity": "1675/QĐ-BVHTTDL",
+      "fieldName": "Hành chính, Giao thông"
+    },
+    {
+      "docGUId": "0f473010-056e-6100-2df9-a28720cc8061",
+      "docName": "Quyết định 758/QĐ-BGTVT của Bộ Giao thông Vận tải về việc công bố chuyển Cảng hàng không Liên Khương thành Cảng hàng không quốc tế Liên Khương",
+      "docIdentity": "758/QĐ-BGTVT",
+      "fieldName": "Giao thông, Hàng không"
+    },
+    {
+      "docGUId": "6d903293-0576-8100-6eeb-916ae9b96692",
+      "docName": "Chỉ thị 04-CT/BCSĐ của Ban Cán sự đảng Bộ Giao thông Vận tải về tăng cường quản lý công tác đấu thầu, lựa chọn nhà thầu, quản lý thi công xây dựng gắn với phòng, chống tham nhũng, tiêu cực, lãng phí đối với các dự án đầu tư xây dựng kết cấu hạ tầng giao thông do Bộ Giao thông Vận tải quản lý",
+      "docIdentity": "04-CT/BCSĐ",
+      "fieldName": "Xây dựng, Giao thông, Tiết kiệm-Phòng, chống tham nhũng, lãng phí, Đấu thầu-Cạnh tranh"
+    },
+    {
+      "docGUId": "19ff4194-056e-e100-417d-9d1d2e419a30",
+      "docName": "Quyết định 739/QĐ-BGTVT của Bộ Giao thông Vận tải về việc sửa đổi, bổ sung, bãi bỏ một số nội dung của Quyết định 1218/QĐ-BGTVT ngày 23/9/2022 của Bộ trưởng Bộ Giao thông Vận tải quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Cục Đường bộ Việt Nam",
+      "docIdentity": "739/QĐ-BGTVT",
+      "fieldName": "Cơ cấu tổ chức, Giao thông"
+    },
+    {
+      "docGUId": "1747dace-056e-4600-0590-eec67774ffb1",
+      "docName": "Quyết định 737/QĐ-BGTVT của Bộ Giao thông Vận tải về việc sửa đổi một số điều của Quyết định 1247/QĐ-BGTVT ngày 28/9/2022 của Bộ trưởng Bộ Giao thông Vận tải quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Khu Quản lý đường bộ III trực thuộc Cục Đường bộ Việt Nam",
+      "docIdentity": "737/QĐ-BGTVT",
+      "fieldName": "Cơ cấu tổ chức, Giao thông"
+    },
+    {
+      "docGUId": "160720a5-056e-1a00-b390-952b18b35ba1",
+      "docName": "Quyết định 738/QĐ-BGTVT của Bộ Giao thông Vận tải về việc sửa đổi một số điều của Quyết định 1246/QĐ-BGTVT ngày 28/9/2022 của Bộ trưởng Bộ Giao thông Vận tải quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Khu Quản lý đường bộ II trực thuộc Cục Đường bộ Việt Nam",
+      "docIdentity": "738/QĐ-BGTVT",
+      "fieldName": "Cơ cấu tổ chức, Giao thông"
+    },
+    {
+      "docGUId": "1585d4a3-056e-4300-a3c8-ff360fe784ab",
+      "docName": "Quyết định 741/QĐ-BGTVT của Bộ Giao thông Vận tải về việc sửa đổi, bổ sung một số điều của Quyết định 1248/QĐ-BGTVT ngày 28/9/2022 của Bộ trưởng Bộ Giao thông Vận tải quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Khu Quản lý đường bộ IV trực thuộc Cục Đường bộ Việt Nam",
+      "docIdentity": "741/QĐ-BGTVT",
+      "fieldName": "Cơ cấu tổ chức, Giao thông"
+    },
+    {
+      "docGUId": "142e1d68-056e-a700-ad96-fd8c0e3925bd",
+      "docName": "Quyết định 740/QĐ-BGTVT của Bộ Giao thông Vận tải về việc sửa đổi một số điều của Quyết định 1255/QĐ-BGTVT ngày 28/9/2022 của Bộ trưởng Bộ Giao thông Vận tải quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Khu Quản lý đường bộ I trực thuộc Cục Đường bộ Việt Nam",
+      "docIdentity": "740/QĐ-BGTVT",
+      "fieldName": "Cơ cấu tổ chức, Giao thông"
+    }
+  ]
+}

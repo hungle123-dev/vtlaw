@@ -1,0 +1,128 @@
+{
+  "manifest_version": 1,
+  "updated_at": "2026-08-15T12:33:53.106997+00:00",
+  "document_count": 12,
+  "total_text_chars": 1645697,
+  "documents": [
+    {
+      "doc_guid": "a366447d-02bd-bc00-3268-f84e46ffb699",
+      "doc_identity": "100/2019/NĐ-CP",
+      "doc_name": "Nghị định 100/2019/NĐ-CP của Chính phủ về việc quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt",
+      "upd_datetime": "2019-12-31T16:31:30.927",
+      "content_sha256": "df061ea64568752c8234fa7d0b8b9d44ebc0d76649a8ef5692c66c46ca46449a",
+      "metadata_sha256": "5ac935e952e84b628b209aaae1b366ce056b4570d793e19beb8c71db2adc4ea7",
+      "text_chars": 322495,
+      "scraped_at": "2026-08-15T11:58:57.222114+00:00"
+    },
+    {
+      "doc_guid": "0379c986-0671-f900-0c89-b91abd8d1d34",
+      "doc_identity": "118/2025/QH15",
+      "doc_name": "Luật sửa đổi, bổ sung một số điều của 10 Luật có liên quan đến an ninh, trật tự của Quốc hội, số 118/2025/QH15",
+      "upd_datetime": "2025-12-23T17:17:13.453",
+      "content_sha256": "5f29fbc01f11ef46d77991bd9ae55089a1b27475503a7cfa17dee252f24ed5fb",
+      "metadata_sha256": "fed755b867da4e44f929851b276f1353606b777e14f77e0dbe49cd5f0ce4f498",
+      "text_chars": 67244,
+      "scraped_at": "2026-08-15T11:58:57.074237+00:00"
+    },
+    {
+      "doc_guid": "77246c27-059a-a500-3db7-70f2ceab2ebb",
+      "doc_identity": "119/2024/NĐ-CP",
+      "doc_name": "Nghị định 119/2024/NĐ-CP của Chính phủ quy định về thanh toán điện tử giao thông đường bộ",
+      "upd_datetime": "2024-10-02T08:36:40.223",
+      "content_sha256": "9281ac8859df7a1628bad50a43d54aa440cb1632cac4167cdb61592064d21e1b",
+      "metadata_sha256": "2afe1ebadacd48f5e32c6e87a0a21c178a370d39e67f9cf2fb72bb3a51330ba8",
+      "text_chars": 59602,
+      "scraped_at": "2026-08-15T11:58:57.133088+00:00"
+    },
+    {
+      "doc_guid": "a23acd3d-0347-de00-7bd0-1da3bdd18347",
+      "doc_identity": "123/2021/NĐ-CP",
+      "doc_name": "Nghị định 123/2021/NĐ-CP của Chính phủ về việc sửa đổi, bổ sung một số điều của các Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực hàng hải; giao thông đường bộ, đường sắt; hàng không dân dụng",
+      "upd_datetime": "2021-12-30T11:39:57.107",
+      "content_sha256": "b03705bf1e178eb53d6ccb2c3a0c303a054a4b60f7b93887124cb2128cdce020",
+      "metadata_sha256": "c90c7cda88b2dfd15fa4011563b551500ce77ac1811703851ccd75840d95431e",
+      "text_chars": 196600,
+      "scraped_at": "2026-08-15T11:58:57.200800+00:00"
+    },
+    {
+      "doc_guid": "401141b3-0118-9100-0919-2e1ba27538ff",
+      "doc_identity": "15/2012/QH13",
+      "doc_name": "Luật Xử lý vi phạm hành chính của Quốc hội, số 15/2012/QH13",
+      "upd_datetime": "2012-07-05T11:16:25.42",
+      "content_sha256": "e62abc17d1b659c835aea67a0c97959e9e3ba135fce32e66b720d880ac963370",
+      "metadata_sha256": "bbb221e6c3f81d485c45113e713fc27910cfe1e48c4772d03c159e98d7c93e4a",
+      "text_chars": 188791,
+      "scraped_at": "2026-08-15T11:58:57.118514+00:00"
+    },
+    {
+      "doc_guid": "a3f7f1a2-05d7-3800-5494-384c43691806",
+      "doc_identity": "168/2024/NĐ-CP",
+      "doc_name": "Nghị định 168/2024/NĐ-CP của Chính phủ quy định xử phạt vi phạm hành chính về trật tự, an toàn giao thông trong lĩnh vực giao thông đường bộ; trừ điểm, phục hồi điểm giấy phép lái xe",
+      "upd_datetime": "2024-12-30T21:38:31.913",
+      "content_sha256": "0e3292d5bdfb00bb8e38091cb13267eb9a50f3b9673da982202ad5d00016c122",
+      "metadata_sha256": "31a27b35975988487f35488386c9a7fcba7e18432b6f01dfa02a8a64f14d3cc4",
+      "text_chars": 256673,
+      "scraped_at": "2026-08-15T11:58:57.251063+00:00"
+    },
+    {
+      "doc_guid": "90bbf4e1-057f-ec00-7fc6-7d7f1c487a66",
+      "doc_identity": "35/2024/QH15",
+      "doc_name": "Luật Đường bộ của Quốc hội, số 35/2024/QH15",
+      "upd_datetime": "2024-07-16T21:55:05.2",
+      "content_sha256": "7875433cc3388a379f22962ba90df8a7872da9163e865c348116bb80b27701f2",
+      "metadata_sha256": "0bc4c554b50ab0041054ad3c597ad10b54f23cb3d72760cbfa65f7a71c450533",
+      "text_chars": 148634,
+      "scraped_at": "2026-08-15T11:58:57.167984+00:00"
+    },
+    {
+      "doc_guid": "8ccd95ae-0581-6000-3277-5a938aba5e51",
+      "doc_identity": "36/2024/QH15",
+      "doc_name": "Luật Trật tự, an toàn giao thông đường bộ của Quốc hội, số 36/2024/QH15",
+      "upd_datetime": "2024-07-22T10:30:21.753",
+      "content_sha256": "9c80f894645e651927c6c124e501bdecddbaa3d7d0412d1238b2c8096da2765a",
+      "metadata_sha256": "3b3f847002a5e71ae87f7d69ecbeb241b8e65f41898650bb3c3794ce4c68c080",
+      "text_chars": 164569,
+      "scraped_at": "2026-08-15T11:58:57.149366+00:00"
+    },
+    {
+      "doc_guid": "9ed2a463-02ab-f500-2bad-cf5a424c7170",
+      "doc_identity": "44/2019/QH14",
+      "doc_name": "Luật Phòng, chống tác hại của rượu, bia của Quốc hội, số 44/2019/QH14",
+      "upd_datetime": "2019-07-04T10:19:53.85",
+      "content_sha256": "7239301ad87687413ffadab1233f7aed9809f05b09ef47edfe1acf3242c98185",
+      "metadata_sha256": "fafd21d2490c236430577079d4f2adde0b749db787c2f4ce085938d9ef917e45",
+      "text_chars": 31030,
+      "scraped_at": "2026-08-15T11:58:57.186774+00:00"
+    },
+    {
+      "doc_guid": "02a0f6e0-05cd-2e00-fa7e-33b97d5c98e0",
+      "doc_identity": "56/2024/QH15",
+      "doc_name": "Luật sửa đổi, bổ sung một số điều của Luật Chứng khoán, Luật Kế toán, Luật Kiểm toán độc lập, Luật Ngân sách Nhà nước, Luật Quản lý, sử dụng tài sản công, Luật Quản lý thuế, Luật Thuế thu nhập cá nhân, Luật Dự trữ quốc gia, Luật Xử lý vi phạm hành chính của Quốc hội, số 56/2024/QH15",
+      "upd_datetime": "2024-12-17T10:21:19.61",
+      "content_sha256": "83f25266f840500c0ed6f1d03372e3ca566ee758f27030f562e69855804c5303",
+      "metadata_sha256": "a89bbb2a5688aeb8aaa741b494fedcb394c3e68b72958d623a0d06f551d526b0",
+      "text_chars": 63059,
+      "scraped_at": "2026-08-15T11:58:57.054634+00:00"
+    },
+    {
+      "doc_guid": "e744da74-02fb-2b00-46cf-a539f0c2973e",
+      "doc_identity": "67/2020/QH14",
+      "doc_name": "Luật sửa đổi, bổ sung một số điều của Luật Xử lý vi phạm hành chính của Quốc hội, số 67/2020/QH14",
+      "upd_datetime": "2020-12-14T17:29:22.697",
+      "content_sha256": "91f4a5ad7c99431e1d7b3f6463ae1406b5cb5ee3ae6325a94d53665ac246ad88",
+      "metadata_sha256": "c27daf4b86cca3d6c3a91963d1723a88014cf0f181d03fcaa43fd2f581036756",
+      "text_chars": 104199,
+      "scraped_at": "2026-08-15T11:58:57.270523+00:00"
+    },
+    {
+      "doc_guid": "3c61dea5-062a-8100-85c9-6890ef4e95d3",
+      "doc_identity": "88/2025/QH15",
+      "doc_name": "Luật sửa đổi, bổ sung một số điều của Luật Xử lý vi phạm hành chính của Quốc hội, số 88/2025/QH15",
+      "upd_datetime": "2025-06-28T08:41:52.587",
+      "content_sha256": "6d645b18d4ca41a448de32e768e676f5ec31c054dff41ec4696e5f591df39082",
+      "metadata_sha256": "d0cb46472b34255f84cf7ef72fd6d34f58ac076253cced8102053517539fbfe6",
+      "text_chars": 42801,
+      "scraped_at": "2026-08-15T11:58:57.101242+00:00"
+    }
+  ]
+}

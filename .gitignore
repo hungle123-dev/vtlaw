@@ -1,0 +1,25 @@
+# Secrets / env
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Reference repo (read-only study material, not part of this project)
+NLP-LegalQA/
+
+# Data: the raw corpus and datasets ARE tracked (see data/README.md) so the
+# pipeline is reproducible without network access. Only derived output is not.
+data/derived/
+data/snapshots/
+*.log
+
+# Eval output. Measured numbers belong in the report, not in git: a stale JSON
+# here once had us quoting recall taken from a graph with zero embeddings.
+data/evaluation/results/
