@@ -20,7 +20,7 @@ of the committed corpus. The implementation here is independent.
 | 7 | `api` — HTTP surface | done, `/chat` `/health` `/metrics` |
 | 8 | `eval` — recall@k, MRR, latency | done, 94-question dataset |
 
-265 tests pass (252 offline, 13 needing Neo4j).
+263 offline tests plus 13 that need Neo4j, all passing.
 
 Four modules are written but wired to nothing: `QueryRouter`, `QueryDecomposer`,
 `QueryRewriter`, `TextToCypher`. They have tests and no callers. The async
@@ -31,10 +31,10 @@ There is no CI and no frontend.
 
 94 questions, `data/evaluation/qa/QA_NLP.csv`, hybrid strategy:
 
-| | recall@1 | recall@5 | MRR | p50 latency |
-|---|---|---|---|---|
-| hybrid | 0.359 | 0.598 | 0.473 | 0.24s |
-| hybrid + cross-encoder rerank | 0.255 | 0.609 | 0.421 | 17.0s |
+| | recall@1 | recall@3 | recall@5 | MRR | p50 |
+|---|---|---|---|---|---|
+| hybrid | 0.359 | 0.588 | 0.681 | 0.504 | 0.28s |
+| hybrid + cross-encoder rerank | 0.255 | 0.527 | 0.609 | 0.421 | 17.0s |
 
 **Rerank is off by default because these numbers do not justify it.** It helps 10
 questions and hurts 11. The pattern in the regressions is legible: the reranker
@@ -43,17 +43,26 @@ promotes `168/2024/NĐ-CP` above `100/2019/NĐ-CP`, which is legally correct —
 law, so the reranker is penalised for being right. Re-measure after the labels
 are reconciled.
 
-Two caveats that apply to every number above:
+Per-leg recall at fetch depth 30 is what set the fusion weights:
 
-* `is_relevant` matches by UID prefix, so retrieving any descendant of a
-  referenced Article counts as a hit. This inflates recall for Article-level
-  references.
-* 85 of the 94 questions have their ground truth in one document
-  (`100/2019/NĐ-CP`). This measures coverage of one decree, not of the corpus.
+| | recall@1 | recall@5 | recall@30 |
+|---|---|---|---|
+| vector | 0.391 | 0.657 | 0.780 |
+| bm25 | 0.255 | 0.410 | 0.649 |
+| both, fused | 0.319 | 0.636 | **0.817** |
 
-The first-stage ceiling is the real constraint: at k=30 recall is 0.758, so
-**24% of questions have no correct provision anywhere in 30 candidates**.
-No amount of reranking reaches those.
+BM25 is the weaker leg at every depth, but it finds provisions vector misses —
+fusing lifts recall@30 above either leg alone. Weighting the two equally, though,
+let BM25's ordering drag the fused list *below plain vector search* at k=1 and
+k=5. Hence `rrf_vector_weight` / `rrf_bm25_weight`, defaulting 3:1.
+
+One caveat applies to every number above: 85 of the 94 questions have their ground
+truth in one document (`100/2019/NĐ-CP`), so this measures coverage of one decree,
+not of the corpus.
+
+The first-stage ceiling is the real constraint: recall@30 is 0.817, so **18% of
+questions have no correct provision anywhere in 30 candidates**. No amount of
+reranking reaches those; only better first-stage retrieval does.
 
 
 ## Why a graph
