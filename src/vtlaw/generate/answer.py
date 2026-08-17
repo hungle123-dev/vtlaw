@@ -19,7 +19,6 @@ from vtlaw.generate.llm_client import LLMClient
 from vtlaw.generate.prompts import SYSTEM_PROMPT, build_user_prompt
 from vtlaw.graph.client import GraphClient
 from vtlaw.retrieve.context_builder import build_full_context
-from vtlaw.retrieve.query_parser import QueryDecomposer
 from vtlaw.retrieve.search import Hit, HybridRetriever
 
 log = logging.getLogger(__name__)
@@ -58,6 +57,12 @@ class AnswerGenerator:
         self._client = client
         self._retriever = HybridRetriever(client, embedder, self._settings)
         self._llm = llm or LLMClient(self._settings)
+        # Imported here, not at module scope: query_parser imports LLMClient from
+        # this package, so a top-level import closes a cycle
+        # (retrieve -> query_parser -> generate -> answer -> retrieve) that breaks
+        # `import vtlaw.retrieve` outright.
+        from vtlaw.retrieve.query_parser import QueryDecomposer
+
         self._decomposer = QueryDecomposer(self._llm)
 
     def answer(

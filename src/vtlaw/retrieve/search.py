@@ -154,14 +154,44 @@ def vector_search(
     return hits[:k]
 
 
+# Lucene's classic query parser treats these as syntax. A user question is not a
+# query expression — it is text to match — so every one of them must be escaped
+# before it reaches db.index.fulltext.queryNodes. Measured on QA_Part2345: 4 of
+# 200 questions crashed the procedure outright, and '/' was in all four. An
+# unpaired '/' opens a regex literal, so the parser reads to end-of-input looking
+# for the close and raises TokenMgrError: "Encountered <EOF> after prefix ...".
+_LUCENE_SPECIAL = r'+-&|!(){}[]^"~*?:\/'
+
+
+def escape_lucene(text: str) -> str:
+    """Escape Lucene query syntax so a question is matched as text, not parsed.
+
+    Also neutralises the boolean keywords, which Lucene reads as operators in
+    upper case even when they are ordinary words in the surrounding sentence.
+    """
+    out = []
+    for ch in text:
+        if ch in _LUCENE_SPECIAL:
+            out.append("\\")
+        out.append(ch)
+    escaped = "".join(out)
+    # AND/OR/NOT are operators only in upper case; lower-casing them keeps the
+    # term while dropping the operator meaning.
+    for keyword in (" AND ", " OR ", " NOT "):
+        escaped = escaped.replace(keyword, keyword.lower())
+    return escaped
+
+
 def bm25_search(
     session: Session,
     query: str,
     k: int,
 ) -> list[Hit]:
     """BM25 keyword search against all provision labels."""
-    # Tokenize for BM25: same segmentation as the embedding model expects.
-    tokenised = segment(query)
+    # Tokenize for BM25: same segmentation as the embedding model expects, then
+    # escape — segmentation can introduce nothing Lucene cares about, but the
+    # question itself carries slashes ("25km/h"), colons and parentheses.
+    tokenised = escape_lucene(segment(query))
     hits: list[Hit] = []
 
     for label in PROVISION_LABELS:
