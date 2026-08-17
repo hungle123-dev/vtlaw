@@ -5,14 +5,18 @@ Metrics computed per-row then aggregated:
     - Precision@k: fraction of top-k that are relevant
     - MRR: mean reciprocal rank (1/rank of first relevant item)
 
-Relevance is determined by UID prefix matching — a retrieved UID is relevant
-if it starts with the reference UID (so retrieving a Clause is relevant to
-an Article reference if the Clause is a descendant).
+A retrieved UID counts as relevant if it is the reference itself or a
+descendant of it in the Điều / Khoản / Điểm hierarchy. See :func:`is_relevant`
+for why that test is not a plain string prefix.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+
+# UID segments are joined by this. Descendant tests must land on a boundary:
+# "article::1" is a prefix of "article::12" as a string but not as a provision.
+UID_SEP = "::"
 
 
 @dataclass
@@ -24,13 +28,24 @@ class RowMetrics:
 
 
 def is_relevant(retrieved_uid: str, reference: str) -> bool:
-    """Return True if retrieved_uid shares a prefix with reference.
+    """Return True if ``retrieved_uid`` is ``reference`` or a descendant of it.
 
-    A retrieved UID is relevant if it starts with the reference UID,
-    allowing hierarchical matching (e.g., retrieving a Clause when the
-    reference is an Article).
+    Retrieving a Clause answers a reference to its parent Article, so
+    descendants count. A plain ``startswith`` almost expresses that but
+    over-counts on two cases measured in this corpus:
+
+    * Sibling numbers that share a digit prefix. ``article::1`` startswith-matches
+      ``article::12``, ``article::15``, ``article::1a`` — different provisions.
+    * An empty reference, which is a prefix of everything and would score a
+      malformed dataset row as a perfect hit.
+
+    Requiring the next character to be the ``::`` separator fixes both.
     """
-    return retrieved_uid.startswith(reference)
+    if not reference or not retrieved_uid:
+        return False
+    if retrieved_uid == reference:
+        return True
+    return retrieved_uid.startswith(reference + UID_SEP)
 
 
 def recall_at_k(relevant_in_top_k: int, total_relevant: int) -> float:
@@ -92,11 +107,14 @@ def aggregate_metrics(row_metrics: list[RowMetrics]) -> AggregateMetrics:
         return agg
 
     # Average recall/precision at each k
+    n = len(row_metrics)
     for k in [1, 3, 5, 7, 10]:
-        agg.recall_at_k[k] = sum(r.recall_at_k.get(k, 0.0) for r in row_metrics) / len(row_metrics)
+        agg.recall_at_k[k] = sum(r.recall_at_k.get(k, 0.0) for r in row_metrics) / n
         if k in [1, 3]:
-            agg.precision_at_k[k] = sum(r.precision_at_k.get(k, 0.0) for r in row_metrics) / len(row_metrics)
+            agg.precision_at_k[k] = (
+                sum(r.precision_at_k.get(k, 0.0) for r in row_metrics) / n
+            )
 
-    agg.mrr = sum(r.mrr for r in row_metrics) / len(row_metrics)
+    agg.mrr = sum(r.mrr for r in row_metrics) / n
 
     return agg

@@ -34,8 +34,8 @@ class TestIsRelevant:
     def test_exact_match(self):
         assert is_relevant("168/2024/NĐ-CP::article::6", "168/2024/NĐ-CP::article::6")
 
-    def test_prefix_match(self):
-        """Retrieving a Clause is relevant to an Article reference."""
+    def test_descendant_match(self):
+        """Retrieving a Clause answers a reference to its parent Article."""
         assert is_relevant(
             "168/2024/NĐ-CP::article::6::clause::3::point::a",
             "168/2024/NĐ-CP::article::6",
@@ -53,14 +53,46 @@ class TestIsRelevant:
             "168/2024/NĐ-CP::article::6",
         )
 
+    def test_sibling_sharing_digit_prefix_is_not_relevant(self):
+        """Điều 12 is not Điều 1, though its UID starts with the same characters.
+
+        This is the case a plain startswith gets wrong, and it inflated recall
+        for every Article-level reference in the dataset.
+        """
+        assert not is_relevant(
+            "168/2024/NĐ-CP::article::12",
+            "168/2024/NĐ-CP::article::1",
+        )
+
+    def test_letter_suffixed_sibling_is_not_relevant(self):
+        """Điều 4a is a distinct provision from Điều 4, not a child of it."""
+        assert not is_relevant(
+            "100/2019/NĐ-CP::article::4a",
+            "100/2019/NĐ-CP::article::4",
+        )
+
+    def test_deep_sibling_sharing_digit_prefix(self):
+        assert not is_relevant(
+            "168/2024/NĐ-CP::article::6::clause::30",
+            "168/2024/NĐ-CP::article::6::clause::3",
+        )
+
+    def test_descendant_of_letter_suffixed_still_matches(self):
+        assert is_relevant(
+            "100/2019/NĐ-CP::article::4a::clause::1",
+            "100/2019/NĐ-CP::article::4a",
+        )
+
     def test_empty_retrieved(self):
         assert not is_relevant("", "168/2024/NĐ-CP::article::6")
 
-    def test_empty_reference(self):
-        # Empty string is a prefix of everything, but that's a data error
-        # not a code error. The function returns True, which is correct
-        # behaviour for prefix matching.
-        assert is_relevant("anything", "")
+    def test_empty_reference_is_never_relevant(self):
+        """A malformed dataset row must not score as a perfect hit.
+
+        An empty string is a prefix of everything, so the old prefix test
+        returned True and rewarded bad data.
+        """
+        assert not is_relevant("anything", "")
 
 
 # ---------------------------------------------------------------------------
@@ -230,7 +262,8 @@ class TestLoadDataset:
         csv_path.write_text(
             "id,question,answer,reference\n"
             '1,"Vượt đèn đỏ phạt bao nhiêu?","Answer","168/2024/NĐ-CP::article::7"\n'
-            '2,"Mũ bảo hiểm phạt gì?","Answer2","168/2024/NĐ-CP::article::12,100/2019/NĐ-CP::article::11"\n',
+            '2,"Mũ bảo hiểm phạt gì?","Answer2",'
+            '"168/2024/NĐ-CP::article::12,100/2019/NĐ-CP::article::11"\n',
             encoding="utf-8",
         )
 

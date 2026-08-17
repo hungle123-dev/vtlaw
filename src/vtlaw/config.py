@@ -62,6 +62,22 @@ class Settings(BaseSettings):
     # filtering is what stops an ineligible hit from evicting an eligible one.
     overfetch_factor: int = Field(default=4, ge=1, le=20)
 
+    # RRF fusion. Measured on the 94-question set, hybrid at these defaults:
+    #
+    #   K=60 w1:1 (textbook)  recall@1 0.319  recall@5 0.636
+    #   K=10 w3:1 (here)      recall@1 0.359  recall@5 0.681
+    #
+    # rrf_k damps the rank signal. The textbook 60 was chosen for lists in the
+    # thousands; over a 30-candidate list it maps ranks 1..30 onto 1/61..1/90 —
+    # a 1.5x spread, so rank 1 and rank 30 score almost alike.
+    rrf_k: int = Field(default=10, ge=1, le=100)
+
+    # Vector search outranks BM25 on this corpus at every depth (recall@1 0.391
+    # vs 0.255). Equal RRF weight let the weaker leg drag the stronger one down,
+    # making hybrid worse than vector alone. Weight the legs by measured quality.
+    rrf_vector_weight: float = Field(default=3.0, gt=0.0, le=10.0)
+    rrf_bm25_weight: float = Field(default=1.0, gt=0.0, le=10.0)
+
     def resolved_device(self) -> str:
         if self.embed_device != "auto":
             return self.embed_device

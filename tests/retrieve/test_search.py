@@ -63,6 +63,29 @@ def mock_embedder():
     return embedder
 
 
+def _client_yielding(session):
+    """A GraphClient stand-in whose `session()` context manager yields `session`.
+
+    HybridRetriever takes the client by argument, so patching GraphClient.session
+    does nothing — the retriever never touches the real class.
+    """
+    client = MagicMock()
+    client.session.return_value.__enter__ = lambda _: session
+    client.session.return_value.__exit__ = lambda *a: None
+    return client
+
+
+def _settings(**overrides):
+    """Settings stub carrying only what `search` reads."""
+    defaults = {
+        "fetch_k": 30,
+        "rrf_k": 10,
+        "rrf_vector_weight": 3.0,
+        "rrf_bm25_weight": 1.0,
+    }
+    return MagicMock(**{**defaults, **overrides})
+
+
 # ---------------------------------------------------------------------------
 # Hit dataclass
 # ---------------------------------------------------------------------------
@@ -153,6 +176,45 @@ class TestFuseRRF:
         assert by_uid["a"].content == "content1"
         assert by_uid["b"].doc_identity == "doc2"
         assert by_uid["b"].content == "content2"
+
+    def test_bm25_scored_once_not_twice(self):
+        """A BM25-only hit gets exactly one term, not a duplicated one.
+
+        A stray second accumulation in the BM25 loop would double every
+        BM25-only score and silently invert the weighting.
+        """
+        fused = fuse_rrf([], [make_hit(uid="b")], k=10, rrf_k=10, bm25_weight=1.0)
+
+        assert abs(fused[0].score - 1.0 / 11) < 1e-12
+
+    def test_vector_weight_outranks_bm25_at_equal_rank(self):
+        """The whole point of the weights: same rank, stronger leg wins."""
+        fused = fuse_rrf(
+            [make_hit(uid="from_vec")],
+            [make_hit(uid="from_bm25")],
+            k=10,
+            vector_weight=3.0,
+            bm25_weight=1.0,
+        )
+
+        assert [h.uid for h in fused] == ["from_vec", "from_bm25"]
+
+    def test_smaller_rrf_k_sharpens_the_rank_signal(self):
+        """rrf_k damps rank. Smaller k => bigger gap between rank 1 and rank 2."""
+        hits = [make_hit(uid="first"), make_hit(uid="second")]
+
+        flat = fuse_rrf(hits, [], k=10, rrf_k=60)
+        sharp = fuse_rrf(hits, [], k=10, rrf_k=1)
+
+        assert sharp[0].score / sharp[1].score > flat[0].score / flat[1].score
+
+    def test_weights_default_to_unweighted(self):
+        """Omitting the weights keeps the textbook 1:1 behaviour."""
+        vec, bm25 = [make_hit(uid="v")], [make_hit(uid="b")]
+
+        fused = fuse_rrf(vec, bm25, k=10, rrf_k=10)
+
+        assert fused[0].score == fused[1].score
 
     def test_sorts_by_score_descending(self):
         vec = [make_hit(uid="low", score=0.01), make_hit(uid="high", score=0.99)]
@@ -401,3 +463,51 @@ class TestHybridRetriever:
 
         assert len(result.hits) == 0
         assert "no results" in result.summary()
+
+    def test_fetches_the_wide_pool_not_just_k(self, mock_session, mock_embedder):
+        """Each leg must fetch settings.fetch_k, then the fused list is cut to k.
+
+        Fetching only k per leg starved the fusion — it saw 2k rows and discarded
+        the depth where the answer often sat. Measured cost of that bug: recall@5
+        0.598 instead of 0.636, with no ranking change.
+        """
+        rows = [
+            {
+                "uid": f"doc::article::{i}",
+                "doc_identity": "doc",
+                "content": f"content {i}",
+                "title": None,
+                "score": 1.0 - i / 100,
+            }
+            for i in range(40)
+        ]
+        mock_session.run.return_value = MagicMock(data=lambda: rows)
+
+        retriever = HybridRetriever(
+            _client_yielding(mock_session), mock_embedder, _settings(fetch_k=30)
+        )
+        result = retriever.search("query", k=5, strategy="vector")
+
+        assert mock_session.run.call_args.kwargs["k"] == 30
+        assert len(result.hits) == 5
+
+    def test_pool_never_narrower_than_k(self, mock_session, mock_embedder):
+        """A caller asking for more than fetch_k must not get a truncated pool."""
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        retriever = HybridRetriever(
+            _client_yielding(mock_session), mock_embedder, _settings(fetch_k=30)
+        )
+        retriever.search("query", k=50, strategy="vector")
+
+        assert mock_session.run.call_args.kwargs["k"] == 50
+
+    def test_explicit_fetch_k_overrides_settings(self, mock_session, mock_embedder):
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        retriever = HybridRetriever(
+            _client_yielding(mock_session), mock_embedder, _settings(fetch_k=30)
+        )
+        retriever.search("query", k=5, strategy="vector", fetch_k=100)
+
+        assert mock_session.run.call_args.kwargs["k"] == 100
