@@ -1,0 +1,141 @@
+name: ci
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+concurrency:
+  # A new push to the same branch cancels the previous run: on a branch with
+  # frequent pushes, the older result is already obsolete.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.11"
+      - run: uv python install 3.12
+      - name: ruff
+        run: uvx ruff@0.9.6 check src/ tests/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.11"
+          enable-cache: true
+
+      - run: uv python install 3.12
+
+      # CPU-only torch: the default wheel pulls ~2GB of CUDA libraries that a
+      # GitHub runner has no GPU to use, and the download dominates the job.
+      - name: install
+        run: |
+          uv venv
+          uv pip install \
+            --extra-index-url https://download.pytorch.org/whl/cpu \
+            --index-strategy unsafe-best-match \
+            -e ".[dev,embed,serve]"
+
+      # The offline suite must not reach the network. HF_HUB_OFFLINE makes an
+      # accidental model download fail loudly instead of silently slowing CI.
+      - name: unit tests
+        env:
+          HF_HUB_OFFLINE: "1"
+          NEO4J_PASSWORD: ci-placeholder-password
+        run: uv run pytest -m "not integration" -q
+
+  integration:
+    runs-on: ubuntu-latest
+    services:
+      neo4j:
+        image: neo4j:5.26.0-community
+        env:
+          NEO4J_AUTH: neo4j/ci-test-password
+          NEO4J_server_memory_heap_max__size: 1G
+        ports:
+          - 7687:7687
+          - 7474:7474
+        # Probe the HTTP endpoint: it needs no credentials, so repeated polling
+        # cannot trip Neo4j's auth rate limiter.
+        options: >-
+          --health-cmd "wget -qO- http://localhost:7474/ || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+          --health-start-period 40s
+
+      redis:
+        image: redis:7.4-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.5.11"
+          enable-cache: true
+
+      - run: uv python install 3.12
+
+      - name: install
+        run: |
+          uv venv
+          uv pip install \
+            --extra-index-url https://download.pytorch.org/whl/cpu \
+            --index-strategy unsafe-best-match \
+            -e ".[dev,embed,serve]"
+
+      # These tests wipe the database, which is why they run against a throwaway
+      # service container and never a developer's Neo4j.
+      - name: integration tests
+        env:
+          NEO4J_URI: bolt://localhost:7687
+          NEO4J_PASSWORD: ci-test-password
+          REDIS_URL: redis://localhost:6379/0
+        run: uv run pytest -m integration -q
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+
+      - name: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: vtlaw:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # A built image that cannot import its own package is a broken image. This
+      # caught a real bug: Settings was constructed at module scope, so importing
+      # the API failed without a full .env.
+      - name: image imports the package
+        run: |
+          docker run --rm vtlaw:ci python -c "
+          import vtlaw.api.app, vtlaw.retrieve, vtlaw.generate
+          print('imports OK')
+          "
+
+      - name: image runs as non-root
+        run: |
+          uid=$(docker run --rm vtlaw:ci id -u)
+          test "$uid" != "0" || { echo "image runs as root"; exit 1; }
+          echo "uid=$uid"

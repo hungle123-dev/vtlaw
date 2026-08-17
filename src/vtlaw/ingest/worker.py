@@ -1,26 +1,24 @@
-"""Async ingestion worker powered by arq (Redis-based async job queue).
+"""Async ingestion worker (arq, Redis-backed).
 
-This is the production-grade background processor that replaces synchronous
-CLI ingestion. The worker runs as a separate process, pulls jobs from a Redis
-queue, and executes the full pipeline: scrape → parse → embed → import.
+Runs the pipeline as background jobs instead of blocking a CLI invocation:
 
-The worker supports three job types:
-    - scrape_and_import     : full pipeline (scrape → parse → embed → import)
-    - parse                 : parse existing snapshots into provisions
-    - reindex               : re-embed provisions after model change
+    scrape   : source API -> snapshot -> parse -> import
+    parse     : re-parse an existing snapshot and import
+    reindex   : re-embed provisions, e.g. after an embedding-model change
 
-Each job is idempotent: re-running it never duplicates data. Jobs are
-serialized through Redis so concurrent workers don't step on each other.
+Each job is idempotent. `parse` and `import` are safe to repeat because the
+importer MERGEs on uid; `reindex` skips nodes that already carry a vector.
 
 Usage
 -----
-    # Start the worker (background process)
     arq vtlaw.ingest.worker.WorkerSettings
 
-Health check
-------------
-    curl http://localhost:8080/metrics          # Prometheus metrics included
-    curl http://localhost:8080/jobs             # queued/pending/resolved counts
+Enqueue from Python:
+
+    from arq import create_pool
+    from arq.connections import RedisSettings
+    pool = await create_pool(RedisSettings.from_dsn(settings.redis_url))
+    await pool.enqueue_job("handle_worker_job", "reindex", {})
 """
 
 from __future__ import annotations
@@ -28,10 +26,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+
+from vtlaw.config import Settings, get_settings
 
 log = logging.getLogger(__name__)
 
@@ -57,180 +56,220 @@ class ReindexJob(BaseModel):
 Jobs = ScrapeJob | ParseJob | ReindexJob
 
 
-# ---------------------------------------------------------------------------
-# Helper functions for worker handlers
-# ---------------------------------------------------------------------------
+def _graph_client(settings: Settings | None = None):
+    """Lazy import: the worker module is imported by arq before Neo4j is needed."""
+    from vtlaw.graph.client import GraphClient
+
+    return GraphClient(settings or get_settings())
 
 
-def _make_scraper(snapshot: Snapshot, keywords: str, *, max_documents: int | None = None):
-    """Build scraper instance and discover documents."""
-    from ..scraper.client import LegalDocumentClient
-    from ..scraper.scraper import Scraper
+def _scrape_to_snapshot(
+    snapshot, keywords: str, *, max_documents: int | None, throttle_s: float
+):
+    """Fetch documents into the snapshot. Returns the scrape report.
 
-    client = LegalDocumentClient(
-        base_url="https://phapluat.gov.vn/api/legal-documents",
-        timeout=30.0,
-    )
-    scraper = Scraper(client=client, snapshot=snapshot)
-    docs = scraper.discover(keywords, max_documents=max_documents)
-    return scraper, docs
-
-
-def _get_graph_client():
-    """Lazy-import GraphClient."""
-    from ..config import get_settings
-    from ..graph.client import GraphClient
-    settings = get_settings()
-    return GraphClient(settings=settings)
-
-
-async def handle_scrape(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Scrape documents and import into Neo4j.
-
-    Returns status dict with stats.
+    Runs in a worker thread — the scrape client is synchronous httpx.
     """
-    job_data = ctx.get("job_data", {})
-    job = ScrapeJob(**job_data) if job_data else ScrapeJob()
-    log.info("Starting scrape: keywords=%s max_doc=%s dir=%s",
-             job.keywords, job.max_documents, job.output_dir)
+    from vtlaw.scrape.client import LegalDocumentClient
+    from vtlaw.scrape.scraper import Scraper
+
+    with LegalDocumentClient(throttle_s=throttle_s) as client:
+        scraper = Scraper(client, snapshot)
+        return scraper.run(keywords, max_documents=max_documents)
+
+
+def _failure(stats: dict[str, Any], exc: Exception, start: float) -> dict[str, Any]:
+    """Record a job failure. The job returns rather than raising so arq stores a
+    result a caller can inspect; arq's own retry handles transient faults."""
+    stats.update({
+        "status": "error",
+        "error": f"{type(exc).__name__}: {exc}",
+        "duration_s": round(time.time() - start, 2),
+    })
+    return stats
+
+
+async def handle_scrape(job: ScrapeJob) -> dict[str, Any]:
+    """Scrape from the source API, parse, and import into Neo4j."""
+    from vtlaw.graph.importer import import_documents
+    from vtlaw.parse.corpus import parse_corpus
+    from vtlaw.scrape.snapshot import Snapshot
+
+    log.info(
+        "scrape: keywords=%r max_documents=%s dir=%s",
+        job.keywords, job.max_documents, job.output_dir,
+    )
     start = time.time()
-    stats = {"type": "scrape", "status": "running"}
+    stats: dict[str, Any] = {"type": "scrape", "status": "running"}
 
     try:
-        from ..graph.importer import import_documents
-        from ..parse.corpus import parse_corpus
-        from ..scrape.snapshot import Snapshot
-
-        graph_client = _get_graph_client()
-        snapshot = Snapshot(root=Path(job.output_dir))
-
-        scraper, scraped_docs = await asyncio.to_thread(
-            _make_scraper, snapshot, job.keywords,
+        snapshot = Snapshot(job.output_dir)
+        report = await asyncio.to_thread(
+            _scrape_to_snapshot,
+            snapshot,
+            job.keywords,
             max_documents=job.max_documents,
+            throttle_s=job.throttle_seconds,
         )
 
-        parsed_docs, corp_stats = await asyncio.to_thread(parse_corpus, snapshot)
-        result = await asyncio.to_thread(import_documents, graph_client, parsed_docs)
+        # A refusal is not a fault: stop and leave the committed snapshot usable.
+        if report.blocked:
+            stats.update({
+                "status": "blocked",
+                "detail": "source refused the request (403); not retrying",
+                "duration_s": round(time.time() - start, 2),
+            })
+            return stats
+
+        parsed, parse_stats = await asyncio.to_thread(parse_corpus, snapshot)
+        client = _graph_client()
+        try:
+            imported = await asyncio.to_thread(import_documents, client, parsed)
+        finally:
+            client.close()
 
         stats.update({
             "status": "done",
-            "documents_scraped": len(scraped_docs),
-            "provisions_parsed": sum(corp_stats.values()),
-            "clauses_imported": result.clauses,
-            "points_imported": result.points,
+            "documents_written": report.written,
+            "provisions_parsed": parse_stats.provisions,
+            "provisions_imported": imported.provisions,
             "duration_s": round(time.time() - start, 2),
         })
-        log.info("Scrape+import done: %d docs, %d provisions in %.2fs",
-                 len(scraped_docs), sum(corp_stats.values()), stats["duration_s"])
+        log.info(
+            "scrape done: %d documents, %d provisions in %.1fs",
+            report.written, imported.provisions, stats["duration_s"],
+        )
         return stats
-
-    except Exception as e:
-        stats.update({"status": "error", "error": str(e), "duration_s": round(time.time() - start, 2)})
-        log.exception("Scrape job failed")
-        return stats
+    except Exception as exc:  # noqa: BLE001 — recorded in the job result
+        log.exception("scrape job failed")
+        return _failure(stats, exc, start)
 
 
-async def handle_parse(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Parse all snapshots in output_dir into provisions."""
-    job_data = ctx.get("job_data", {})
-    job = ParseJob(**job_data) if job_data else ParseJob()
-    log.info("Starting parse: dir=%s", job.output_dir)
+async def handle_parse(job: ParseJob) -> dict[str, Any]:
+    """Re-parse an existing snapshot and import it."""
+    from vtlaw.graph.importer import import_documents
+    from vtlaw.parse.corpus import parse_corpus
+    from vtlaw.scrape.snapshot import Snapshot
+
+    log.info("parse: dir=%s", job.output_dir)
     start = time.time()
-    stats = {"type": "parse", "status": "running"}
+    stats: dict[str, Any] = {"type": "parse", "status": "running"}
 
     try:
-        from ..graph.importer import import_documents
-        from ..parse.corpus import parse_corpus
-        from ..scrape.snapshot import Snapshot
-
-        snapshot = Snapshot(root=Path(job.output_dir))
-        graph_client = _get_graph_client()
-
-        parsed_docs, corp_stats = await asyncio.to_thread(parse_corpus, snapshot)
-        result = await asyncio.to_thread(import_documents, graph_client, parsed_docs)
+        snapshot = Snapshot(job.output_dir)
+        parsed, parse_stats = await asyncio.to_thread(parse_corpus, snapshot)
+        client = _graph_client()
+        try:
+            imported = await asyncio.to_thread(import_documents, client, parsed)
+        finally:
+            client.close()
 
         stats.update({
             "status": "done",
-            "snapshots_found": len(list(Path(job.output_dir).glob("*.json"))),
-            "documents_parsed": sum(corp_stats.values()),
-            "clauses_imported": result.clauses,
-            "points_imported": result.points,
+            "documents_parsed": parse_stats.documents,
+            "provisions_parsed": parse_stats.provisions,
+            "provisions_imported": imported.provisions,
+            "parse_failures": len(parse_stats.failed),
             "duration_s": round(time.time() - start, 2),
         })
-        log.info("Parse done: %d docs, %d provisions in %.2fs",
-                 sum(corp_stats.values()), sum(result.clauses + result.points), stats["duration_s"])
+        log.info(
+            "parse done: %d documents, %d provisions in %.1fs",
+            parse_stats.documents, imported.provisions, stats["duration_s"],
+        )
         return stats
-
-    except Exception as e:
-        stats.update({"status": "error", "error": str(e), "duration_s": round(time.time() - start, 2)})
-        log.exception("Parse job error")
-        return stats
+    except Exception as exc:  # noqa: BLE001
+        log.exception("parse job failed")
+        return _failure(stats, exc, start)
 
 
-async def handle_reindex(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Re-embed all provisions after model change."""
-    job_data = ctx.get("job_data", {})
-    job = ReindexJob(**job_data) if job_data else ReindexJob()
-    log.info("Starting reindex: dir=%s", job.output_dir)
+async def handle_reindex(job: ReindexJob) -> dict[str, Any]:
+    """Embed provisions that are missing a vector."""
+    from vtlaw.embed import Embedder, embed_corpus
+
+    log.info("reindex: dir=%s", job.output_dir)
     start = time.time()
-    stats = {"type": "reindex", "status": "running"}
+    stats: dict[str, Any] = {"type": "reindex", "status": "running"}
 
     try:
-        from ..config import get_settings
-        from ..embed.embedder import Embedder, embed_corpus
-
         settings = get_settings()
-        graph_client = _get_graph_client()
-        embedder = Embedder(settings=settings)
-
-        result = await asyncio.to_thread(embed_corpus, graph_client, embedder, batch_size=256)
-        total_embedded = sum(result.embedded.values())
-        total_skipped = sum(result.skipped.values())
-        total_failed = len(result.failed)
+        embedder = Embedder(settings)
+        client = _graph_client(settings)
+        try:
+            result = await asyncio.to_thread(
+                embed_corpus, client, embedder, batch_size=settings.embed_batch_size
+            )
+        finally:
+            client.close()
 
         stats.update({
             "status": "done",
-            "total_embedded": total_embedded,
-            "skipped": total_skipped,
-            "failed": total_failed,
+            "embedded": sum(result.embedded.values()),
+            "already_had_vectors": sum(result.skipped.values()),
+            "failed": len(result.failed),
             "duration_s": round(time.time() - start, 2),
         })
-        log.info("Reindexed: %d embedded, %d skipped, %d failed in %.2fs",
-                 total_embedded, total_skipped, total_failed, stats["duration_s"])
+        log.info(
+            "reindex done: %d embedded, %d skipped, %d failed in %.1fs",
+            stats["embedded"], stats["already_had_vectors"], stats["failed"],
+            stats["duration_s"],
+        )
         return stats
-
-    except Exception as e:
-        stats.update({"status": "error", "error": str(e), "duration_s": round(time.time() - start, 2)})
-        log.exception("Reindex job error")
-        return stats
+    except Exception as exc:  # noqa: BLE001
+        log.exception("reindex job failed")
+        return _failure(stats, exc, start)
 
 
-async def handle_worker_job(ctx: dict[str, Any]) -> dict[str, Any]:
-    """Main handler called by arq worker."""
-    job_type = ctx.get("job_type", "")
-    job_data = ctx.get("job_data", {})
-
-    log.info("Handling job: %s data=%s", job_type, job_data)
-
-    if job_type == "scrape":
-        return await handle_scrape(ctx)
-    elif job_type == "parse":
-        return await handle_parse(ctx)
-    elif job_type == "reindex":
-        return await handle_reindex(ctx)
-    else:
-        return {"status": "error", "error": f"Unknown job type: {job_type}"}
+_HANDLERS = {
+    "scrape": (ScrapeJob, handle_scrape),
+    "parse": (ParseJob, handle_parse),
+    "reindex": (ReindexJob, handle_reindex),
+}
 
 
-# ---------------------------------------------------------------------------
-# Arq Worker Settings
-# ---------------------------------------------------------------------------
+async def handle_worker_job(
+    ctx: dict[str, Any], job_type: str, job_data: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """arq entry point.
+
+    arq passes its own context as the first argument and the enqueued arguments
+    after it, so the job type arrives as a parameter — reading it out of `ctx`
+    (as this module previously did) always found nothing.
+    """
+    entry = _HANDLERS.get(job_type)
+    if entry is None:
+        log.error("unknown job type %r", job_type)
+        return {"status": "error", "error": f"unknown job type: {job_type!r}"}
+
+    model, handler = entry
+    log.info("job %s data=%s", job_type, job_data)
+    try:
+        job = model(**(job_data or {}))
+    except ValidationError as exc:
+        # Bad job payload is the caller's error, not a transient fault: return it
+        # so arq records the reason instead of retrying four times over.
+        log.error("invalid %s payload: %s", job_type, exc)
+        return {"status": "error", "error": f"ValidationError: {exc}"}
+    return await handler(job)
+
+
+def _redis_settings():
+    from arq.connections import RedisSettings
+
+    return RedisSettings.from_dsn(get_settings().redis_url)
 
 
 class WorkerSettings:
+    """arq worker configuration.
+
+    `redis_settings` is required — without it arq connects to localhost:6379 and
+    silently misses the queue this project uses on port 16379.
+    """
+
     functions = [handle_worker_job]
-    cron_jobs = []  # Configurable for scheduled ingest
+    redis_settings = _redis_settings()
     retry_jobs = True
-    keep_result = 3600 * 24 * 7  # Keep results for 7 days
-    enable_time_limit = False   # Disable time limit for long operations
     max_tries = 4
+    keep_result = 3600 * 24 * 7
+    # Ingestion runs for minutes: embedding 7,381 provisions on CPU takes longer
+    # than any default job timeout would allow.
+    job_timeout = 3600
