@@ -252,24 +252,34 @@ async def handle_worker_job(
     return await handler(job)
 
 
-def _redis_settings():
-    from arq.connections import RedisSettings
-
-    return RedisSettings.from_dsn(get_settings().redis_url)
-
-
 class WorkerSettings:
     """arq worker configuration.
 
-    `redis_settings` is required — without it arq connects to localhost:6379 and
-    silently misses the queue this project uses on port 16379.
+    `redis_settings` is required — without it arq connects to the default
+    localhost:6379 and silently misses the queue this project runs on 16379.
+
+    It is a classproperty rather than a class attribute because evaluating it in
+    the class body would import arq at module-import time, so `import
+    vtlaw.ingest` would need the optional `worker` extra installed. Importing a
+    module must not require an optional dependency; only running the worker
+    should. CI caught exactly this — the offline test job installs
+    `[dev,embed,serve]` and collection failed with ModuleNotFoundError.
     """
 
     functions = [handle_worker_job]
-    redis_settings = _redis_settings()
     retry_jobs = True
     max_tries = 4
     keep_result = 3600 * 24 * 7
     # Ingestion runs for minutes: embedding 7,381 provisions on CPU takes longer
     # than any default job timeout would allow.
     job_timeout = 3600
+
+    class _RedisSettingsDescriptor:
+        """Resolve the DSN on attribute access, which is when arq reads it."""
+
+        def __get__(self, _obj, _owner):
+            from arq.connections import RedisSettings
+
+            return RedisSettings.from_dsn(get_settings().redis_url)
+
+    redis_settings = _RedisSettingsDescriptor()

@@ -42,7 +42,7 @@ jobs:
           uv pip install \
             --extra-index-url https://download.pytorch.org/whl/cpu \
             --index-strategy unsafe-best-match \
-            -e ".[dev,embed,serve]"
+            -e ".[dev,embed,serve,worker]"
 
       # The offline suite must not reach the network. HF_HUB_OFFLINE makes an
       # accidental model download fail loudly instead of silently slowing CI.
@@ -97,7 +97,7 @@ jobs:
           uv pip install \
             --extra-index-url https://download.pytorch.org/whl/cpu \
             --index-strategy unsafe-best-match \
-            -e ".[dev,embed,serve]"
+            -e ".[dev,embed,serve,worker]"
 
       # These tests wipe the database, which is why they run against a throwaway
       # service container and never a developer's Neo4j.

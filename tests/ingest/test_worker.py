@@ -16,6 +16,7 @@ all inside function bodies, so `import vtlaw.ingest.worker` succeeded.
 
 from __future__ import annotations
 
+import builtins
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -179,6 +180,30 @@ class TestDispatch:
 
 
 class TestWorkerSettings:
+    def test_importable_without_arq_installed(self, monkeypatch):
+        """`import vtlaw.ingest` must not need the optional worker extra.
+
+        redis_settings used to be evaluated in the class body, which imported arq
+        at module-import time. CI's offline job installs [dev,embed,serve] and
+        collection died with ModuleNotFoundError — the module imported fine only
+        on a machine that happened to have arq.
+        """
+        import importlib
+        import sys
+
+        real_import = builtins.__import__
+
+        def no_arq(name, *args, **kwargs):
+            if name.startswith("arq"):
+                raise ModuleNotFoundError("No module named 'arq'")
+            return real_import(name, *args, **kwargs)
+
+        for mod in [m for m in sys.modules if m.startswith(("vtlaw.ingest", "arq"))]:
+            monkeypatch.delitem(sys.modules, mod, raising=False)
+        monkeypatch.setattr(builtins, "__import__", no_arq)
+
+        importlib.import_module("vtlaw.ingest")
+
     def test_declares_redis_settings(self):
         """Without this arq connects to localhost:6379 and misses the queue."""
         assert WorkerSettings.redis_settings.port == 16379
