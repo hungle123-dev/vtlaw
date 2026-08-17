@@ -166,6 +166,10 @@ def mock_app():
         mock_state.settings.llm_model = "test-llm"
         mock_state.settings.rerank_top = 30
         mock_state.settings.context_k = 8
+        # Explicit: a bare MagicMock attribute is truthy, which would switch on
+        # API-key auth with a key no test could supply.
+        mock_state.settings.api_key = ""
+        mock_state.settings.rate_limit_per_minute = 1000
         mock_state.llm_configured = False
         mock_state.graph = MagicMock()
 

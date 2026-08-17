@@ -1,0 +1,36 @@
+# Build context hygiene. Every path here would otherwise be uploaded to the
+# daemon and, worse, could land in an image layer.
+
+# Secrets — the reason this file matters most.
+.env
+.env.*
+!.env.example
+
+# Virtualenvs: platform-specific binaries that would break inside the image.
+.venv/
+.venv-ingest/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Caches and local state.
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.log
+
+# Git history: not needed at runtime, and it carries every past version of every
+# file into the build context.
+.git/
+.github/
+
+# The reference repository, studied but not part of this project.
+NLP-LegalQA/
+
+# Tests and docs do not run in the image.
+tests/
+docs/
+spike/
+
+# Derived eval output.
+data/evaluation/results/

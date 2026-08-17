@@ -14,17 +14,28 @@ generation, so the API works for retrieval-only demos.
 from __future__ import annotations
 
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import date
 from typing import Literal
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from pydantic import BaseModel, Field
 
+from vtlaw.api.middleware import (
+    API_KEY_HEADER,
+    REQUEST_ID_HEADER,
+    RequestIdMiddleware,
+    SlidingWindowRateLimiter,
+    require_api_key,
+    warn_if_unprotected,
+)
 from vtlaw.cache import Cache
 from vtlaw.config import Settings, get_settings
 from vtlaw.embed import Embedder
@@ -94,7 +105,8 @@ class AppState:
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     log.info("initialising app state...")
-    get_state()
+    state = get_state()
+    warn_if_unprotected(state.settings)
     yield
     if _state:
         _state.close()
@@ -107,6 +119,52 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(RequestIdMiddleware)
+
+# Read straight from the environment rather than through Settings: constructing
+# Settings validates every field, including the required neo4j_password, which
+# would make `import vtlaw.api.app` fail without a full .env. Importing a module
+# should not require production config — only running it should.
+_cors_origins = [
+    o.strip() for o in os.environ.get("CORS_ORIGINS", "").split(",") if o.strip()
+]
+if _cors_origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_cors_origins,
+        allow_credentials=False,
+        allow_methods=["GET", "POST"],
+        allow_headers=["Content-Type", API_KEY_HEADER],
+    )
+
+_rate_limiter: SlidingWindowRateLimiter | None = None
+
+
+def get_rate_limiter() -> SlidingWindowRateLimiter:
+    """Built on first use, for the same reason as the CORS origins above."""
+    global _rate_limiter
+    if _rate_limiter is None:
+        _rate_limiter = SlidingWindowRateLimiter(
+            get_settings().rate_limit_per_minute
+        )
+    return _rate_limiter
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Return a JSON error without leaking internals.
+
+    FastAPI's default for an unhandled exception is an HTML traceback page, which
+    both breaks JSON clients and hands an attacker the file layout. The traceback
+    is logged against the request id by RequestIdMiddleware instead.
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "internal server error", "request_id": request_id},
+        headers={REQUEST_ID_HEADER: request_id},
+    )
 
 
 @app.middleware("http")
@@ -160,20 +218,54 @@ class ChatResponse(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     neo4j: str
+    redis: str
     embed_model: str
     llm_model: str
     llm_configured: bool
+    api_key_required: bool
 
 
 @app.get("/health", response_model=HealthResponse)
-async def health() -> HealthResponse:
+async def health(response: Response) -> HealthResponse:
+    """Report the state of each dependency, not just that the process is up.
+
+    A health check that only answers "the server started" is worse than none: an
+    orchestrator keeps routing traffic to a pod whose database went away. Each
+    dependency is probed, and the response is 503 when any of them is down so a
+    load balancer can act on it.
+    """
     state = get_state()
+
+    neo4j_status = "not connected"
+    if state.graph:
+        try:
+            await run_in_threadpool(state.graph.verify)
+            neo4j_status = "connected"
+        except Exception as exc:  # noqa: BLE001 — the reason belongs in the body
+            neo4j_status = f"error: {type(exc).__name__}"
+
+    # The cache is optional by design: retrieval and generation both work without
+    # it, only slower. So a dead Redis is reported but does not fail the check.
+    redis_status = "not configured"
+    if state.cache:
+        try:
+            await run_in_threadpool(state.cache.redis.ping)
+            redis_status = "connected"
+        except Exception as exc:  # noqa: BLE001
+            redis_status = f"error: {type(exc).__name__}"
+
+    healthy = neo4j_status == "connected"
+    if not healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
     return HealthResponse(
-        status="ok" if state.graph else "initializing",
-        neo4j="connected" if state.graph else "not connected",
+        status="ok" if healthy else "degraded",
+        neo4j=neo4j_status,
+        redis=redis_status,
         embed_model=state.settings.embed_model,
         llm_model=state.settings.llm_model,
         llm_configured=state.llm_configured,
+        api_key_required=bool(state.settings.api_key),
     )
 
 
@@ -187,8 +279,23 @@ async def metrics():
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest) -> ChatResponse:
+async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     state = get_state()
+    require_api_key(state.settings, request)
+
+    # Rate limit per API key when one is configured, otherwise per source address.
+    # Keying on the address alone would let one key behind a NAT starve the rest.
+    client_id = request.headers.get(API_KEY_HEADER) or (
+        request.client.host if request.client else "unknown"
+    )
+    allowed, retry_after = get_rate_limiter().check(client_id)
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"rate limit exceeded ({state.settings.rate_limit_per_minute}/min)",
+            headers={"Retry-After": str(retry_after)},
+        )
+
     cache = state.cache
     ck = (req.question, req.strategy, state.settings.rerank_top, state.settings.context_k)
 

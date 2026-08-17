@@ -53,6 +53,21 @@ class Settings(BaseSettings):
     api_host: str = "127.0.0.1"
     api_port: int = 18080
 
+    # API surface controls. The default host is loopback, so an unauthenticated
+    # deployment stays local until someone deliberately binds it wider.
+    #
+    # api_key gates /chat. Empty means open — correct for local development, and
+    # logged as a warning at startup so an open deployment is never silent. /chat
+    # spends money (LLM tokens) and CPU (embedding + graph traversal) per request,
+    # so an open endpoint on a public address is an invitation to drain both.
+    api_key: str = ""
+    # Per-client request budget for /chat, enforced in-process.
+    rate_limit_per_minute: int = Field(default=20, ge=1, le=10_000)
+    # Browser origins allowed to call the API. Empty means no CORS headers at
+    # all, which blocks browser clients — deliberate, since "*" plus an API key
+    # header is a combination browsers refuse anyway.
+    cors_origins: str = ""
+
     # Redis cache
     redis_url: str = "redis://localhost:16379/0"
     answer_cache_ttl: int = 3600      # seconds — full answers
@@ -97,6 +112,10 @@ class Settings(BaseSettings):
     # first stage found, so raising that ceiling needs a different query. Costs
     # ~0.26s of extra retrieval plus the decomposition call.
     decompose_queries: bool = True
+
+    def cors_origin_list(self) -> list[str]:
+        """`cors_origins` as a list. Comma-separated in the environment."""
+        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
     def resolved_device(self) -> str:
         if self.embed_device != "auto":

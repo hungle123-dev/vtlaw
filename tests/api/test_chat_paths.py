@@ -31,12 +31,16 @@ HIT = Hit(
 )
 
 
-def _state(*, cached_hits=None, cached_answer=None, llm=False):
+def _state(*, cached_hits=None, cached_answer=None, llm=False, api_key=""):
     state = MagicMock()
     state.settings.rerank_top = 15
     state.settings.context_k = 8
     state.settings.embed_model = "test-embed"
     state.settings.llm_model = "test-llm"
+    # Set explicitly: a MagicMock attribute is truthy, so leaving api_key unset
+    # would silently turn auth on for every test with an unusable key.
+    state.settings.api_key = api_key
+    state.settings.rate_limit_per_minute = 1000
     state.llm_configured = llm
     state.graph = MagicMock()
 
