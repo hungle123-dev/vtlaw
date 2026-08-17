@@ -3,20 +3,17 @@
 Tests cover:
 - AmendStats dataclass
 - _resolve_uid: label/uid resolution for different granularity levels
-- apply_heuristic_rerank: penalty application, recency bonus, reordering
+- apply_heuristic_rerank: demotion of superseded provisions, reordering
 - Penalty constants: abolished > replaced > no penalty
 """
 
 from __future__ import annotations
 
-from datetime import date
 from unittest.mock import MagicMock, patch
 
 from vtlaw.graph.amends import AmendStats, _resolve_uid
 from vtlaw.retrieve.heuristics import (
     ABOLISHED_PENALTY,
-    RECENCY_DECAY_PER_YEAR,
-    RECENCY_INITIAL_BONUS,
     REPLACED_PENALTY,
     apply_heuristic_rerank,
 )
@@ -104,10 +101,6 @@ class TestPenaltyConstants:
         assert ABOLISHED_PENALTY < 0
         assert REPLACED_PENALTY < 0
 
-    def test_recency_constants_are_positive(self):
-        assert RECENCY_INITIAL_BONUS > 0
-        assert RECENCY_DECAY_PER_YEAR > 0
-
 
 # ---------------------------------------------------------------------------
 # apply_heuristic_rerank
@@ -150,9 +143,7 @@ class TestApplyHeuristicRerank:
                 },
             ),
         ):
-            adjusted = apply_heuristic_rerank(
-                hits, mock_client, as_of=date(2026, 8, 16)
-            )
+            adjusted = apply_heuristic_rerank(hits, mock_client)
 
         # The abolished provision (originally rank 1) should now be last.
         assert adjusted[-1].uid == "100/2019/NĐ-CP::article::11::clause::3"
@@ -188,82 +179,6 @@ class TestApplyHeuristicRerank:
         assert scores["abolished"] == 0.9 + ABOLISHED_PENALTY
         assert scores["replaced"] == 0.9 + REPLACED_PENALTY
 
-    def test_recency_bonus_boosts_newer_documents(self):
-        """A document that took effect recently should get a higher score
-        than one with the same original score but an older effect date."""
-        hits = [
-            make_hit(uid="old", score=0.5, doc_identity="old-doc"),
-            make_hit(uid="new", score=0.5, doc_identity="new-doc"),
-        ]
-
-        mock_client = MagicMock()
-        with (
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_abolished_uids",
-                return_value={},
-            ),
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_doc_effect_dates",
-                return_value={
-                    "old-doc": "2020-01-01",
-                    "new-doc": "2025-01-01",
-                },
-            ),
-        ):
-            adjusted = apply_heuristic_rerank(
-                hits, mock_client, as_of=date(2026, 8, 16)
-            )
-
-        # New document should rank first.
-        assert adjusted[0].uid == "new"
-        assert adjusted[0].score > adjusted[1].score
-
-    def test_recency_bonus_floors_at_zero(self):
-        """Very old documents should get no recency bonus (floor at 0)."""
-        hits = [make_hit(uid="very-old", score=0.5, doc_identity="old-doc")]
-
-        mock_client = MagicMock()
-        with (
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_abolished_uids",
-                return_value={},
-            ),
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_doc_effect_dates",
-                return_value={"old-doc": "2010-01-01"},
-            ),
-        ):
-            adjusted = apply_heuristic_rerank(
-                hits, mock_client, as_of=date(2026, 8, 16)
-            )
-
-        # 16.5 years old → bonus = max(0, 2.0 - 0.3 * 16.5) = max(0, -2.95) = 0
-        assert adjusted[0].score == 0.5  # no bonus, no penalty
-
-    def test_no_penalty_for_clean_provisions(self):
-        """A provision with no amendments should keep its original score
-        (plus recency bonus if applicable)."""
-        hits = [make_hit(uid="clean", score=0.7, doc_identity="clean-doc")]
-
-        mock_client = MagicMock()
-        with (
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_abolished_uids",
-                return_value={},
-            ),
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_doc_effect_dates",
-                return_value={"clean-doc": "2026-01-01"},
-            ),
-        ):
-            adjusted = apply_heuristic_rerank(
-                hits, mock_client, as_of=date(2026, 8, 16)
-            )
-
-        # ~0.6 years old → bonus = max(0, 2.0 - 0.3 * 0.6) ≈ 1.82
-        assert adjusted[0].score > 0.7  # original + bonus
-        assert adjusted[0].score < 0.7 + RECENCY_INITIAL_BONUS
-
     def test_preserves_hit_metadata(self):
         """All Hit fields (uid, doc_identity, label, content) must be preserved."""
         hits = [
@@ -288,8 +203,29 @@ class TestApplyHeuristicRerank:
         assert adjusted[0].label == "Article"
         assert adjusted[0].content == "original content"
 
+    def test_returns_input_untouched_when_nothing_is_superseded(self):
+        """No AMENDS edge among the hits means no reordering to do.
+
+        The list comes in already sorted by retrieval score; re-sorting it would
+        be a no-op at best, so the function returns early instead.
+        """
+        hits = [
+            make_hit(uid="b", score=0.9),
+            make_hit(uid="c", score=0.6),
+            make_hit(uid="a", score=0.3),
+        ]
+
+        mock_client = MagicMock()
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids", return_value={}
+        ):
+            adjusted = apply_heuristic_rerank(hits, mock_client)
+
+        assert [h.uid for h in adjusted] == ["b", "c", "a"]
+        assert [h.score for h in adjusted] == [0.9, 0.6, 0.3]
+
     def test_scores_are_sorted_descending(self):
-        """Output must be sorted by adjusted score, highest first."""
+        """When something IS superseded, the output must be re-sorted."""
         hits = [
             make_hit(uid="a", score=0.3),
             make_hit(uid="b", score=0.9),
@@ -297,11 +233,39 @@ class TestApplyHeuristicRerank:
         ]
 
         mock_client = MagicMock()
-        with (
-            patch("vtlaw.retrieve.heuristics.fetch_abolished_uids", return_value={}),
-            patch("vtlaw.retrieve.heuristics.fetch_doc_effect_dates", return_value={}),
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids",
+            return_value={"b": ["bãi bỏ"]},
         ):
             adjusted = apply_heuristic_rerank(hits, mock_client)
 
         scores = [h.score for h in adjusted]
         assert scores == sorted(scores, reverse=True)
+        assert adjusted[-1].uid == "b"  # the superseded one sinks
+
+    def test_demotion_scales_with_the_score_span(self):
+        """The penalty is a fraction of the list's span, not an absolute value.
+
+        Absolute constants were the original bug: -5.0 against an RRF list whose
+        span is ~0.3 does not demote a hit, it discards the ranking. The same
+        constant must behave the same way on either scale.
+        """
+        rrf_like = [
+            make_hit(uid="superseded", score=0.36),
+            make_hit(uid="in_force", score=0.08),
+        ]
+        cross_encoder_like = [
+            make_hit(uid="superseded", score=9.9),
+            make_hit(uid="in_force", score=1.2),
+        ]
+
+        mock_client = MagicMock()
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids",
+            return_value={"superseded": ["bãi bỏ"]},
+        ):
+            small = apply_heuristic_rerank(rrf_like, mock_client)
+            large = apply_heuristic_rerank(cross_encoder_like, mock_client)
+
+        assert [h.uid for h in small] == ["in_force", "superseded"]
+        assert [h.uid for h in large] == ["in_force", "superseded"]

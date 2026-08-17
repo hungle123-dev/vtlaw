@@ -9,9 +9,8 @@ A cross-encoder reranker then scores the top candidates against the query
 directly — it reads the full query+provision pair, not just their vectors,
 so it catches mismatches that a vector similarity score cannot.
 
-After reranking, a legal-safety heuristic penalises provisions that have
-been abolished or replaced by newer amendments, and gives a small recency
-bonus to documents with recent effect dates.
+After reranking, provisions that a later document abolished or replaced are
+demoted, so superseded law does not get cited as current.
 
 Graph-enhanced context building walks the hierarchy UP (Document
 → Article → Clause → Point), SIDEWAYS (sibling Points), and DOWN (children
@@ -31,8 +30,6 @@ from vtlaw.retrieve.context_builder import (
 )
 from vtlaw.retrieve.heuristics import (
     ABOLISHED_PENALTY,
-    RECENCY_DECAY_PER_YEAR,
-    RECENCY_INITIAL_BONUS,
     REPLACED_PENALTY,
     apply_heuristic_rerank,
     fetch_abolished_uids,
@@ -60,8 +57,6 @@ __all__ = [
     "QueryDecomposer",
     "QueryRewriter",
     "QueryRouter",
-    "RECENCY_DECAY_PER_YEAR",
-    "RECENCY_INITIAL_BONUS",
     "REPLACED_PENALTY",
     "RetrievalResult",
     "SearchResult",

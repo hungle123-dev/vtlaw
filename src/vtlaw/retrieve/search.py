@@ -419,7 +419,7 @@ class HybridRetriever:
         as_of: date | None = None,
         sub_queries: list[str] | None = None,
     ) -> RetrievalResult:
-        """Retrieve, rerank, and optionally apply legal-safety heuristic.
+        """Retrieve, rerank, and optionally demote superseded provisions.
 
         Args:
             query: The user query.
@@ -427,9 +427,11 @@ class HybridRetriever:
             strategy: "hybrid", "vector", or "bm25".
             rerank_top: Number of candidates to rerank with cross-encoder.
             reranker_model: Cross-encoder model name.
-            heuristic_rerank: If True, apply amendment penalty + recency bonus
-                after cross-encoder rerank.
-            as_of: Date for recency calculation. Defaults to today.
+            heuristic_rerank: If True, demote provisions an amendment has
+                abolished or replaced, after cross-encoder rerank.
+            as_of: Reserved for date-scoped retrieval. Accepted and ignored here:
+                which law applies is a filter on effect_date/expire_date, applied
+                in the search queries, not a score adjustment made afterwards.
             sub_queries: Extra phrasings to retrieve with, fused into one list.
                 See :meth:`search`.
 
@@ -448,12 +450,10 @@ class HybridRetriever:
 
         reranked_hits = rerank(result.hits, query, rerank_k, reranker)
 
-        # Apply legal-safety heuristic after cross-encoder rerank
+        # Demote provisions a later document abolished or replaced.
         if heuristic_rerank:
             from vtlaw.retrieve.heuristics import apply_heuristic_rerank
-            reranked_hits = apply_heuristic_rerank(
-                reranked_hits, self._client, as_of=as_of
-            )
+            reranked_hits = apply_heuristic_rerank(reranked_hits, self._client)
 
         return RetrievalResult(
             query=query,

@@ -1,42 +1,60 @@
-"""Post-retrieval heuristic re-ranking based on legal amendment status.
+"""Post-retrieval demotion of provisions that an amendment has superseded.
 
-After vector + BM25 retrieval and optional cross-encoder rerank, this module
-applies two legal-safety adjustments:
+If a provision has been ``bãi bỏ`` (abolished) or ``thay thế`` (replaced) by a
+newer document it should not be cited as current law, so it is pushed below
+still-in-force provisions.
 
-1. **Amendment penalty**: if a provision has been ``bãi bỏ`` (abolished) or
-   ``thay thế`` (replaced) by a newer document, it should not be cited as
-   current law. Penalise it so it sinks below still-in-force provisions.
+This runs *after* the eligibility filter, not instead of it. The filter already
+removes fully expired documents; this catches provisions whose parent document is
+still in force but which have been individually superseded.
 
-2. **Recency bonus**: newer documents are more likely to be the current
-   applicable law. A small additive boost rewards recent effect dates.
+There is no recency bonus. One existed — a positive score for documents with a
+recent ``effect_date`` — and it was removed after measuring it on two datasets
+with opposite labelling:
 
-The penalties are applied *after* the eligibility filter, not instead of it.
-The filter already removes fully expired documents; this catches provisions
-that are still technically ``in_force`` (their parent document has not expired)
-but have been individually superseded by an amendment.
+    QA_Part2345 (labelled against 168/2024, 36/2024)   MRR 0.528 -> 0.593  (+0.066)
+    QA_NLP      (labelled against 100/2019)            MRR 0.568 -> 0.433  (-0.135)
+
+Weighted across both: +0.0015, i.e. nothing. The bonus was not detecting the
+applicable law, it was detecting which dataset was being scored, and it lost more
+on the older-law set than it gained on the newer one.
+
+It could not be rescued by tuning either. Being additive, it applied to every hit
+regardless of what retrieval thought, and at any strength large enough to matter
+it saturated into "sort by effect date" — measured: at 3x the score span, 200 of
+200 questions had an identical top ten to 1x, the retrieval signal fully erased.
+Rescaling the constants from absolute values to a fraction of the score span only
+moved where that saturation began.
+
+"Which law applies" is a filter on a date, not a score adjustment. The graph
+carries ``effect_date`` and ``expire_date`` for exactly that, and the retrieval
+queries already filter on them.
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import date
 
 from vtlaw.graph.client import GraphClient
 from vtlaw.retrieve.search import Hit
 
 log = logging.getLogger(__name__)
 
-# Penalty constants. These are additive to the reranker score and large enough
-# to push a hit below any still-in-force provision that the reranker scored
-# similarly. The exact values are tunable; the important thing is that
-# ``bãi bỏ`` penalises more than ``thay thế``.
-ABOLISHED_PENALTY = -5.0
-REPLACED_PENALTY = -3.0
+# Expressed as a FRACTION of the score span of the list being reranked, so the
+# demotion means the same thing whether it is applied to RRF scores (span ~0.3)
+# or cross-encoder scores (span ~10). Absolute constants here were a bug: -5.0
+# against an RRF list is 18x the whole span, which does not demote a hit, it
+# replaces the ranking.
+#
+# Both are larger than 1.0 span deliberately: an amendment is a fact recorded in
+# the graph, not a guess, so a superseded provision should fall below every
+# in-force one rather than merely lose a few places.
+ABOLISHED_PENALTY = -2.0
+REPLACED_PENALTY = -1.2
 
-# Recency bonus: starts at 2.0 for a document that took effect today, decays
-# by 0.3 per year, and floors at 0 (no bonus for very old documents).
-RECENCY_INITIAL_BONUS = 2.0
-RECENCY_DECAY_PER_YEAR = 0.3
+# A degenerate list (every hit scored identically) has no span to scale by. Fall
+# back to this so an abolished provision is still demoted rather than left alone.
+_FALLBACK_SPAN = 1.0
 
 
 def fetch_amend_status(
@@ -137,21 +155,17 @@ def fetch_doc_effect_dates(
 def apply_heuristic_rerank(
     hits: list[Hit],
     client: GraphClient,
-    *,
-    as_of: date | None = None,
 ) -> list[Hit]:
-    """Apply amendment penalty + recency bonus to the hit list.
+    """Demote provisions an amendment has abolished or replaced.
 
-    This is a post-processing step after vector search, BM25, and optional
-    cross-encoder rerank. It does not reorder drastically — the penalties and
-    bonus are small relative to typical reranker scores — but it ensures that
-    an abolished provision cannot rank above a still-in-force one when their
-    reranker scores are close.
+    The demotion is a fraction of the list's own score span, so it means the
+    same on any score scale. It is deliberately strong: an AMENDS edge is a
+    recorded fact, so a superseded provision belongs below the in-force ones
+    rather than a few places lower.
 
     Args:
         hits: The current ranked hit list.
         client: Neo4j client for amendment lookups.
-        as_of: The "current date" for recency calculation. Defaults to today.
 
     Returns:
         Re-sorted hit list with adjusted scores.
@@ -159,40 +173,25 @@ def apply_heuristic_rerank(
     if not hits:
         return hits
 
-    today = as_of or date.today()
     uids = [h.uid for h in hits]
-
-    # Fetch amendment status for all hits in one query
     abolished_map = fetch_abolished_uids(client, uids)
+    if not abolished_map:
+        # Nothing in this list is superseded, so there is nothing to reorder.
+        return hits
 
-    # Fetch effect dates for all documents in one query
-    doc_identities = list({h.doc_identity for h in hits})
-    effect_dates = fetch_doc_effect_dates(client, doc_identities)
+    scores = [h.score for h in hits]
+    span = max(scores) - min(scores)
+    if span <= 0:
+        span = _FALLBACK_SPAN
 
     adjusted: list[Hit] = []
     for hit in hits:
         score = hit.score
-
-        # Amendment penalty
         amend_types = abolished_map.get(hit.uid, [])
         if "bãi bỏ" in amend_types:
-            score += ABOLISHED_PENALTY
+            score += ABOLISHED_PENALTY * span
         elif "thay thế" in amend_types:
-            score += REPLACED_PENALTY
-
-        # Recency bonus
-        eff_str = effect_dates.get(hit.doc_identity)
-        if eff_str:
-            try:
-                eff_date = date.fromisoformat(eff_str)
-                years_old = max(0.0, (today - eff_date).days / 365.0)
-                recency = max(
-                    0.0,
-                    RECENCY_INITIAL_BONUS - RECENCY_DECAY_PER_YEAR * years_old,
-                )
-                score += recency
-            except ValueError:
-                pass
+            score += REPLACED_PENALTY * span
 
         adjusted.append(
             Hit(

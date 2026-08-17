@@ -73,7 +73,7 @@ class AnswerGenerator:
         as_of: date | None = None,
         temperature: float = 0.3,
         max_tokens: int | None = None,
-        heuristic_rerank: bool = True,
+        heuristic_rerank: bool = False,
         decompose: bool | None = None,
     ) -> Answer:
         """Generate an answer to a question.
@@ -84,7 +84,9 @@ class AnswerGenerator:
             as_of: The "current date" for temporal reasoning. Defaults to today.
             temperature: LLM sampling temperature.
             max_tokens: Maximum tokens in the generated answer.
-            heuristic_rerank: Apply amendment penalty + recency bonus.
+            heuristic_rerank: Demote provisions a later document abolished or
+                replaced. Off by default: measured on two datasets with opposite
+                labelling it costs more than it gains (see heuristics module).
             decompose: Retrieve with LLM-generated sub-queries alongside the
                 original phrasing. Defaults to ``settings.decompose_queries``.
 
