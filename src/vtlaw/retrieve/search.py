@@ -387,6 +387,7 @@ class HybridRetriever:
         reranker_model: str | None = None,
         heuristic_rerank: bool = False,
         as_of: date | None = None,
+        sub_queries: list[str] | None = None,
     ) -> RetrievalResult:
         """Retrieve, rerank, and optionally apply legal-safety heuristic.
 
@@ -399,11 +400,13 @@ class HybridRetriever:
             heuristic_rerank: If True, apply amendment penalty + recency bonus
                 after cross-encoder rerank.
             as_of: Date for recency calculation. Defaults to today.
+            sub_queries: Extra phrasings to retrieve with, fused into one list.
+                See :meth:`search`.
 
         Returns:
             RetrievalResult with reranked hits.
         """
-        result = self.search(query, k=k, strategy=strategy)
+        result = self.search(query, k=k, strategy=strategy, sub_queries=sub_queries)
 
         if not result.hits:
             return RetrievalResult(

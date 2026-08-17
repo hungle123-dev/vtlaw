@@ -85,6 +85,19 @@ class Settings(BaseSettings):
     rrf_vector_weight: float = Field(default=3.0, gt=0.0, le=10.0)
     rrf_bm25_weight: float = Field(default=1.0, gt=0.0, le=10.0)
 
+    # Query decomposition. One extra LLM call per question, then one retrieval
+    # pass per phrasing. Measured on the 94-question set, retrieving with the
+    # original query *and* its sub-queries:
+    #
+    #   single           recall@1 0.359  recall@5 0.681  recall@30 0.780
+    #   sub-queries only recall@1 0.332  recall@5 0.710  recall@30 0.826
+    #   both (here)      recall@1 0.402  recall@5 0.734  recall@30 0.849
+    #
+    # The recall@30 lift is what matters: reranking can only reorder what the
+    # first stage found, so raising that ceiling needs a different query. Costs
+    # ~0.26s of extra retrieval plus the decomposition call.
+    decompose_queries: bool = True
+
     def resolved_device(self) -> str:
         if self.embed_device != "auto":
             return self.embed_device

@@ -22,6 +22,14 @@ class SubQuery(TypedDict):
 
 # ruff: noqa: E501 — prompt text contains long Vietnamese lines that cannot be
 #   wrapped without breaking the prompt structure.
+#
+# The JSON examples below use SINGLE braces. This prompt is passed to the model
+# verbatim — only the user prompt goes through .format() — so `{{` is not an
+# escape here, it is two literal braces. It was written as `{{"query": ...}}`
+# and the model faithfully copied the doubling into its output, which then failed
+# json.loads and sent every question down the fallback path. Measured: 19 of 19
+# decompositions lost that way, silently, because the fallback returns the
+# original query and logs at WARNING.
 
 _DECOMPOSE_SYSTEM_PROMPT = """Bạn là chuyên gia thiết kế truy vấn cho hệ thống RAG tra cứu Luật Giao thông đường bộ Việt Nam.
 
@@ -80,29 +88,29 @@ Chuyển câu hỏi của người dùng thành một tập hợp sub-query tố
 - Chỉ trả về JSON array hợp lệ. Mỗi phần tử có đúng một khóa: "query".
 - Tuyệt đối không bọc trong markdown (KHÔNG dùng ```json).
 - Không giải thích, không thêm bất kỳ văn bản nào khác.
-- KHÔNG dùng dấu ngoặc nhọn đơn. Chỉ dùng cú pháp JSON chuẩn.
+- Dùng đúng cú pháp JSON: một dấu ngoặc nhọn cho mỗi object, ví dụ {"query": "..."}.
 
 Một số ví dụ:
 Input: "Lỗi vượt đèn đỏ phạt thế nào?"
 Output:
 [
-  {{"query": "người điều khiển xe mô tô không chấp hành hiệu lệnh của đèn tín hiệu giao thông"}},
-  {{"query": "người điều khiển xe ô tô không chấp hành hiệu lệnh của đèn tín hiệu giao thông"}},
-  {{"query": "mức xử phạt vi phạm hành chính"}}
+  {"query": "người điều khiển xe mô tô không chấp hành hiệu lệnh của đèn tín hiệu giao thông"},
+  {"query": "người điều khiển xe ô tô không chấp hành hiệu lệnh của đèn tín hiệu giao thông"},
+  {"query": "mức xử phạt vi phạm hành chính"}
 ]
 
 Input: "Lỗi chạy xe máy không đội mũ bảo hiểm bị phạt gì"
 Output:
 [
-  {{"query": "người điều khiển, người ngồi trên xe mô tô không đội mũ bảo hiểm"}},
-  {{"query": "xử phạt vi phạm hành chính"}}
+  {"query": "người điều khiển, người ngồi trên xe mô tô không đội mũ bảo hiểm"},
+  {"query": "xử phạt vi phạm hành chính"}
 ]
 
 Input: "Uống 1 lon bia rồi chạy xe điện có bị phạt không?"
 Output:
 [
-  {{"query": "điều khiển xe điện khi trong máu hoặc hơi thở có nồng độ cồn"}},
-  {{"query": "xử phạt vi phạm hành chính đối với hành vi điều khiển xe điện có nồng độ cồn"}}
+  {"query": "điều khiển xe điện khi trong máu hoặc hơi thở có nồng độ cồn"},
+  {"query": "xử phạt vi phạm hành chính đối với hành vi điều khiển xe điện có nồng độ cồn"}
 ]
 """
 
