@@ -9,6 +9,7 @@ Tests cover:
 
 from __future__ import annotations
 
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 from vtlaw.graph.amends import AmendStats, _resolve_uid
@@ -16,6 +17,7 @@ from vtlaw.retrieve.heuristics import (
     ABOLISHED_PENALTY,
     REPLACED_PENALTY,
     apply_heuristic_rerank,
+    fetch_abolished_uids,
 )
 from vtlaw.retrieve.search import Hit
 
@@ -113,6 +115,22 @@ class TestApplyHeuristicRerank:
         result = apply_heuristic_rerank([], mock_client)
         assert result == []
 
+
+class TestTemporalAmendmentLookup:
+    def test_uses_as_of_to_bound_amendment_effect(self):
+        session = MagicMock()
+        session.run.return_value.data.return_value = []
+        client = MagicMock()
+        client.session.return_value.__enter__.return_value = session
+
+        fetch_abolished_uids(
+            client,
+            ["36/2024/QH15::article::6::clause::3"],
+            as_of=date(2025, 1, 1),
+        )
+
+        assert session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
     def test_abolished_provision_sinks_below(self):
         """A provision marked bãi bỏ should be penalised and sink below
         a still-in-force provision with a lower original score."""
@@ -130,18 +148,9 @@ class TestApplyHeuristicRerank:
         ]
 
         mock_client = MagicMock()
-        with (
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_abolished_uids",
-                return_value={"100/2019/NĐ-CP::article::11::clause::3": ["bãi bỏ"]},
-            ),
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_doc_effect_dates",
-                return_value={
-                    "100/2019/NĐ-CP": "2020-01-01",
-                    "168/2024/NĐ-CP": "2025-01-01",
-                },
-            ),
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids",
+            return_value={"100/2019/NĐ-CP::article::11::clause::3": ["bãi bỏ"]},
         ):
             adjusted = apply_heuristic_rerank(hits, mock_client)
 
@@ -158,18 +167,12 @@ class TestApplyHeuristicRerank:
         ]
 
         mock_client = MagicMock()
-        with (
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_abolished_uids",
-                return_value={
-                    "abolished": ["bãi bỏ"],
-                    "replaced": ["thay thế"],
-                },
-            ),
-            patch(
-                "vtlaw.retrieve.heuristics.fetch_doc_effect_dates",
-                return_value={},
-            ),
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids",
+            return_value={
+                "abolished": ["bãi bỏ"],
+                "replaced": ["thay thế"],
+            },
         ):
             adjusted = apply_heuristic_rerank(hits, mock_client)
 
@@ -192,10 +195,7 @@ class TestApplyHeuristicRerank:
         ]
 
         mock_client = MagicMock()
-        with (
-            patch("vtlaw.retrieve.heuristics.fetch_abolished_uids", return_value={}),
-            patch("vtlaw.retrieve.heuristics.fetch_doc_effect_dates", return_value={}),
-        ):
+        with patch("vtlaw.retrieve.heuristics.fetch_abolished_uids", return_value={}):
             adjusted = apply_heuristic_rerank(hits, mock_client)
 
         assert adjusted[0].uid == "test::1"

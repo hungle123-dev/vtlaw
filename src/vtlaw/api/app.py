@@ -300,7 +300,7 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
     ck = (req.question, req.strategy, state.settings.rerank_top, state.settings.context_k)
 
     # --- Retrieval, cached ---------------------------------------------------
-    cached_hits = cache.get_retrieval(*ck) if cache else None
+    cached_hits = cache.get_retrieval(*ck, as_of=req.as_of) if cache else None
     if cached_hits is not None:
         # get_retrieval already returns decoded dicts, one per Hit field.
         hits = [Hit(**row) for row in cached_hits]
@@ -313,16 +313,14 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
             rerank_top=state.settings.rerank_top,
             heuristic_rerank=True,
             as_of=req.as_of,
-        ) if state.llm_configured else state.retriever.search(
-            req.question, k=state.settings.context_k, strategy=req.strategy
         )
         hits = list(result.hits)
         reranked = getattr(result, "reranked", False)
         if cache and hits:
-            cache.set_retrieval(*ck, [asdict(h) for h in hits])
+            cache.set_retrieval(*ck, [asdict(h) for h in hits], as_of=req.as_of)
 
     # --- Generation, cached --------------------------------------------------
-    text = cache.get_answer(*ck) if cache else None
+    text = cache.get_answer(*ck, as_of=req.as_of) if cache else None
     if text is None:
         if state.generator:
             text = await run_in_threadpool(
@@ -336,7 +334,7 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
                 hits, as_of=req.as_of
             )
         if cache and text:
-            cache.set_answer(*ck, text)
+            cache.set_answer(*ck, text, as_of=req.as_of)
 
     return ChatResponse(
         question=req.question,

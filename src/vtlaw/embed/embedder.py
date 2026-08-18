@@ -12,8 +12,9 @@ Three things this module gets right that a naive wrapper does not:
    ``sentence_bert_config.json``. We set it explicitly so long provisions are
    not silently truncated inside the encoder.
 
-3. **Idempotent batch embedding.** Nodes already carrying an embedding are
-   skipped, so a re-run after a partial failure resumes instead of recomputing.
+3. **Provenance-aware batch embedding.** Nodes are recomputed when the model
+   or embedding-text transform changes, so stored vectors cannot silently use
+   an older pipeline.
 """
 
 from __future__ import annotations
@@ -31,6 +32,15 @@ from vtlaw.graph.schema import PROVISION_LABELS
 log = logging.getLogger(__name__)
 
 SEGMENTER_VERSION = "pyvi-ViTokenizer"
+EMBEDDING_TEXT_VERSION = "v2"
+
+
+def embedding_fingerprint(settings: Settings) -> str:
+    """Identity of the model and text transform used for stored vectors."""
+    return (
+        f"{settings.embed_model}@{settings.embed_model_revision}|"
+        f"{SEGMENTER_VERSION}|{EMBEDDING_TEXT_VERSION}"
+    )
 
 
 def segment(text: str) -> str:
@@ -83,7 +93,9 @@ class Embedder:
                 self._settings.embed_model, device, EMBED_DIM, EMBED_MAX_TOKENS,
             )
             self._model = SentenceTransformer(
-                self._settings.embed_model, device=device
+                self._settings.embed_model,
+                revision=self._settings.embed_model_revision,
+                device=device,
             )
             self._model.max_seq_length = EMBED_MAX_TOKENS
         return self._model
@@ -124,22 +136,54 @@ class Embedder:
 # Neo4j write-back
 # ---------------------------------------------------------------------------
 
-# Fetch provisions that have content but no embedding yet.
-_FETCH_MISSING = """
-MATCH (n:{label})
+# Fetch provisions that need a vector from the current embedding pipeline.
+# These are intentionally separate queries: optional matches for a Point's
+# parents can cross-join when `n` is an Article or Clause.
+_FETCH_ARTICLES = """
+MATCH (n:Article)
 WHERE n.content IS NOT NULL AND n.content <> ''
-  AND n.embedding IS NULL
+  AND (n.embedding IS NULL OR coalesce(n.embedding_fingerprint, '') <> $fingerprint)
 RETURN n.uid AS uid,
        coalesce(n.title, '') AS title,
-       n.content AS content
+       n.content AS content,
+       '' AS parent_content
 LIMIT $batch
 """
+
+_FETCH_CLAUSES = """
+MATCH (article:Article)-[:HAS_CLAUSE]->(n:Clause)
+WHERE n.content IS NOT NULL AND n.content <> ''
+  AND (n.embedding IS NULL OR coalesce(n.embedding_fingerprint, '') <> $fingerprint)
+RETURN n.uid AS uid,
+       coalesce(article.title, '') AS title,
+       n.content AS content,
+       '' AS parent_content
+LIMIT $batch
+"""
+
+_FETCH_POINTS = """
+MATCH (article:Article)-[:HAS_CLAUSE]->(clause:Clause)-[:HAS_POINT]->(n:Point)
+WHERE n.content IS NOT NULL AND n.content <> ''
+  AND (n.embedding IS NULL OR coalesce(n.embedding_fingerprint, '') <> $fingerprint)
+RETURN n.uid AS uid,
+       coalesce(article.title, '') AS title,
+       n.content AS content,
+       clause.content AS parent_content
+LIMIT $batch
+"""
+
+_FETCH_CONTENT = {
+    "Article": _FETCH_ARTICLES,
+    "Clause": _FETCH_CLAUSES,
+    "Point": _FETCH_POINTS,
+}
 
 _WRITE_VECTORS = """
 UNWIND $rows AS row
 MATCH (n:{label} {{uid: row.uid}})
 SET n.embedding = row.vector,
-    n.embedded_with = $embedded_with
+    n.embedded_with = $fingerprint,
+    n.embedding_fingerprint = $fingerprint
 """
 
 # For articles with no body content, embed the title only. Verified on this
@@ -149,21 +193,22 @@ _FETCH_ARTICLES_TITLE_ONLY = """
 MATCH (n:Article)
 WHERE n.title IS NOT NULL AND n.title <> ''
   AND n.content = ''
-  AND n.embedding IS NULL
-RETURN n.uid AS uid, n.title AS title, '' AS content
+  AND (n.embedding IS NULL OR coalesce(n.embedding_fingerprint, '') <> $fingerprint)
+RETURN n.uid AS uid, n.title AS title, '' AS content, '' AS parent_content
 LIMIT $batch
 """
 
 
-def _embed_text(title: str, content: str) -> str:
+def _embed_text(title: str, content: str, parent_content: str = "") -> str:
     """Build the text that goes into the vector.
 
-    Articles often have a real title and no body: prepend the title so the vector
-    captures its topical signal rather than embedding an empty string.
+    Clauses inherit their article title. Points also include their parent clause,
+    but keep their own offence first so the most specific signal survives token
+    truncation. Articles with no body use their title as the topical signal.
     """
-    if title:
-        return f"{title}\n{content}".strip()
-    return content.strip()
+    if parent_content:
+        return "\n".join(part for part in (content, parent_content, title) if part)
+    return "\n".join(part for part in (title, content) if part)
 
 
 def embed_corpus(
@@ -172,12 +217,12 @@ def embed_corpus(
     *,
     batch_size: int = 256,
 ) -> EmbedStats:
-    """Embed every provision in the graph that is missing a vector.
+    """Embed every provision not produced by the current vector pipeline.
 
-    Idempotent: ``WHERE n.embedding IS NULL`` skips already-embedded nodes, so a
-    re-run resumes from where it left off.
+    Idempotent for a fingerprint: a re-run resumes after a partial failure, while
+    a model or text-pipeline change deliberately refreshes every stale vector.
     """
-    embedded_with = f"{embedder._settings.embed_model}|{SEGMENTER_VERSION}"
+    fingerprint = embedding_fingerprint(embedder._settings)
     stats = EmbedStats(embedded={}, skipped={})
 
     for label in PROVISION_LABELS:
@@ -187,13 +232,13 @@ def embed_corpus(
         if label == "Article":
             embedded_count += _embed_batch(
                 client, embedder, "Article", _FETCH_ARTICLES_TITLE_ONLY,
-                batch_size, embedded_with,
+                batch_size, fingerprint,
             )
 
         # Everything with content.
         embedded_count += _embed_batch(
-            client, embedder, label, _FETCH_MISSING,
-            batch_size, embedded_with,
+            client, embedder, label, _FETCH_CONTENT[label],
+            batch_size, fingerprint,
         )
 
         stats.embedded[label] = embedded_count
@@ -217,7 +262,7 @@ def _embed_batch(
     label: str,
     fetch_cypher: str,
     batch_size: int,
-    embedded_with: str,
+    fingerprint: str,
 ) -> int:
     """Embed and write one label, looping until no more unembedded nodes."""
     total = 0
@@ -225,13 +270,16 @@ def _embed_batch(
     while True:
         with client.session() as s:
             rows = s.run(
-                fetch_cypher.format(label=label), batch=batch_size
+                fetch_cypher.format(label=label), batch=batch_size, fingerprint=fingerprint
             ).data()
 
         if not rows:
             break
 
-        texts = [_embed_text(r["title"], r["content"]) for r in rows]
+        texts = [
+            _embed_text(r["title"], r["content"], r["parent_content"])
+            for r in rows
+        ]
         vectors = embedder.encode(texts)
 
         assert all(len(v) == EMBED_DIM for v in vectors), (
@@ -246,7 +294,7 @@ def _embed_batch(
             s.run(
                 _WRITE_VECTORS.format(label=label),
                 rows=payload,
-                embedded_with=embedded_with,
+                fingerprint=fingerprint,
             )
 
         total += len(rows)

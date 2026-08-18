@@ -35,8 +35,7 @@ log = logging.getLogger(__name__)
 _HIERARCHY_QUERY = """
 UNWIND $uids AS target_uid
 MATCH path = (d:Document)
-      -[:HAS_PART|HAS_CHAPTER|HAS_SECTION
-        |HAS_ARTICLE|HAS_CLAUSE|HAS_POINT*]->(target)
+      -[:HAS_ARTICLE|HAS_CLAUSE|HAS_POINT*]->(target)
 WHERE target.uid = target_uid
 RETURN target.uid AS uid,
        nodes(path)[1..] AS hierarchy,

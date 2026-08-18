@@ -25,7 +25,7 @@ import sys
 from datetime import datetime
 
 from vtlaw.embed import Embedder, embed_corpus, embedding_coverage
-from vtlaw.graph import GraphClient, count_graph, import_documents
+from vtlaw.graph import GraphClient, count_graph, import_amends_directory, import_documents
 from vtlaw.parse import parse_corpus
 from vtlaw.scrape import LegalDocumentClient, Scraper, Snapshot
 
@@ -204,10 +204,12 @@ def cmd_graph_import(args: argparse.Namespace) -> int:
         if args.wipe:
             client.wipe()
         stats = import_documents(client, documents)
+        amend_stats = import_amends_directory(client, "data/amends")
         client.await_indexes()
         counts = count_graph(client)
 
     print(f"imported: {stats.summary()}")
+    print(f"amends : {amend_stats.summary()}")
     print(f"in graph: {counts.summary()}")
 
     # Read-back is the check: it catches a write that reported success without
@@ -363,6 +365,7 @@ def cmd_retrieve_search(args: argparse.Namespace) -> int:
                 strategy=args.strategy,
                 rerank_top=args.rerank_top,
                 reranker_model=args.reranker_model,
+                rerank_enabled=True,
             )
         else:
             result = retriever.search(
@@ -470,6 +473,7 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         rerank=args.rerank,
         fetch_k=args.fetch_k,
         limit=args.limit,
+        as_of=args.as_of,
     )
 
     # Exit code: 0 if recall@5 > 0, 1 otherwise
@@ -686,6 +690,12 @@ def build_parser() -> argparse.ArgumentParser:
     eval_run.add_argument(
         "--limit", type=int, default=None,
         help="score only the first N rows (quick check, not a report)",
+    )
+    eval_run.add_argument(
+        "--as-of",
+        type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
+        default=None,
+        help="legal-effective date for every query (YYYY-MM-DD)",
     )
     eval_run.set_defaults(func=cmd_eval_run)
 

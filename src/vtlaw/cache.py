@@ -17,6 +17,8 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+from datetime import date
+from pathlib import Path
 from typing import Any
 
 import redis
@@ -25,6 +27,8 @@ from prometheus_client import Counter
 from vtlaw.config import Settings, get_settings
 
 log = logging.getLogger(__name__)
+
+CACHE_KEY_VERSION = "v2"
 
 # Prometheus metrics
 CACHE_HITS = Counter(
@@ -48,12 +52,23 @@ def _hash_key(parts: list[str]) -> str:
     return h.hexdigest()[:16]
 
 
+def _snapshot_fingerprint() -> str:
+    """Fingerprint the committed corpus manifest when it is available."""
+    try:
+        return hashlib.sha256(
+            Path("data/snapshot/manifest.json").read_bytes()
+        ).hexdigest()[:16]
+    except OSError:
+        return "no-snapshot"
+
+
 class Cache:
     """Redis-backed cache for retrieval and answer caching."""
 
     def __init__(self, settings: Settings | None = None):
         self._settings = settings or get_settings()
         self._redis: redis.Redis | None = None
+        self._corpus_fingerprint = _snapshot_fingerprint()
 
     @property
     def redis(self) -> redis.Redis:
@@ -63,20 +78,49 @@ class Cache:
 
     # -- retrieval cache -----------------------------------------------------
 
+    def _result_key_parts(
+        self,
+        query: str,
+        strategy: str,
+        rerank_top: int | None,
+        context_k: int,
+        as_of: date | None,
+    ) -> list[str]:
+        """Inputs that can change the retrieved provisions or their order."""
+        settings = self._settings
+        effective_as_of = as_of or date.today()
+        return [
+            CACHE_KEY_VERSION,
+            self._corpus_fingerprint,
+            query,
+            strategy,
+            str(rerank_top or 0),
+            str(context_k),
+            effective_as_of.isoformat(),
+            settings.embed_model,
+            settings.embed_model_revision,
+            str(settings.fetch_k),
+            str(settings.rrf_k),
+            str(settings.rrf_vector_weight),
+            str(settings.rrf_bm25_weight),
+            str(settings.rerank_enabled),
+            settings.rerank_model,
+            settings.rerank_model_revision,
+        ]
+
     def get_retrieval(
         self,
         query: str,
         strategy: str,
         rerank_top: int | None,
         context_k: int,
+        *,
+        as_of: date | None = None,
     ) -> list[dict[str, Any]] | None:
         """Get cached retrieval results, or None if cache miss."""
-        key = "ret:" + _hash_key([
-            query,
-            strategy,
-            str(rerank_top or 0),
-            str(context_k),
-        ])
+        key = "ret:" + _hash_key(
+            self._result_key_parts(query, strategy, rerank_top, context_k, as_of)
+        )
         cached = self.redis.get(key)
         if cached:
             CACHE_HITS.labels(type="retrieval").inc()
@@ -92,14 +136,13 @@ class Cache:
         rerank_top: int | None,
         context_k: int,
         results: list[dict[str, Any]],
+        *,
+        as_of: date | None = None,
     ) -> None:
         """Cache retrieval results with TTL."""
-        key = "ret:" + _hash_key([
-            query,
-            strategy,
-            str(rerank_top or 0),
-            str(context_k),
-        ])
+        key = "ret:" + _hash_key(
+            self._result_key_parts(query, strategy, rerank_top, context_k, as_of)
+        )
         self.redis.setex(key, self._settings.retrieval_cache_ttl, json.dumps(results))
 
     # -- answer cache --------------------------------------------------------
@@ -110,14 +153,14 @@ class Cache:
         strategy: str,
         rerank_top: int | None,
         context_k: int,
+        *,
+        as_of: date | None = None,
     ) -> str | None:
         """Get cached answer, or None if cache miss."""
-        key = "ans:" + _hash_key([
-            query,
-            strategy,
-            str(rerank_top or 0),
-            str(context_k),
-        ])
+        key = "ans:" + _hash_key(
+            self._result_key_parts(query, strategy, rerank_top, context_k, as_of)
+            + [self._settings.llm_base_url, self._settings.llm_model]
+        )
         cached = self.redis.get(key)
         if cached:
             CACHE_HITS.labels(type="answer").inc()
@@ -133,14 +176,14 @@ class Cache:
         rerank_top: int | None,
         context_k: int,
         answer: str,
+        *,
+        as_of: date | None = None,
     ) -> None:
         """Cache generated answer with TTL."""
-        key = "ans:" + _hash_key([
-            query,
-            strategy,
-            str(rerank_top or 0),
-            str(context_k),
-        ])
+        key = "ans:" + _hash_key(
+            self._result_key_parts(query, strategy, rerank_top, context_k, as_of)
+            + [self._settings.llm_base_url, self._settings.llm_model]
+        )
         self.redis.setex(key, self._settings.answer_cache_ttl, answer)
         log.info("answer cached: %s", key)
 

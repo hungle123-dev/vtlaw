@@ -18,8 +18,8 @@ Clauses/Points) to assemble full legal context for each hit — because a
 Point on its own states the offence, but the penalty amount lives in its
 parent Clause.
 
-Query pipeline modules (router, parser, rewriter, text2cypher) enable
-intelligent query routing, decomposition, and multi-turn conversation support.
+Query decomposition is opt-in because it needs an LLM call; the deterministic
+hybrid path remains the default retrieval baseline.
 """
 
 from vtlaw.retrieve.context_builder import (
@@ -33,12 +33,8 @@ from vtlaw.retrieve.heuristics import (
     REPLACED_PENALTY,
     apply_heuristic_rerank,
     fetch_abolished_uids,
-    fetch_amend_status,
-    fetch_doc_effect_dates,
 )
 from vtlaw.retrieve.query_parser import QueryDecomposer, SubQuery
-from vtlaw.retrieve.query_rewriter import ChatMessage, QueryRewriter
-from vtlaw.retrieve.router import IntentType, QueryRouter
 from vtlaw.retrieve.search import (
     Hit,
     HybridRetriever,
@@ -46,28 +42,20 @@ from vtlaw.retrieve.search import (
     SearchResult,
     fuse_weighted,
 )
-from vtlaw.retrieve.text2cypher import TextToCypher
 
 __all__ = [
     "ABOLISHED_PENALTY",
-    "ChatMessage",
     "Hit",
     "HybridRetriever",
-    "IntentType",
     "QueryDecomposer",
-    "QueryRewriter",
-    "QueryRouter",
     "REPLACED_PENALTY",
     "RetrievalResult",
     "SearchResult",
     "SubQuery",
-    "TextToCypher",
     "apply_heuristic_rerank",
     "build_full_context",
     "fetch_abolished_uids",
-    "fetch_amend_status",
     "fetch_children_context",
-    "fetch_doc_effect_dates",
     "fetch_hierarchy",
     "fetch_sibling_points",
     "fuse_weighted",

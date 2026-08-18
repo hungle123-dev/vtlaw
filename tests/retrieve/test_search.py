@@ -11,6 +11,7 @@ No Neo4j needed — all database calls are mocked.
 
 from __future__ import annotations
 
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -82,6 +83,7 @@ def _settings(**overrides):
         "rrf_k": 10,
         "rrf_vector_weight": 3.0,
         "rrf_bm25_weight": 1.0,
+        "rerank_enabled": False,
     }
     return MagicMock(**{**defaults, **overrides})
 
@@ -265,6 +267,24 @@ class TestRerank:
         assert reranked[2].uid == "a"
         assert reranked[2].score == 0.3
 
+    def test_pins_cross_encoder_revision(self):
+        hits = [make_hit()]
+
+        with patch("sentence_transformers.CrossEncoder") as mock_ce_class:
+            mock_ce_class.return_value.predict.return_value = [0.5]
+
+            rerank(
+                hits,
+                "query",
+                k=1,
+                reranker_model="test-model",
+                reranker_revision="fixed-revision",
+            )
+
+        mock_ce_class.assert_called_once_with(
+            "test-model", revision="fixed-revision", max_length=256
+        )
+
     def test_respects_k(self):
         hits = [make_hit(uid=f"h{i}") for i in range(10)]
 
@@ -373,6 +393,20 @@ class TestVectorSearch:
 
         mock_embedder.encode_query.assert_called_once_with("my query")
 
+    def test_uses_requested_as_of_date(self, mock_session, mock_embedder):
+        """A historical query must reach Neo4j with its requested cutoff date."""
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        vector_search(
+            mock_session,
+            mock_embedder,
+            "my query",
+            k=5,
+            as_of=date(2025, 1, 1),
+        )
+
+        assert mock_session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
     def test_empty_results(self, mock_session, mock_embedder):
         mock_session.run.return_value = MagicMock(data=lambda: [])
 
@@ -412,6 +446,13 @@ class TestBM25Search:
 
             mock_segment.assert_called_once_with("my query")
 
+    def test_uses_requested_as_of_date(self, mock_session):
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        bm25_search(mock_session, "my query", k=5, as_of=date(2025, 1, 1))
+
+        assert mock_session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
     def test_empty_results(self, mock_session):
         mock_session.run.return_value = MagicMock(data=lambda: [])
 
@@ -426,6 +467,16 @@ class TestBM25Search:
 
 
 class TestHybridRetriever:
+    def test_exact_citation_bypasses_approximate_search(self, mock_embedder):
+        hit = make_hit(uid="168/2024/NĐ-CP::article::6")
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+
+        with patch("vtlaw.retrieve.search.citation_search", return_value=[hit]) as lookup:
+            result = retriever.search("Điều 6 168/2024/NĐ-CP", k=5)
+
+        assert result.hits == [hit]
+        lookup.assert_called_once()
+
     def test_search_returns_search_result(self, mock_session, mock_embedder):
         mock_session.run.return_value = MagicMock(data=lambda: [])
 
@@ -511,3 +562,63 @@ class TestHybridRetriever:
         retriever.search("query", k=5, strategy="vector", fetch_k=100)
 
         assert mock_session.run.call_args.kwargs["k"] == 100
+
+    def test_search_propagates_as_of_date(self, mock_session, mock_embedder):
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+        retriever = HybridRetriever(
+            _client_yielding(mock_session), mock_embedder, _settings(fetch_k=30)
+        )
+
+        retriever.search(
+            "query",
+            k=5,
+            strategy="vector",
+            as_of=date(2025, 1, 1),
+        )
+
+        assert mock_session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
+    def test_reranked_search_propagates_as_of_date(self, mock_embedder):
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=[], strategy="hybrid")
+        )
+
+        retriever.search_and_rerank("query", as_of=date(2025, 1, 1))
+
+        assert retriever.search.call_args.kwargs["as_of"] == date(2025, 1, 1)
+
+    def test_temporal_heuristic_uses_as_of_date(self, mock_embedder):
+        hit = make_hit()
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=[hit], strategy="hybrid")
+        )
+
+        with (
+            patch("vtlaw.retrieve.search.rerank", return_value=[hit]),
+            patch(
+                "vtlaw.retrieve.heuristics.apply_heuristic_rerank",
+                return_value=[hit],
+            ) as heuristic,
+        ):
+            retriever.search_and_rerank(
+                "query",
+                heuristic_rerank=True,
+                as_of=date(2025, 1, 1),
+            )
+
+        assert heuristic.call_args.kwargs["as_of"] == date(2025, 1, 1)
+
+    def test_reranker_is_off_by_default(self, mock_embedder):
+        hit = make_hit()
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=[hit], strategy="hybrid")
+        )
+
+        with patch("vtlaw.retrieve.search.rerank") as rerank_mock:
+            result = retriever.search_and_rerank("query")
+
+        rerank_mock.assert_not_called()
+        assert result.reranked is False

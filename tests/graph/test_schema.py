@@ -5,10 +5,12 @@ Integration tests that need a live Neo4j live in `test_import.py`.
 
 from __future__ import annotations
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from vtlaw.config import EMBED_DIM
-from vtlaw.graph.importer import _iso, _row
+from vtlaw.graph.importer import _CLEAR_DOCUMENT_EMBEDDINGS, _iso, _row, _write_document
 from vtlaw.graph.schema import (
     ALL_SCHEMA_STATEMENTS,
     CHILD_RELATIONSHIP,
@@ -18,7 +20,7 @@ from vtlaw.graph.schema import (
     PROVISION_LABELS,
     VECTOR_INDEXES,
 )
-from vtlaw.parse import Provision
+from vtlaw.parse import Document, Provision, parse_text
 
 
 def test_provision_labels_are_ordered_outermost_first():
@@ -117,6 +119,25 @@ def test_row_carries_ordinal_for_document_order():
         number="1", content="", title="T", ordinal=7,
     )
     assert _row(provision)["ordinal"] == 7
+
+
+def test_reimport_invalidates_vectors_for_that_document():
+    """Changed source text must not retain a vector made from the old text."""
+    parsed = parse_text(
+        "Điều 1. Tiêu đề\n1. Nội dung mới.\n",
+        Document(
+            doc_guid="g",
+            doc_identity="1/2025/NĐ-CP",
+            doc_name="N",
+            effect_date=None,
+        ),
+    )
+    session = MagicMock()
+
+    _write_document(session, parsed)
+
+    assert session.run.call_args_list[1].args[0] == _CLEAR_DOCUMENT_EMBEDDINGS
+    assert session.run.call_args_list[1].kwargs == {"doc_identity": "1/2025/NĐ-CP"}
 
 
 @pytest.mark.parametrize(

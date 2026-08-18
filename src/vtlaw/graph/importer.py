@@ -50,6 +50,15 @@ SET d.doc_guid      = $doc_guid,
     d.signers       = $signers
 """
 
+# A source correction can keep the same document identity while changing its
+# text. Its old vector is then wrong even when the embedding pipeline is not.
+_CLEAR_DOCUMENT_EMBEDDINGS = """
+MATCH (n)
+WHERE n.doc_identity = $doc_identity
+  AND (n:Article OR n:Clause OR n:Point)
+REMOVE n.embedding, n.embedded_with, n.embedding_fingerprint
+"""
+
 # Articles hang off the Document; clauses and points hang off the exact parent UID
 # the parser recorded.
 _MERGE_ARTICLES = """
@@ -174,6 +183,7 @@ def _write_document(session: Session, parsed: ParsedDocument) -> ImportStats:
         organizations=list(document.organizations),
         signers=list(document.signers),
     )
+    session.run(_CLEAR_DOCUMENT_EMBEDDINGS, doc_identity=document.doc_identity)
 
     # Group by level so parents are always written before their children.
     by_level: dict[str, list[dict]] = {"article": [], "clause": [], "point": []}

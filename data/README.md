@@ -37,9 +37,9 @@ data/
 │   ├── documents/{doc_guid}.txt   12 files, 31K–322K — plain text, NFC
 │   ├── metadata/{doc_guid}.json   12 files — the `tomtat` payload
 │   └── manifest.json              per-document hashes + provenance
-├── annotations/                   human/LLM-produced labels
-│   ├── amendments/{doc_guid}.json 3 files — amendment relations
-│   └── EXTRACTION_PROMPT.txt      the prompt used to produce them
+├── amends/{doc_guid}.json         3 amendment-relation annotation files
+├── annotations/EXTRACTION_PROMPT.txt
+│                                  prompt used to produce the amendment labels
 └── evaluation/
     └── qa/QA_*.csv                7 files — question / answer / reference
 ```
@@ -70,6 +70,19 @@ Files are keyed by `docGUId` (a UUID), not `docIdentity`: values such as
 Holding both `100/2019/NĐ-CP` and `168/2024/NĐ-CP` matters: the same offence
 carries different penalties depending on when it happened, so the corpus can
 exercise temporal reasoning rather than only topical matching.
+
+## Evaluation labels
+
+The QA files are NLP-LegalQA labels, not a new independent benchmark assembled
+by this project. `QA_Part2`, `QA_Part3`, `QA_Part4`, and `QA_Part5` are subsets
+of the larger `QA_Part234` / `QA_Part2345` files; pooling or averaging all seven
+would count many questions more than once. Report `QA_NLP.csv` (94 rows) and
+`QA_Part2345.csv` (200 rows) as two separate tracks.
+
+The rows do not provide a date-of-fact. A retrieval score therefore measures
+agreement with the supplied historical UID label, not whether the provision is
+the legally current rule after an amendment. Every reproducible run records its
+`as_of` date, dataset SHA-256, models, and retrieval settings in its JSON output.
 
 ## Known defects in the source data
 

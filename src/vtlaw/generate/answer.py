@@ -85,8 +85,8 @@ class AnswerGenerator:
             temperature: LLM sampling temperature.
             max_tokens: Maximum tokens in the generated answer.
             heuristic_rerank: Demote provisions a later document abolished or
-                replaced. Off by default: measured on two datasets with opposite
-                labelling it costs more than it gains (see heuristics module).
+                replaced. This is an amendment-annotation safeguard, not a
+                consolidated-text engine, so it remains an explicit opt-in.
             decompose: Retrieve with LLM-generated sub-queries alongside the
                 original phrasing. Defaults to ``settings.decompose_queries``.
 
@@ -100,11 +100,8 @@ class AnswerGenerator:
         )
         sub_queries = None
         if use_decompose:
-            # Keep the original phrasing as its own leg. Measured on 94 questions:
-            # sub-queries alone beat the single query at k=5 (0.710 vs 0.681) but
-            # lose at k=1 (0.332 vs 0.359) — decomposing trades precision at the
-            # top for reach. Retrieving with both recovers the top and keeps the
-            # reach: recall@1 0.402, recall@5 0.734, recall@30 0.849.
+            # Keep the user's words as a leg: an LLM paraphrase can improve
+            # recall, but it can also lose a discriminating term.
             sub_queries = [question] + [
                 sub["query"] for sub in self._decomposer.decompose(question)
             ]

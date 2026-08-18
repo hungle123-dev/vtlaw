@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from dataclasses import asdict
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
@@ -168,3 +169,20 @@ class TestNoCache:
             response = client.post("/chat", json={"question": "q"})
 
         assert response.status_code == 200
+
+
+class TestTemporalChatContract:
+    def test_as_of_reaches_retrieval_and_cache_without_llm(self):
+        state = _state(llm=False)
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "q", "as_of": "2025-01-01"}
+            )
+
+        assert response.status_code == 200
+        state.retriever.search_and_rerank.assert_called_once()
+        assert state.retriever.search_and_rerank.call_args.kwargs["as_of"] == date(
+            2025, 1, 1
+        )
+        assert state.cache.get_retrieval.call_args.kwargs["as_of"] == date(2025, 1, 1)
+        assert state.cache.set_retrieval.call_args.kwargs["as_of"] == date(2025, 1, 1)

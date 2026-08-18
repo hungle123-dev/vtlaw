@@ -12,9 +12,11 @@ The dataset CSV must have columns: question, reference (comma-separated UIDs).
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import logging
 import time
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -62,6 +64,10 @@ def load_dataset(path: str | Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _file_sha256(path: str | Path) -> str:
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
 def run_eval(
     dataset_path: str | Path,
     *,
@@ -71,6 +77,7 @@ def run_eval(
     rerank: bool = False,
     fetch_k: int | None = None,
     limit: int | None = None,
+    as_of: date | None = None,
 ) -> AggregateMetrics:
     """Run evaluation on a dataset.
 
@@ -85,6 +92,8 @@ def run_eval(
         fetch_k: Candidates to retrieve before reranking. Ignored unless
             ``rerank``. Defaults to 4x top_k.
         limit: Score only the first N rows. For a quick check, not a report.
+        as_of: Legal-effective date applied to every retrieval. ``None`` is
+            captured once as the day the benchmark starts and written to output.
 
     Returns:
         AggregateMetrics with averaged scores.
@@ -99,6 +108,8 @@ def run_eval(
     if not rows:
         log.error("No valid rows found in dataset")
         return AggregateMetrics()
+
+    effective_as_of = as_of or date.today()
 
     settings = get_settings()
     graph_client = GraphClient(settings=settings)
@@ -124,9 +135,13 @@ def run_eval(
                     k=candidates_k,
                     strategy=strategy,
                     rerank_top=top_k,
+                    rerank_enabled=True,
+                    as_of=effective_as_of,
                 )
             else:
-                result = retriever.search(question, k=top_k, strategy=strategy)
+                result = retriever.search(
+                    question, k=top_k, strategy=strategy, as_of=effective_as_of
+                )
         except Exception as e:
             log.error("Search failed for row %d: %s", i, e)
             continue
@@ -147,6 +162,8 @@ def run_eval(
             "mrr": row_metrics.mrr,
         })
 
+    graph_client.close()
+
     # Aggregate
     agg = aggregate_metrics(all_row_metrics)
 
@@ -166,6 +183,7 @@ def run_eval(
     print(f"Evaluation Results ({label}, k={top_k})")
     print(f"{'=' * 60}")
     print(f"Dataset: {dataset_path}")
+    print(f"As of: {effective_as_of.isoformat()}")
     print(f"Rows: {agg.total_rows}")
     print()
     for k in [1, 3, 5, 7, 10]:
@@ -193,6 +211,19 @@ def run_eval(
             "top_k": top_k,
             "fetch_k": candidates_k,
             "dataset": str(dataset_path),
+            "dataset_sha256": _file_sha256(dataset_path),
+            "as_of": effective_as_of.isoformat(),
+            "configuration": {
+                "embed_model": settings.embed_model,
+                "embed_model_revision": settings.embed_model_revision,
+                "rerank_enabled": rerank,
+                "rerank_model": settings.rerank_model,
+                "rerank_model_revision": settings.rerank_model_revision,
+                "query_decomposition": False,
+                "rrf_k": settings.rrf_k,
+                "rrf_vector_weight": settings.rrf_vector_weight,
+                "rrf_bm25_weight": settings.rrf_bm25_weight,
+            },
             "total_rows": agg.total_rows,
             "aggregate": {
                 "recall_at_k": agg.recall_at_k,

@@ -1,192 +1,179 @@
-# vtlaw — Vietnamese traffic-law graph RAG
+# vtlaw — Vietnamese Legal Graph RAG
 
-Question answering over Vietnamese road-traffic law, with citations down to the
-`Điểm / Khoản / Điều` and awareness of which law was in force when.
+A production-minded, reproducible RAG system for Vietnamese road-traffic law.
+It is built on the fixed corpus, QA labels, and amendment annotations supplied
+by [NLP-LegalQA](https://github.com/n3sfan/NLP-LegalQA), while implementing its
+own parser, Neo4j graph, hybrid retrieval, API, and evaluation workflow.
 
-Built on the domain groundwork of [`n3sfan/NLP-LegalQA`](https://github.com/n3sfan/NLP-LegalQA)
-(MIT, © Le Truong Thinh) — used with permission as a reference and as the source
-of the committed corpus. The implementation here is independent.
+This is a portfolio system, not a legal-advice service. It is deliberately
+honest about both what the graph proves and what the fixed source data cannot
+prove.
 
-## Status
+For a concise project narrative, demo flow, and CV-ready bullets, see
+[docs/portfolio-case-study.md](docs/portfolio-case-study.md).
 
-| Stage | | State |
-|---|---|---|
-| 1 | `scrape` — source API → snapshot | done, 20 tests |
-| 2 | `parse` — text → provisions | done, 68 tests |
-| 3 | `graph` — provisions → Neo4j | done, 25 tests |
-| 4 | `embed` — vectors + indexes | done, 7,381/7,381 embedded |
-| 5 | `retrieve` — hybrid search + rerank | done; rerank off by default, see below |
-| 6 | `generate` — answer with citations | done, verified against a live server |
-| 7 | `api` — HTTP surface | done, `/chat` `/health` `/metrics` |
-| 8 | `eval` — recall@k, MRR, latency | done, 94-question dataset |
+## What is implemented
 
-280 offline tests plus 13 that need Neo4j, all passing.
-
-Three modules are written but wired to nothing: `QueryRouter`, `QueryRewriter`,
-`TextToCypher`. They have tests and no callers. The async worker in
-`ingest/worker.py` does not run — it is scaffolding, not working code. There is
-no CI and no frontend.
-
-## Measured retrieval quality
-
-94 questions, `data/evaluation/qa/QA_NLP.csv`, hybrid strategy:
-
-| | recall@1 | recall@5 | recall@30 | MRR | p50 |
-|---|---|---|---|---|---|
-| single query | 0.359 | 0.681 | 0.780 | 0.515 | 0.25s |
-| sub-queries only | 0.332 | 0.710 | 0.826 | 0.529 | 0.32s |
-| **both** (default) | **0.402** | **0.734** | **0.849** | **0.568** | 0.52s |
-
-Query decomposition asks the same question several ways — one LLM call turns
-"vượt đèn đỏ" into "không chấp hành hiệu lệnh của đèn tín hiệu giao thông" and
-splits a multi-violation question into one sub-query per violation — then fuses a
-retrieval pass per phrasing.
-
-Sub-queries *alone* lose at rank 1: paraphrasing into legal vocabulary finds more
-overall but discards the exact wording that made the top hit land. Retrieving
-with the original phrasing **and** its sub-queries recovers rank 1 and keeps the
-reach, so that is the default.
-
-recall@30 is the number to watch. Reranking can only reorder what the first stage
-found, so the share of questions with no correct provision anywhere in 30
-candidates — 22% single, **15% with decomposition** — is only reachable by asking
-a different question.
-
-Per-leg recall at fetch depth 30 is what set the fusion weights:
-
-| | recall@1 | recall@5 | recall@30 |
-|---|---|---|---|
-| vector | 0.391 | 0.657 | 0.780 |
-| bm25 | 0.255 | 0.410 | 0.649 |
-| both, fused | 0.319 | 0.636 | **0.817** |
-
-BM25 is the weaker leg at every depth, but it finds provisions vector misses —
-fusing lifts recall@30 above either leg alone. Weighting the two equally, though,
-let BM25's ordering drag the fused list *below plain vector search* at k=1 and
-k=5. Hence `rrf_vector_weight` / `rrf_bm25_weight`, defaulting 3:1.
-
-**Cross-encoder rerank is off by default.** Measured before decomposition landed:
-recall@1 0.255 against 0.359 without it, MRR 0.421 against 0.473, p50 17s against
-0.24s. It helped 10 questions and hurt 11. The regressions are legible — the
-reranker promotes `168/2024/NĐ-CP` above `100/2019/NĐ-CP`, which is legally
-correct since the 2024 decree replaced the 2019 one, but the dataset is labelled
-against the older law. Worth re-measuring once the labels are reconciled.
-
-One caveat applies to every number above: 85 of the 94 questions have their ground
-truth in one document (`100/2019/NĐ-CP`), so this measures coverage of one decree,
-not of the corpus.
-
-
-## Why a graph
-
-A legal citation *is* a path through a hierarchy, and a Point on its own is not an
-answer. Take `NĐ 168/2024` Điều 6 Khoản 3 điểm a:
-
-```
-Point  a  "Điều khiển xe chạy quá tốc độ quy định từ 05 km/h đến dưới 10 km/h"
-Clause 3  "Phạt tiền từ 800.000 đồng đến 1.000.000 đồng đối với người điều khiển…"
+```text
+NLP-LegalQA snapshot
+        │
+        ▼
+Điều / Khoản / Điểm parser ──► Neo4j hierarchy + AMENDS annotations
+        │                                      │
+        ▼                                      ▼
+exact citation lookup ──► vector + BM25 + weighted RRF ──► graph context
+                                                               │
+                                                               ▼
+                                                   cited LLM answer (optional)
 ```
 
-The offence is in the Point; the amount is in its parent Clause. Retrieval that
-returns the Point alone reads like an answer while omitting the penalty. Walking
-up the hierarchy is a correctness requirement, not a convenience — which is what
-the graph buys.
+- 12 fixed source documents, parsed into 7,381 citable provisions.
+- A graph hierarchy preserves `Document → Article → Clause → Point`; a Point
+  can be expanded with its parent Clause, where a penalty amount often lives.
+- 440 resolved `AMENDS` edges represent NLP-LegalQA amendment annotations.
+- Every retrieval accepts `as_of`; it filters document effective/expiry dates.
+  Amendment demotion is also date-bounded by the amending document's effective
+  date.
+- A full `Điều / Khoản / Điểm + document identity` citation is resolved exactly
+  before approximate retrieval. Ambiguous citations stay on the hybrid path.
+- The baseline is deterministic hybrid retrieval. LLM decomposition and the
+  cross-encoder reranker are opt-in experiments, not hidden defaults.
+- API includes `/health`, `/metrics`, request IDs, optional API-key protection,
+  loopback binding by default, rate limiting, CORS allow-listing, and Redis
+  caching keyed by corpus, model, retrieval configuration, and `as_of` date.
+
+## Legal-temporal boundary
+
+The graph can tell the system that a provision has a recorded `bãi bỏ` or
+`thay thế` relationship as of a given date. It **cannot** reconstruct a new,
+consolidated version of every amended provision: the corpus contains amendment
+instructions, not a verified consolidated text. The system therefore never
+pretends to synthesize a replacement rule; it cites the retrieved source and
+keeps that limitation explicit.
+
+The project uses only the committed NLP-LegalQA artifacts. Scraper code is kept
+to make the original acquisition path inspectable, but normal operation is
+offline and does not fetch PDFs or another legal source. The upstream endpoint
+currently rejects or errors on requests, and the client stops on refusal rather
+than trying to bypass it. See [data/README.md](data/README.md).
+
+## Reproducible evaluation
+
+Scores are meaningful only with their corpus, model revision, retrieval
+settings, and legal date. `vtlaw eval run` writes all of those, plus a dataset
+SHA-256, into its JSON result.
+
+```bash
+vtlaw eval run data/evaluation/qa/QA_NLP.csv \
+  --top-k 5 --as-of 2026-08-18 \
+  --output data/evaluation/results/qa-nlp.json
+
+vtlaw eval run data/evaluation/qa/QA_Part2345.csv \
+  --top-k 5 --as-of 2026-08-18 \
+  --output data/evaluation/results/qa-part2345.json
+```
+
+`QA_Part2`–`QA_Part5` overlap with `QA_Part234` / `QA_Part2345`; they must not
+be averaged as independent datasets. The current reproducible report and its
+limits live in [docs/benchmark.md](docs/benchmark.md).
 
 ## Quick start
 
 ```bash
-docker compose up -d                 # Neo4j on 127.0.0.1:17687, Redis on 16379
-cp .env.example .env                 # set NEO4J_PASSWORD (8+ chars)
-uv venv && uv pip install -e ".[dev,embed,serve]"
+cp .env.example .env
+# Set NEO4J_PASSWORD in .env (and LLM_API_KEY only if generation is wanted).
 
-vtlaw scrape verify                  # hash-check the committed snapshot
-vtlaw parse check                    # 12 documents -> 7,381 provisions
-vtlaw graph import --wipe            # write to Neo4j
-vtlaw graph import-amends            # amendment edges from data/amends
-vtlaw embed run                      # embed provisions missing a vector
-vtlaw graph status                   # read the counts back
+docker compose up -d
+
+uv venv
+uv pip install \
+  --extra-index-url https://download.pytorch.org/whl/cpu \
+  --index-strategy unsafe-best-match \
+  -e ".[dev,embed,serve,worker]"
+
+vtlaw scrape verify             # hash-check only; no network access
+vtlaw parse check               # 12 docs -> 7,381 provisions
+vtlaw graph import --wipe       # imports hierarchy and AMENDS annotations
+vtlaw embed run                 # model/provenance-aware vector refresh
+vtlaw graph status              # read counts and amendment edges back
 ```
 
-Then ask it something:
+After a source re-import, provision vectors are cleared deliberately: their
+input text may have changed. Run `vtlaw embed run` again; it refreshes only
+vectors whose embedding fingerprint is stale or missing.
 
 ```bash
+# Deterministic retrieval-only query
 vtlaw retrieve search "không đội mũ bảo hiểm phạt bao nhiêu"
-vtlaw generate answer "không đội mũ bảo hiểm phạt bao nhiêu"   # needs LLM_API_KEY
-vtlaw api serve                                                 # http://127.0.0.1:18080
-vtlaw eval run data/evaluation/qa/QA_NLP.csv --top-k 5
+
+# Exact citation lookup (no vector search needed for this query)
+vtlaw retrieve search "Điểm a Khoản 3 Điều 6 168/2024/NĐ-CP"
+
+# LLM-backed answer, with a legally scoped date
+vtlaw generate answer "vượt quá tốc độ phạt bao nhiêu" --as-of 2025-01-01
+
+# HTTP API on http://127.0.0.1:18080
+vtlaw api serve
 ```
 
-`vtlaw embed run` is idempotent — it skips nodes that already carry a vector, so
-a re-run after an interruption resumes rather than recomputing.
-
-Inspect a single provision with its ancestors:
+Example API call:
 
 ```bash
-vtlaw parse show "168/2024/NĐ-CP::article::6::clause::3::point::a"
+curl -X POST http://127.0.0.1:18080/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question":"không đội mũ bảo hiểm phạt bao nhiêu","as_of":"2025-01-01"}'
 ```
+
+## Development checks
+
+```bash
+uv run --no-sync ruff check src/ tests/
+uv run --no-sync pytest -m "not integration" -q
+VTLAW_TEST_WIPE=1 uv run --no-sync pytest -m integration -q
+```
+
+Integration tests wipe Neo4j, so run them only against the isolated CI service
+or an expendable local database. They require the explicit `VTLAW_TEST_WIPE=1`
+opt-in. GitHub Actions runs lint, offline tests,
+isolated Neo4j/Redis integration tests, and a non-root Docker image import
+check.
+
+## Scope and Definition of Done
+
+The project is complete for its stated portfolio scope when all of the
+following hold:
+
+1. Snapshot hashes, parser counts, graph counts, AMENDS edges, and embedding
+   coverage agree with their read-back checks.
+2. Unit and isolated integration tests pass; Docker builds and imports.
+3. The two non-overlapping reporting tracks are run with a recorded `as_of`
+   date and their generated JSON is summarized in `docs/benchmark.md`.
+4. API health is green with Neo4j and Redis, and a retrieval-only `/chat` call
+   returns citable sources without requiring an LLM key.
+
+That scope intentionally excludes live crawling, PDF/OCR ingestion, a frontend,
+and legal consolidation. Those require authoritative source access and a
+separate validation process rather than more retrieval code.
 
 ## Layout
 
-```
+```text
 src/vtlaw/
-├── scrape/     stage 1 — the only stage that touches the network
-├── parse/      stage 2 — Điều / Khoản / Điểm extraction
-├── graph/      stage 3 — Neo4j schema, import, AMENDS edges
-├── embed/      stage 4 — vietnamese-bi-encoder vectors
-├── retrieve/   stage 5 — decompose → vector + BM25 → RRF → rerank → heuristic
-├── generate/   stage 6 — graph-walk context → LLM with citations
-├── api/        stage 7 — FastAPI
-├── eval/       stage 8 — recall@k, MRR, latency
-└── ingest/     async worker — does not run yet
+  scrape/      reproducible acquisition client; not part of normal runtime
+  parse/       Vietnamese legal-structure parser and citable UID model
+  graph/       Neo4j schema, hierarchy importer, AMENDS importer
+  embed/       pinned Vietnamese bi-encoder and provenance-aware indexer
+  retrieve/    exact citation lookup, vector/BM25/RRF, temporal safeguards
+  generate/    context construction and optional grounded LLM generation
+  api/         FastAPI application and operational middleware
+  eval/        Recall@k, MRR, latency, reproducibility metadata
+  ingest/      optional ARQ maintenance worker
 
-data/           committed corpus — see data/README.md
-tests/          one directory per stage
+data/          committed NLP-LegalQA snapshot, labels, and annotations
+tests/         offline unit tests and isolated Neo4j integration tests
 ```
-
-Each stage reads what the previous one wrote and is runnable on its own. Only
-`scrape` needs the network, so everything after it replays offline from the
-committed snapshot.
-
-## Testing
-
-```bash
-pytest -m "not integration"    # 280 tests, no services needed
-pytest -m integration          # 13 tests, needs Neo4j running
-```
-
-Integration tests wipe the database. Do not point them at data you care about.
-
-
-## Design notes
-
-**The snapshot is the boundary.** The source API is a public government service
-with no SLA, and it went down mid-development. Committing a hash-verified snapshot
-means every stage after acquisition is reproducible without it. See
-[`data/README.md`](data/README.md) for provenance and measured defects.
-
-**HTTP 200 is not success.** The source answers `200` with a non-null `error`
-field when its backend fails. `raise_for_status()` passes that, so the client
-validates the envelope — otherwise an upstream failure is recorded as "no more
-documents".
-
-**A refusal is not a fault.** On `403` the client stops rather than retrying or
-working around it.
-
-**Counts are read back, not trusted.** `vtlaw graph import` compares the parse
-count, the import count, and a count queried from the database. Agreement is the
-check; a write that reports success without landing fails it.
-
-**Duplicate numbering does not merge.** When a document numbers two distinct
-provisions identically, both are kept under distinct UIDs. Measured: this recovers
-2 provisions in `118/2025/QH15` that a naive UID scheme loses.
-
-**A silent fallback hid a dead reranker.** `rerank` catches
-`(ImportError, ValueError, OSError)` and returns the unranked hits. That is the
-right behaviour — retrieval should degrade, not fail — but the reranker raised
-`ValueError: Unrecognized processing class` on every call for want of
-`sentencepiece`, logged one WARNING, and the pipeline reported success while
-ranking nothing. The fallback is still there; the dependency is now declared.
 
 ## Licence
 
-MIT.
+MIT. Corpus provenance and constraints are documented in
+[data/README.md](data/README.md).

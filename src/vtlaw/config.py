@@ -13,8 +13,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Model revisions are pinned so a silently-updated upstream checkpoint cannot
 # change embeddings underneath an index that was built with the old weights.
-EMBED_MODEL_REVISION = "main"
-RERANK_MODEL_REVISION = "main"
+EMBED_MODEL_REVISION = "84f9d9ada0d1a3c37557398b9ae9fcedcdf40be0"
+RERANK_MODEL_REVISION = "f536976248403314225d7fdfdbc87f0e9516a54e"
 
 EMBED_DIM = 768
 # The real limit from `sentence_bert_config.json`. The tokenizer config reports
@@ -46,7 +46,10 @@ class Settings(BaseSettings):
     llm_retry_base_s: float = Field(default=2.0, gt=0.0, le=60.0)
 
     embed_model: str = "bkai-foundation-models/vietnamese-bi-encoder"
+    embed_model_revision: str = EMBED_MODEL_REVISION
     rerank_model: str = "AITeamVN/Vietnamese_Reranker"
+    rerank_model_revision: str = RERANK_MODEL_REVISION
+    rerank_enabled: bool = False
     embed_device: Literal["auto", "cpu", "cuda"] = "auto"
     embed_batch_size: int = 32
 
@@ -84,34 +87,20 @@ class Settings(BaseSettings):
     # filtering is what stops an ineligible hit from evicting an eligible one.
     overfetch_factor: int = Field(default=4, ge=1, le=20)
 
-    # RRF fusion. Measured on the 94-question set, hybrid at these defaults:
-    #
-    #   K=60 w1:1 (textbook)  recall@1 0.319  recall@5 0.636
-    #   K=10 w3:1 (here)      recall@1 0.359  recall@5 0.681
-    #
-    # rrf_k damps the rank signal. The textbook 60 was chosen for lists in the
-    # thousands; over a 30-candidate list it maps ranks 1..30 onto 1/61..1/90 —
-    # a 1.5x spread, so rank 1 and rank 30 score almost alike.
+    # RRF fusion. A small damping constant makes rank differences meaningful in
+    # this deliberately small candidate pool. Treat these as a baseline, not a
+    # universal legal-retrieval optimum; evaluation records every value used.
     rrf_k: int = Field(default=10, ge=1, le=100)
 
-    # Vector search outranks BM25 on this corpus at every depth (recall@1 0.391
-    # vs 0.255). Equal RRF weight let the weaker leg drag the stronger one down,
-    # making hybrid worse than vector alone. Weight the legs by measured quality.
+    # Vector is given the stronger prior; benchmark a proposed change against
+    # the recorded NLP-LegalQA evaluation tracks before making it the default.
     rrf_vector_weight: float = Field(default=3.0, gt=0.0, le=10.0)
     rrf_bm25_weight: float = Field(default=1.0, gt=0.0, le=10.0)
 
-    # Query decomposition. One extra LLM call per question, then one retrieval
-    # pass per phrasing. Measured on the 94-question set, retrieving with the
-    # original query *and* its sub-queries:
-    #
-    #   single           recall@1 0.359  recall@5 0.681  recall@30 0.780
-    #   sub-queries only recall@1 0.332  recall@5 0.710  recall@30 0.826
-    #   both (here)      recall@1 0.402  recall@5 0.734  recall@30 0.849
-    #
-    # The recall@30 lift is what matters: reranking can only reorder what the
-    # first stage found, so raising that ceiling needs a different query. Costs
-    # ~0.26s of extra retrieval plus the decomposition call.
-    decompose_queries: bool = True
+    # Query decomposition adds an LLM request and makes a run non-deterministic
+    # unless the provider/model/prompt are controlled. Keep it off for the
+    # reproducible retrieval baseline; benchmark it as a separate experiment.
+    decompose_queries: bool = False
 
     def cors_origin_list(self) -> list[str]:
         """`cors_origins` as a list. Comma-separated in the environment."""

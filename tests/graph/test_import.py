@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from vtlaw.graph import GraphClient, count_graph, import_documents
+from vtlaw.graph import GraphClient, count_graph, import_amends_directory, import_documents
 from vtlaw.parse import Document, ParsedDocument, parse_corpus, parse_text
 from vtlaw.scrape import Snapshot
 
@@ -29,6 +29,8 @@ EXPECTED_ARTICLES = 566
 EXPECTED_CLAUSES = 2_763
 EXPECTED_POINTS = 4_052
 EXPECTED_PROVISIONS = 7_381
+EXPECTED_AMEND_EDGES = 440
+EXPECTED_UNRESOLVED_AMENDS = 30
 
 pytestmark = pytest.mark.integration
 
@@ -368,3 +370,27 @@ def test_known_citation_path_is_traversable(clean: GraphClient):
     assert "Phạt tiền" in row["clause_text"], "the penalty lives in the parent clause"
     assert "ô tô" in row["article_title"]
     assert str(row["effect_date"]) == "2025-01-01"
+
+
+@pytest.mark.skipif(
+    not (SNAPSHOT_ROOT / "manifest.json").exists(), reason="snapshot not present"
+)
+def test_amendment_annotations_resolve_to_the_snapshot_graph(clean: GraphClient):
+    """The graph must preserve every annotation whose endpoints exist.
+
+    Some labels deliberately point to provisions inserted only inside quoted
+    amendment text; those are not graph nodes and are reported as unresolved,
+    never fabricated.
+    """
+    documents, _ = parse_corpus(Snapshot(SNAPSHOT_ROOT))
+    import_documents(clean, documents)
+
+    stats = import_amends_directory(clean, "data/amends")
+    with clean.session() as session:
+        edge_count = session.run(
+            "MATCH ()-[r:AMENDS]->() RETURN count(r) AS n"
+        ).single()["n"]
+
+    assert stats.imported == EXPECTED_AMEND_EDGES
+    assert stats.skipped == EXPECTED_UNRESOLVED_AMENDS
+    assert edge_count == EXPECTED_AMEND_EDGES

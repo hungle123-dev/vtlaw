@@ -64,7 +64,7 @@ def generator_parts(monkeypatch):
 
 class TestDecomposeWiring:
     def test_passes_sub_queries_to_retrieval(self, generator_parts):
-        gen, retriever, _ = generator_parts()
+        gen, retriever, _ = generator_parts(decompose_queries=True)
 
         gen.answer("không đội mũ bảo hiểm phạt bao nhiêu")
 
@@ -74,7 +74,7 @@ class TestDecomposeWiring:
         """Measured: sub-queries alone lose at k=1 (0.332 vs 0.359); with the
         original included, recall@1 rises to 0.402. Dropping it costs precision
         at the top of the list."""
-        gen, retriever, _ = generator_parts()
+        gen, retriever, _ = generator_parts(decompose_queries=True)
         question = "không đội mũ bảo hiểm phạt bao nhiêu"
 
         gen.answer(question)
@@ -107,12 +107,12 @@ class TestDecomposeWiring:
         assert retriever.search_and_rerank.call_args.kwargs["sub_queries"] is not None
         decomposer.decompose.assert_called_once()
 
-    def test_on_by_default(self, generator_parts):
+    def test_off_by_default(self, generator_parts):
         gen, _, decomposer = generator_parts()
 
         gen.answer("q")
 
-        decomposer.decompose.assert_called_once_with("q")
+        decomposer.decompose.assert_not_called()
 
     def test_answer_still_generated(self, generator_parts):
         """Decomposition must not disturb the generation path."""

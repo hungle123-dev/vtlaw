@@ -11,6 +11,7 @@ Uses unittest.mock to mock Redis, so no Redis connection needed.
 
 from __future__ import annotations
 
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -129,6 +130,35 @@ class TestRetrievalCache:
 
         cache.set_retrieval("query", "hybrid", 30, 8, [])
         cache.set_retrieval("query", "hybrid", 30, 10, [])
+
+        key1 = mock_redis.setex.call_args_list[0][0][0]
+        key2 = mock_redis.setex.call_args_list[1][0][0]
+        assert key1 != key2
+
+    def test_different_as_of_dates_use_different_keys(self, cache, mock_redis):
+        cache.set_retrieval(
+            "query", "hybrid", 30, 8, [], as_of=date(2025, 1, 1)
+        )
+        cache.set_retrieval(
+            "query", "hybrid", 30, 8, [], as_of=date(2026, 1, 1)
+        )
+
+        key1 = mock_redis.setex.call_args_list[0][0][0]
+        key2 = mock_redis.setex.call_args_list[1][0][0]
+        assert key1 != key2
+
+    def test_default_as_of_is_keyed_as_today(self, cache, mock_redis):
+        cache.set_retrieval("query", "hybrid", 30, 8, [])
+        cache.set_retrieval("query", "hybrid", 30, 8, [], as_of=date.today())
+
+        key1 = mock_redis.setex.call_args_list[0][0][0]
+        key2 = mock_redis.setex.call_args_list[1][0][0]
+        assert key1 == key2
+
+    def test_rerank_setting_changes_the_retrieval_key(self, cache, mock_redis):
+        cache.set_retrieval("query", "hybrid", 30, 8, [])
+        cache._settings.rerank_enabled = True
+        cache.set_retrieval("query", "hybrid", 30, 8, [])
 
         key1 = mock_redis.setex.call_args_list[0][0][0]
         key2 = mock_redis.setex.call_args_list[1][0][0]

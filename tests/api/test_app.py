@@ -179,7 +179,7 @@ def mock_app():
         mock_state.cache = mock_cache
 
         mock_retriever = MagicMock()
-        mock_retriever.search.return_value = MagicMock(
+        mock_retriever.search_and_rerank.return_value = MagicMock(
             hits=[
                 make_hit(
                     uid="168/2024/NĐ-CP::article::6::clause::3::point::a",
@@ -189,6 +189,7 @@ def mock_app():
                 )
             ],
             strategy="hybrid",
+            reranked=False,
         )
         mock_state.retriever = mock_retriever
         mock_state.generator = None
