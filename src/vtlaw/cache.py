@@ -106,6 +106,7 @@ class Cache:
             str(settings.rerank_enabled),
             settings.rerank_model,
             settings.rerank_model_revision,
+            str(settings.decompose_queries),
         ]
 
     def get_retrieval(

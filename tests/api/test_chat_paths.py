@@ -38,12 +38,14 @@ def _state(*, cached_hits=None, cached_answer=None, llm=False, api_key=""):
     state.settings.context_k = 8
     state.settings.embed_model = "test-embed"
     state.settings.llm_model = "test-llm"
+    state.settings.decompose_queries = False
     # Set explicitly: a MagicMock attribute is truthy, so leaving api_key unset
     # would silently turn auth on for every test with an unusable key.
     state.settings.api_key = api_key
     state.settings.rate_limit_per_minute = 1000
     state.llm_configured = llm
     state.graph = MagicMock()
+    state.decomposer = None
 
     cache = MagicMock()
     cache.get_retrieval.return_value = cached_hits
@@ -186,3 +188,20 @@ class TestTemporalChatContract:
         )
         assert state.cache.get_retrieval.call_args.kwargs["as_of"] == date(2025, 1, 1)
         assert state.cache.set_retrieval.call_args.kwargs["as_of"] == date(2025, 1, 1)
+
+
+class TestQueryDecomposition:
+    def test_enabled_decomposition_reaches_retrieval(self):
+        state = _state(llm=True)
+        state.settings.decompose_queries = True
+        state.decomposer = MagicMock()
+        state.decomposer.decompose.return_value = [{"query": "vượt đèn đỏ xe mô tô"}]
+
+        with client_for(state) as client:
+            response = client.post("/chat", json={"question": "vượt đèn đỏ phạt thế nào"})
+
+        assert response.status_code == 200
+        assert state.retriever.search_and_rerank.call_args.kwargs["sub_queries"] == [
+            "vượt đèn đỏ phạt thế nào",
+            "vượt đèn đỏ xe mô tô",
+        ]

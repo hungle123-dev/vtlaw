@@ -75,6 +75,7 @@ def run_eval(
     strategy: str = "hybrid",
     output_path: str | Path | None = None,
     rerank: bool = False,
+    decompose: bool = False,
     fetch_k: int | None = None,
     limit: int | None = None,
     as_of: date | None = None,
@@ -89,8 +90,12 @@ def run_eval(
         rerank: Cross-encoder rerank the candidates before scoring. Retrieval
             fetches ``fetch_k`` candidates and the reranker picks ``top_k``, so
             this can raise recall@k for k < fetch_k, not just reorder.
-        fetch_k: Candidates to retrieve before reranking. Ignored unless
-            ``rerank``. Defaults to 4x top_k.
+        fetch_k: Candidate budget for each retrieval leg. With ``rerank``,
+            the same number of fused candidates is scored by the cross-encoder.
+            Defaults to 4x ``top_k`` for reranking; otherwise the configured
+            retrieval budget is used.
+        decompose: Use LLM-generated query phrasings alongside the original
+            question, recording the exact phrasings in the result artifact.
         limit: Score only the first N rows. For a quick check, not a report.
         as_of: Legal-effective date applied to every retrieval. ``None`` is
             captured once as the day the benchmark starts and written to output.
@@ -115,32 +120,52 @@ def run_eval(
     graph_client = GraphClient(settings=settings)
     embedder = Embedder(settings=settings)
     retriever = HybridRetriever(graph_client, embedder, settings)
-    candidates_k = (fetch_k or top_k * 4) if rerank else top_k
+    decomposer = None
+    if decompose:
+        from vtlaw.generate.llm_client import LLMClient
+        from vtlaw.retrieve.query_parser import QueryDecomposer
+
+        decomposer = QueryDecomposer(LLMClient(settings))
+    candidates_k = fetch_k or top_k * 4
 
     all_row_metrics: list[RowMetrics] = []
     latencies: list[float] = []
     detailed_results: list[dict] = []
 
     for i, row in enumerate(rows):
+        start = time.time()
         question = row["question"]
         references = row["references"]
+        sub_queries = None
+        if decomposer:
+            generated = [sub["query"] for sub in decomposer.decompose(question)]
+            sub_queries = list(dict.fromkeys([question, *generated]))
 
         log.info("[%d/%d] Q: %s", i + 1, len(rows), question[:80])
 
-        start = time.time()
         try:
+            search_kwargs: dict[str, Any] = {
+                "strategy": strategy,
+                "as_of": effective_as_of,
+            }
+            if sub_queries is not None:
+                search_kwargs["sub_queries"] = sub_queries
             if rerank:
                 result = retriever.search_and_rerank(
                     question,
-                    k=candidates_k,
-                    strategy=strategy,
-                    rerank_top=top_k,
+                    k=top_k,
+                    rerank_top=candidates_k,
+                    fetch_k=candidates_k,
                     rerank_enabled=True,
-                    as_of=effective_as_of,
+                    **search_kwargs,
                 )
             else:
+                if fetch_k is not None:
+                    search_kwargs["fetch_k"] = fetch_k
                 result = retriever.search(
-                    question, k=top_k, strategy=strategy, as_of=effective_as_of
+                    question,
+                    k=top_k,
+                    **search_kwargs,
                 )
         except Exception as e:
             log.error("Search failed for row %d: %s", i, e)
@@ -160,6 +185,7 @@ def run_eval(
             "recall@5": row_metrics.recall_at_k.get(5, 0.0),
             "recall@10": row_metrics.recall_at_k.get(10, 0.0),
             "mrr": row_metrics.mrr,
+            "sub_queries": sub_queries,
         })
 
     graph_client.close()
@@ -178,7 +204,11 @@ def run_eval(
         p50 = p95 = p99 = 0.0
 
     # Print summary
-    label = f"{strategy}+rerank" if rerank else strategy
+    label = strategy
+    if rerank:
+        label += "+rerank"
+    if decompose:
+        label += "+decompose"
     print(f"\n{'=' * 60}")
     print(f"Evaluation Results ({label}, k={top_k})")
     print(f"{'=' * 60}")
@@ -209,7 +239,7 @@ def run_eval(
         full_output = {
             "strategy": label,
             "top_k": top_k,
-            "fetch_k": candidates_k,
+            "fetch_k": candidates_k if rerank else (fetch_k or settings.fetch_k),
             "dataset": str(dataset_path),
             "dataset_sha256": _file_sha256(dataset_path),
             "as_of": effective_as_of.isoformat(),
@@ -219,7 +249,8 @@ def run_eval(
                 "rerank_enabled": rerank,
                 "rerank_model": settings.rerank_model,
                 "rerank_model_revision": settings.rerank_model_revision,
-                "query_decomposition": False,
+                "query_decomposition": decompose,
+                "llm_model": settings.llm_model if decompose else None,
                 "rrf_k": settings.rrf_k,
                 "rrf_vector_weight": settings.rrf_vector_weight,
                 "rrf_bm25_weight": settings.rrf_bm25_weight,

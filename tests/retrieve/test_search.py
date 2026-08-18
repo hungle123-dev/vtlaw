@@ -84,6 +84,7 @@ def _settings(**overrides):
         "rrf_vector_weight": 3.0,
         "rrf_bm25_weight": 1.0,
         "rerank_enabled": False,
+        "rerank_top": 15,
     }
     return MagicMock(**{**defaults, **overrides})
 
@@ -326,8 +327,8 @@ class TestRerank:
         assert by_uid["b"].doc_identity == "doc2"
         assert by_uid["b"].content == "content2"
 
-    def test_returns_hits_on_import_error(self):
-        """If sentence-transformers is not installed, rerank returns hits[:k]."""
+    def test_returns_none_on_import_error(self):
+        """A caller must be able to distinguish fallback from real reranking."""
         hits = [make_hit(uid="a"), make_hit(uid="b")]
 
         with patch(
@@ -336,8 +337,7 @@ class TestRerank:
         ):
             reranked = rerank(hits, "query", k=1, reranker_model="test-model")
 
-        assert len(reranked) == 1
-        assert reranked[0].uid == "a"
+        assert reranked is None
 
     def test_uses_embedding_text_for_pairs(self):
         """rerank should build (query, embedding_text) pairs."""
@@ -588,6 +588,34 @@ class TestHybridRetriever:
 
         assert retriever.search.call_args.kwargs["as_of"] == date(2025, 1, 1)
 
+    def test_rerank_fetches_a_candidate_pool_before_returning_top_k(self, mock_embedder):
+        """The cross-encoder needs more candidates than the requested output."""
+        pool = [
+            Hit(
+                uid=f"doc::article::{i}",
+                score=1.0,
+                doc_identity="doc",
+                label="Article",
+                content=f"content {i}",
+            )
+            for i in range(4)
+        ]
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=pool, strategy="hybrid")
+        )
+
+        with patch("vtlaw.retrieve.search.rerank", return_value=pool[:2]) as reranker:
+            result = retriever.search_and_rerank(
+                "query", k=2, rerank_top=4, fetch_k=7, rerank_enabled=True
+            )
+
+        assert retriever.search.call_args.kwargs["k"] == 4
+        assert retriever.search.call_args.kwargs["fetch_k"] == 7
+        assert reranker.call_args.args[0] == pool
+        assert reranker.call_args.args[2] == 2
+        assert result.hits == pool[:2]
+
     def test_temporal_heuristic_uses_as_of_date(self, mock_embedder):
         hit = make_hit()
         retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
@@ -621,4 +649,17 @@ class TestHybridRetriever:
             result = retriever.search_and_rerank("query")
 
         rerank_mock.assert_not_called()
+        assert result.reranked is False
+
+    def test_unavailable_reranker_is_not_reported_as_applied(self, mock_embedder):
+        hit = make_hit()
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=[hit], strategy="hybrid")
+        )
+
+        with patch("vtlaw.retrieve.search.rerank", return_value=None):
+            result = retriever.search_and_rerank("query", rerank_enabled=True)
+
+        assert result.hits == [hit]
         assert result.reranked is False

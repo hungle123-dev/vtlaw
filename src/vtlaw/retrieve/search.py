@@ -411,12 +411,14 @@ def rerank(
     k: int,
     reranker_model: str = "AITeamVN/Vietnamese_Reranker",
     reranker_revision: str = RERANK_MODEL_REVISION,
-) -> list[Hit]:
+) -> list[Hit] | None:
     """Cross-encoder rerank: score (query, provision) pairs directly.
 
     The cross-encoder reads the full pair rather than comparing two vectors,
     so it catches fine-grained mismatches that a vector similarity score
     cannot. Slower than vector search, so only applied to the top candidates.
+    Returns ``None`` when the model cannot run so callers do not misreport a
+    fallback as a successful rerank.
     """
     if not hits:
         return hits[:k]
@@ -427,7 +429,7 @@ def rerank(
         scores = model.predict(pairs)
     except (ImportError, ValueError, OSError) as exc:
         log.warning("reranker unavailable (%s); skipping rerank", exc)
-        return hits[:k]
+        return None
 
     reranked = [
         Hit(
@@ -517,6 +519,7 @@ class HybridRetriever:
         k: int = 10,
         strategy: Literal["hybrid", "vector", "bm25"] = "hybrid",
         rerank_top: int | None = None,
+        fetch_k: int | None = None,
         reranker_model: str | None = None,
         rerank_enabled: bool | None = None,
         heuristic_rerank: bool = False,
@@ -529,7 +532,9 @@ class HybridRetriever:
             query: The user query.
             k: Number of hits to return.
             strategy: "hybrid", "vector", or "bm25".
-            rerank_top: Number of candidates to rerank with cross-encoder.
+            rerank_top: Number of candidates to rerank with the cross-encoder.
+                The returned result still contains only ``k`` hits.
+            fetch_k: Candidates fetched by each retrieval leg before fusion.
             reranker_model: Cross-encoder model name.
             rerank_enabled: Override the configured cross-encoder opt-in.
             heuristic_rerank: If True, demote provisions an amendment has
@@ -542,8 +547,17 @@ class HybridRetriever:
         Returns:
             RetrievalResult with reranked hits.
         """
+        should_rerank = (
+            self._settings.rerank_enabled if rerank_enabled is None else rerank_enabled
+        )
+        candidate_k = max(k, rerank_top or self._settings.rerank_top) if should_rerank else k
         result = self.search(
-            query, k=k, strategy=strategy, sub_queries=sub_queries, as_of=as_of
+            query,
+            k=candidate_k,
+            strategy=strategy,
+            fetch_k=fetch_k,
+            sub_queries=sub_queries,
+            as_of=as_of,
         )
 
         if not result.hits:
@@ -551,19 +565,18 @@ class HybridRetriever:
                 query=query, hits=[], retrieval_score=strategy, reranked=False
             )
 
-        should_rerank = (
-            self._settings.rerank_enabled if rerank_enabled is None else rerank_enabled
-        )
         if should_rerank:
-            rerank_k = rerank_top or min(k, 20)
             reranker = reranker_model or self._settings.rerank_model
             reranked_hits = rerank(
                 result.hits,
                 query,
-                rerank_k,
+                k,
                 reranker,
                 self._settings.rerank_model_revision,
             )
+            if reranked_hits is None:
+                reranked_hits = result.hits[:k]
+                should_rerank = False
         else:
             reranked_hits = result.hits
 

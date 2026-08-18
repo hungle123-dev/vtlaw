@@ -18,13 +18,20 @@ dependencies = [
 [project.optional-dependencies]
 # stage 4 (embed) + stage 5 (retrieve): heavy ML wheels, installed on demand
 embed = [
-    "sentence-transformers>=3.3.0",
+    # Both committed checkpoints were validated against this compatible stack.
+    # Unbounded 5.x sentence-transformers broke the 4.51 model runtime.
+    "sentence-transformers==3.4.1",
+    # This XLM-R checkpoint was published with 4.51. Its sentencepiece tokenizer
+    # does not load on Transformers 5, and newer 4.x versions are unverified.
+    "transformers==4.51.0",
+    "accelerate>=1.6.0,<2.0.0",
     "pyvi>=0.1.1",
     # The reranker (AITeamVN/Vietnamese_Reranker) is XLM-RoBERTa: its tokenizer
     # is a sentencepiece.bpe.model. Without these two, CrossEncoder raises
     # "Unrecognized processing class" and rerank is silently skipped —
     # retrieval keeps working at materially worse quality.
     "sentencepiece>=0.2.0",
+    "protobuf>=5.29.0,<6.0.0",
     "tiktoken>=0.8.0",
 ]
 # stage 6 (generate) + stage 7 (api)

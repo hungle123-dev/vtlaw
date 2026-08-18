@@ -471,6 +471,7 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         strategy=args.strategy,
         output_path=output,
         rerank=args.rerank,
+        decompose=args.decompose,
         fetch_k=args.fetch_k,
         limit=args.limit,
         as_of=args.as_of,
@@ -684,8 +685,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="cross-encoder rerank the candidates before scoring",
     )
     eval_run.add_argument(
+        "--decompose", action="store_true",
+        help="expand each question with LLM-generated legal-search phrasings",
+    )
+    eval_run.add_argument(
         "--fetch-k", type=int, default=None,
-        help="candidates to retrieve before rerank (default: 4x top-k)",
+        help="candidate budget per retrieval leg; reranker scores that pool (default: 4x top-k)",
     )
     eval_run.add_argument(
         "--limit", type=int, default=None,

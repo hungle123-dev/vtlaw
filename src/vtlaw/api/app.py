@@ -45,6 +45,7 @@ from vtlaw.generate.llm_client import LLMClient
 from vtlaw.graph.client import GraphClient
 from vtlaw.metrics import increment_requests, observe_request_duration
 from vtlaw.parse.models import uid_to_citation
+from vtlaw.retrieve.query_parser import QueryDecomposer
 from vtlaw.retrieve.search import Hit, HybridRetriever
 
 log = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ class AppState:
         self.embedder: Embedder | None = None
         self.retriever: HybridRetriever | None = None
         self.generator: AnswerGenerator | None = None
+        self.decomposer: QueryDecomposer | None = None
         self.cache: Cache | None = None
         self.llm_configured = bool(settings.llm_api_key)
 
@@ -89,6 +91,7 @@ class AppState:
             self.generator = AnswerGenerator(
                 self.graph, self.embedder, llm, self.settings
             )
+            self.decomposer = QueryDecomposer(llm)
 
     def close(self) -> None:
         if self.graph:
@@ -306,6 +309,10 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
         hits = [Hit(**row) for row in cached_hits]
         reranked = False
     else:
+        sub_queries = None
+        if state.settings.decompose_queries and state.decomposer:
+            generated = [sub["query"] for sub in state.decomposer.decompose(req.question)]
+            sub_queries = list(dict.fromkeys([req.question, *generated]))
         result = state.retriever.search_and_rerank(
             req.question,
             k=state.settings.context_k,
@@ -313,6 +320,7 @@ async def chat(req: ChatRequest, request: Request) -> ChatResponse:
             rerank_top=state.settings.rerank_top,
             heuristic_rerank=True,
             as_of=req.as_of,
+            sub_queries=sub_queries,
         )
         hits = list(result.hits)
         reranked = getattr(result, "reranked", False)
