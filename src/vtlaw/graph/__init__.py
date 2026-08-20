@@ -16,6 +16,7 @@ from vtlaw.graph.importer import (
     count_graph,
     import_documents,
 )
+from vtlaw.graph.query_templates import GraphAnswer, StructuredGraphQueries
 from vtlaw.graph.schema import (
     ALL_SCHEMA_STATEMENTS,
     CHILD_RELATIONSHIP,
@@ -27,9 +28,11 @@ __all__ = [
     "AmendStats",
     "CHILD_RELATIONSHIP",
     "PROVISION_LABELS",
+    "GraphAnswer",
     "GraphClient",
     "GraphCounts",
     "ImportStats",
+    "StructuredGraphQueries",
     "count_graph",
     "import_amends_directory",
     "import_amends_file",

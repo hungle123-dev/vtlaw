@@ -35,6 +35,7 @@ from vtlaw.retrieve.heuristics import (
     fetch_abolished_uids,
 )
 from vtlaw.retrieve.query_parser import QueryDecomposer, SubQuery
+from vtlaw.retrieve.router import Intent, QueryRouter
 from vtlaw.retrieve.search import (
     Hit,
     HybridRetriever,
@@ -47,7 +48,9 @@ __all__ = [
     "ABOLISHED_PENALTY",
     "Hit",
     "HybridRetriever",
+    "Intent",
     "QueryDecomposer",
+    "QueryRouter",
     "REPLACED_PENALTY",
     "RetrievalResult",
     "SearchResult",

@@ -17,7 +17,13 @@ from pathlib import Path
 
 import pytest
 
-from vtlaw.graph import GraphClient, count_graph, import_amends_directory, import_documents
+from vtlaw.graph import (
+    GraphClient,
+    StructuredGraphQueries,
+    count_graph,
+    import_amends_directory,
+    import_documents,
+)
 from vtlaw.parse import Document, ParsedDocument, parse_corpus, parse_text
 from vtlaw.scrape import Snapshot
 
@@ -394,3 +400,27 @@ def test_amendment_annotations_resolve_to_the_snapshot_graph(clean: GraphClient)
     assert stats.imported == EXPECTED_AMEND_EDGES
     assert stats.skipped == EXPECTED_UNRESOLVED_AMENDS
     assert edge_count == EXPECTED_AMEND_EDGES
+
+
+@pytest.mark.skipif(
+    not (SNAPSHOT_ROOT / "manifest.json").exists(), reason="snapshot not present"
+)
+def test_graph_amendment_history_respects_the_amending_document_effective_date(
+    clean: GraphClient,
+):
+    """An AMENDS edge is not current law until its source document takes effect."""
+    documents, _ = parse_corpus(Snapshot(SNAPSHOT_ROOT))
+    import_documents(clean, documents)
+    import_amends_directory(clean, "data/amends")
+    service = StructuredGraphQueries(clean)
+
+    before = service.answer(
+        "Văn bản nào bãi bỏ quy định của 100/2019/NĐ-CP?", as_of=date(2021, 12, 31)
+    )
+    after = service.answer(
+        "Văn bản nào bãi bỏ quy định của 100/2019/NĐ-CP?", as_of=date(2022, 1, 1)
+    )
+
+    assert before is not None and after is not None
+    assert "123/2021/NĐ-CP" not in before.answer
+    assert "123/2021/NĐ-CP" in after.answer
