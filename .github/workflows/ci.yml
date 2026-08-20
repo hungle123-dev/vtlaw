@@ -128,11 +128,13 @@ jobs:
       # A built image that cannot import its own package is a broken image. This
       # caught a real bug: Settings was constructed at module scope, so importing
       # the API failed without a full .env.
-      - name: image imports the package
+      - name: image imports the package and ships the UI
         run: |
           docker run --rm vtlaw:ci python -c "
-          import vtlaw.api.app, vtlaw.retrieve, vtlaw.generate
-          print('imports OK')
+          from vtlaw.api.app import _UI_PATH
+          import vtlaw.retrieve, vtlaw.generate
+          assert _UI_PATH.is_file(), _UI_PATH
+          print('imports OK; UI included')
           "
 
       - name: image runs as non-root
