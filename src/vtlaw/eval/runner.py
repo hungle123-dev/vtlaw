@@ -131,6 +131,10 @@ def run_eval(
     all_row_metrics: list[RowMetrics] = []
     latencies: list[float] = []
     detailed_results: list[dict] = []
+    # A row whose retrieval raised is dropped from the averages. Counting them
+    # is the difference between "0.87 over 94 rows" and "0.87 over the 90 rows
+    # that did not crash" — the second is a different claim.
+    skipped: list[dict[str, str]] = []
 
     for i, row in enumerate(rows):
         start = time.time()
@@ -169,12 +173,13 @@ def run_eval(
                 )
         except Exception as e:
             log.error("Search failed for row %d: %s", i, e)
+            skipped.append({"question": question, "error": f"{type(e).__name__}: {e}"})
             continue
         latency = time.time() - start
         latencies.append(latency)
 
         retrieved_uids = [h.uid for h in result.hits]
-        row_metrics = compute_row_metrics(retrieved_uids, references)
+        row_metrics = compute_row_metrics(retrieved_uids, references, top_k=top_k)
         all_row_metrics.append(row_metrics)
 
         detailed_results.append({
@@ -182,8 +187,7 @@ def run_eval(
             "references": references,
             "retrieved": retrieved_uids,
             "latency_s": round(latency, 3),
-            "recall@5": row_metrics.recall_at_k.get(5, 0.0),
-            "recall@10": row_metrics.recall_at_k.get(10, 0.0),
+            "recall_at_k": row_metrics.recall_at_k,
             "mrr": row_metrics.mrr,
             "sub_queries": sub_queries,
         })
@@ -215,13 +219,13 @@ def run_eval(
     print(f"Dataset: {dataset_path}")
     print(f"As of: {effective_as_of.isoformat()}")
     print(f"Rows: {agg.total_rows}")
+    if skipped:
+        print(f"Skipped (retrieval error): {len(skipped)} — excluded from every score")
     print()
-    for k in [1, 3, 5, 7, 10]:
-        recall = agg.recall_at_k.get(k, 0.0)
+    for k, recall in sorted(agg.recall_at_k.items()):
         print(f"  Recall@{k:2d}: {recall:.4f}")
     print()
-    for k in [1, 3]:
-        precision = agg.precision_at_k.get(k, 0.0)
+    for k, precision in sorted(agg.precision_at_k.items()):
         print(f"  Precision@{k}: {precision:.4f}")
     print()
     print(f"  MRR: {agg.mrr:.4f}")
@@ -254,8 +258,11 @@ def run_eval(
                 "rrf_k": settings.rrf_k,
                 "rrf_vector_weight": settings.rrf_vector_weight,
                 "rrf_bm25_weight": settings.rrf_bm25_weight,
+                "overfetch_factor": settings.overfetch_factor,
             },
             "total_rows": agg.total_rows,
+            "dataset_rows": len(rows),
+            "skipped_rows": skipped,
             "aggregate": {
                 "recall_at_k": agg.recall_at_k,
                 "precision_at_k": agg.precision_at_k,

@@ -18,6 +18,11 @@ from dataclasses import dataclass, field
 # "article::1" is a prefix of "article::12" as a string but not as a provision.
 UID_SEP = "::"
 
+# Cutoffs the report covers, and the subset precision is meaningful at. Defined
+# once so a row and its aggregate can never disagree about which k exist.
+REPORTED_K = (1, 3, 5, 7, 10)
+PRECISION_K = (1, 3)
+
 
 @dataclass
 class RowMetrics:
@@ -71,18 +76,28 @@ def mrr(retrieved_uids: list[str], references: list[str]) -> float:
     return 0.0
 
 
-def compute_row_metrics(retrieved_uids: list[str], references: list[str]) -> RowMetrics:
-    """Compute all metrics for a single row."""
+def compute_row_metrics(
+    retrieved_uids: list[str], references: list[str], *, top_k: int | None = None
+) -> RowMetrics:
+    """Compute all metrics for a single row.
+
+    ``top_k`` bounds which cutoffs are reported, and the runner passes the depth
+    it actually requested. A top-5 run has no recall@10 to speak of: the number
+    equals recall@5 and reads as a plateau in the results table when it is only
+    truncation. Unbounded, every cutoff in :data:`REPORTED_K` is computed.
+    """
     metrics = RowMetrics()
     total_relevant = len(references)
 
-    for k in [1, 3, 5, 7, 10]:
-        top_k = retrieved_uids[:k]
+    for k in REPORTED_K:
+        if top_k is not None and k > top_k:
+            continue
+        top = retrieved_uids[:k]
         # Count unique references covered — a reference is "found" once
-        found_refs = {ref for uid in top_k for ref in references if is_relevant(uid, ref)}
+        found_refs = {ref for uid in top for ref in references if is_relevant(uid, ref)}
         rel_in_k = len(found_refs)
         metrics.recall_at_k[k] = recall_at_k(rel_in_k, total_relevant)
-        if k in [1, 3]:
+        if k in PRECISION_K:
             metrics.precision_at_k[k] = precision_at_k(rel_in_k, k)
 
     metrics.mrr = mrr(retrieved_uids, references)
@@ -100,21 +115,27 @@ class AggregateMetrics:
 
 
 def aggregate_metrics(row_metrics: list[RowMetrics]) -> AggregateMetrics:
-    """Compute aggregate metrics across all rows."""
+    """Average each metric over the rows that reported it."""
     agg = AggregateMetrics()
     agg.total_rows = len(row_metrics)
     if not row_metrics:
         return agg
 
-    # Average recall/precision at each k
-    n = len(row_metrics)
-    for k in [1, 3, 5, 7, 10]:
-        agg.recall_at_k[k] = sum(r.recall_at_k.get(k, 0.0) for r in row_metrics) / n
-        if k in [1, 3]:
-            agg.precision_at_k[k] = (
-                sum(r.precision_at_k.get(k, 0.0) for r in row_metrics) / n
-            )
+    for k in REPORTED_K:
+        # Average over the rows that measured this cutoff, not over every row.
+        # Dividing by n would score a row that never reported recall@10 as 0.0
+        # and turn a mixed-depth run into a fake regression.
+        recall_rows = [r.recall_at_k[k] for r in row_metrics if k in r.recall_at_k]
+        if not recall_rows:
+            continue
+        agg.recall_at_k[k] = sum(recall_rows) / len(recall_rows)
+        if k in PRECISION_K:
+            precision_rows = [
+                r.precision_at_k[k] for r in row_metrics if k in r.precision_at_k
+            ]
+            if precision_rows:
+                agg.precision_at_k[k] = sum(precision_rows) / len(precision_rows)
 
-    agg.mrr = sum(r.mrr for r in row_metrics) / n
+    agg.mrr = sum(r.mrr for r in row_metrics) / len(row_metrics)
 
     return agg

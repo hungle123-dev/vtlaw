@@ -213,6 +213,48 @@ class TestComputeRowMetrics:
         assert metrics.recall_at_k[3] == 1.0
         assert metrics.mrr == 1.0
 
+    def test_top_k_bounds_the_reported_cutoffs(self):
+        """A top-5 run must not report recall@10.
+
+        It would equal recall@5 and read as a plateau in the results table when
+        it is only the list being truncated. The recorded benchmark JSON carried
+        recall@7 and recall@10 for a `--top-k 5` run for exactly this reason.
+        """
+        uids = ["168/2024/NĐ-CP::article::6"]
+        refs = ["168/2024/NĐ-CP::article::6"]
+
+        metrics = compute_row_metrics(uids, refs, top_k=5)
+
+        assert sorted(metrics.recall_at_k) == [1, 3, 5]
+        assert sorted(metrics.precision_at_k) == [1, 3]
+
+    def test_aggregate_omits_a_cutoff_no_row_measured(self):
+        """Absent is not zero: averaging a missing k as 0.0 invents a regression."""
+        row = compute_row_metrics(
+            ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=5
+        )
+
+        agg = aggregate_metrics([row])
+
+        assert 10 not in agg.recall_at_k
+        assert agg.recall_at_k[5] == 1.0
+
+    def test_a_cutoff_only_some_rows_measured_averages_over_those_rows(self):
+        """Mixed depths must not score the shallower rows as 0.0 at the deeper k."""
+        shallow = compute_row_metrics(
+            ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=5
+        )
+        deep = compute_row_metrics(
+            ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=10
+        )
+
+        agg = aggregate_metrics([shallow, deep])
+
+        # Only `deep` measured recall@10, and it was perfect. Dividing by both
+        # rows would report 0.5 and read as a regression that never happened.
+        assert agg.recall_at_k[10] == 1.0
+        assert agg.recall_at_k[5] == 1.0
+
 
 # ---------------------------------------------------------------------------
 # aggregate_metrics

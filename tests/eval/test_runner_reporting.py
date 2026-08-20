@@ -79,6 +79,9 @@ def test_eval_records_dataset_config_and_as_of(tmp_path, monkeypatch):
     assert report["as_of"] == "2025-01-01"
     assert report["dataset_sha256"]
     assert report["configuration"]["embed_model_revision"] == "embed-revision"
+    # Every setting that changes the result must be in the artifact, or the
+    # artifact cannot reproduce the run it claims to describe.
+    assert report["configuration"]["overfetch_factor"] == settings.overfetch_factor
 
 
 def test_eval_cli_parses_as_of_date():
@@ -160,6 +163,66 @@ def test_eval_decomposition_records_and_forwards_subqueries(tmp_path, monkeypatc
     assert report["configuration"]["query_decomposition"] is True
     assert report["rows"][0]["sub_queries"] == received[0]
     assert report["rows"][0]["latency_s"] == 5.0
+
+
+def test_eval_records_rows_dropped_by_a_retrieval_error(tmp_path, monkeypatch):
+    """A crashed row must be visible, not silently absent from the denominator."""
+    dataset = tmp_path / "qa.csv"
+    dataset.write_text(
+        "question,reference\n"
+        "Câu hỏi lỗi?,168/2024/NĐ-CP::article::6\n"
+        "Mức phạt?,168/2024/NĐ-CP::article::6\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "result.json"
+
+    class FakeGraphClient:
+        def __init__(self, **_kwargs):
+            pass
+
+        def close(self):
+            pass
+
+    class FakeEmbedder:
+        def __init__(self, **_kwargs):
+            pass
+
+    class FakeRetriever:
+        def __init__(self, *_args):
+            pass
+
+        def search(self, question, *, k, strategy, as_of=None):
+            if question.startswith("Câu hỏi lỗi"):
+                raise RuntimeError("lucene exploded")
+            return SearchResult(
+                query=question,
+                strategy=strategy,
+                hits=[
+                    Hit(
+                        uid="168/2024/NĐ-CP::article::6",
+                        score=1.0,
+                        doc_identity="168/2024/NĐ-CP",
+                        label="Article",
+                        content="Nội dung",
+                    )
+                ][:k],
+            )
+
+    import vtlaw.embed
+    import vtlaw.graph.client
+    import vtlaw.retrieve.search
+
+    monkeypatch.setattr(vtlaw.embed, "Embedder", FakeEmbedder)
+    monkeypatch.setattr(vtlaw.graph.client, "GraphClient", FakeGraphClient)
+    monkeypatch.setattr(vtlaw.retrieve.search, "HybridRetriever", FakeRetriever)
+
+    run_eval(dataset, top_k=1, output_path=output)
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["dataset_rows"] == 2
+    assert report["total_rows"] == 1
+    assert len(report["skipped_rows"]) == 1
+    assert "lucene exploded" in report["skipped_rows"][0]["error"]
 
 
 def test_eval_rerank_keeps_output_k_separate_from_candidate_pool(tmp_path, monkeypatch):
