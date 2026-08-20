@@ -172,6 +172,7 @@ class AnswerGenerator:
         # Assemble LLM prompt with enriched context
         today = (as_of or date.today()).isoformat()
         parts = [f"Ngày hiện tại: {today}", ""]
+        parts.extend(self._currency_note(hits, as_of=as_of))
         parts.append(f"Các quy định pháp luật liên quan ({len(hits)} điều):")
         parts.append("")
 
@@ -192,6 +193,50 @@ class AnswerGenerator:
 
         log.info("answer: %d chars", len(text))
         return text
+
+    def _currency_note(self, hits: list[Hit], *, as_of: date | None) -> list[str]:
+        """State which penalty decree in the evidence is the most recent one.
+
+        The effective date already appears in each provision's header, but the
+        list is ordered by retrieval score, so the model anchors on hit #1 and
+        cites whatever decree happens to rank first. Measured on 31 QA_NLP
+        questions whose evidence spans two decrees: 16 answers cited only the
+        superseded 100/2019/NĐ-CP when 168/2024/NĐ-CP was available in the same
+        evidence — a 0.516 stale rate.
+
+        Read from the graph, not inferred by the model: this is a fact about the
+        corpus. Only decrees are compared — a Luật and a Nghị định are different
+        instruments, not two versions of one rule.
+        """
+        decrees = sorted({h.doc_identity for h in hits if h.doc_identity.endswith("NĐ-CP")})
+        if len(decrees) < 2:
+            return []
+
+        with self._client.session() as session:
+            rows = session.run(
+                """
+                MATCH (d:Document) WHERE d.doc_identity IN $identities
+                RETURN d.doc_identity AS ident, toString(d.effect_date) AS effect_date
+                """,
+                identities=decrees,
+            ).data()
+        dated = sorted(
+            ((r["ident"], r["effect_date"]) for r in rows if r["effect_date"]),
+            key=lambda pair: pair[1],
+            reverse=True,
+        )
+        if len(dated) < 2:
+            return []
+
+        newest, newest_date = dated[0]
+        listing = "; ".join(f"{ident} (hiệu lực {eff})" for ident, eff in dated)
+        return [
+            f"Nghị định xử phạt trong ngữ cảnh, mới nhất trước: {listing}.",
+            f"Nghị định {newest} có hiệu lực từ {newest_date} là văn bản mới nhất. "
+            "Nếu nó quy định hành vi được hỏi, hãy trích dẫn nó; chỉ trích dẫn "
+            "nghị định cũ hơn khi nghị định mới không quy định hành vi đó.",
+            "",
+        ]
 
     def _enforce_grounded_citations(
         self, question: str, answer: str, hits: list[Hit]

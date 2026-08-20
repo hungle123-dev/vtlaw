@@ -98,6 +98,46 @@ The effect changes sign by track and costs ~50× the latency. The UI/API label
 `Compose + rerank` is therefore marked experimental: it has a live E2E contract
 test, but no full-track claim that it beats decomposition alone.
 
+### Citation currency — a generation defect Recall@k cannot see
+
+The screenshots in the README exposed a failure the retrieval metrics rate as a
+success. Both `100/2019/NĐ-CP` and `168/2024/NĐ-CP` are in effect on 2026-08-20
+with no expiry date, so the temporal filter keeps both, and retrieval returns
+provisions from each. Recall@5 counts that as a hit — the labelled provision was
+found. The model then cited the 2020 decree.
+
+Nothing existing catches it. The date filter cannot separate two documents that
+are both in effect. Amendment demotion only demotes what the annotations cover,
+and `168/2024` has 199 `AMENDS` edges into `100/2019` but none onto the clause
+that was cited. Citation verification says `verified`, correctly: the citation
+*is* in the evidence. It checks provenance, not currency.
+
+So it needed its own measurement. `scripts/measure_citation_currency.py` scores
+the questions where the defect is possible at all — evidence spanning two or
+more penalty decrees — and asks whether the answer cited only a superseded one:
+
+| Prompt | Contested questions | Cited only a superseded decree | Rate |
+|---|---:|---:|---:|
+| Effective date in each provision header only | 31 | 15 | 0.484 |
+| Newest decree named explicitly before the evidence | 31 | 7 | 0.226 |
+
+Eight answers fixed, none newly broken. The dates were already in the context —
+each provision header carries `Hiệu lực: <date>` — but the evidence list is
+ordered by retrieval score, so the model anchored on hit #1. Stating the ordering
+as a fact read from the graph, rather than leaving it to be inferred, halved the
+rate.
+
+A `Luật` and a `Nghị định` are not compared: they are different instruments, not
+two versions of one rule. A question that names a decree ("Nghị định
+100/2019/NĐ-CP quy định gì?") is asking about that document, so citing it back
+is correct rather than stale — scoring it as stale was a false positive in the
+first version of this measurement.
+
+The remaining 0.226 is not solved by prompting. Those are behaviours the newer
+decree does not obviously cover, where picking the older text may even be right,
+and the corpus holds no consolidated version to check against. Recorded, not
+claimed as fixed. Artifacts: `2026-08-20-citation-currency-{before,after}.json`.
+
 ## Interpretation and limits
 
 - The tracks are reported separately. `QA_Part2`–`QA_Part5` concatenate exactly
