@@ -15,6 +15,11 @@
 
     vtlaw embed run           embed provisions missing a vector
     vtlaw embed status        show embedding coverage per label
+
+    vtlaw retrieve search Q   hybrid retrieval, no LLM
+    vtlaw generate answer Q   retrieval plus a grounded LLM answer
+    vtlaw api serve           start the FastAPI service and chat UI
+    vtlaw eval run CSV        score retrieval against a labelled QA dataset
 """
 
 from __future__ import annotations
@@ -22,7 +27,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
-from datetime import datetime
+from datetime import date, datetime
 
 from vtlaw.embed import Embedder, embed_corpus, embedding_coverage
 from vtlaw.graph import GraphClient, count_graph, import_amends_directory, import_documents
@@ -30,6 +35,11 @@ from vtlaw.parse import parse_corpus
 from vtlaw.scrape import LegalDocumentClient, Scraper, Snapshot
 
 log = logging.getLogger("vtlaw")
+
+
+def _iso_date(text: str) -> date:
+    """Parse a YYYY-MM-DD argument. Shared by every command taking --as-of."""
+    return datetime.strptime(text, "%Y-%m-%d").date()
 
 
 # ---------------------------------------------------------------------------
@@ -366,12 +376,14 @@ def cmd_retrieve_search(args: argparse.Namespace) -> int:
                 rerank_top=args.rerank_top,
                 reranker_model=args.reranker_model,
                 rerank_enabled=True,
+                as_of=args.as_of,
             )
         else:
             result = retriever.search(
                 args.query,
                 k=args.top_k,
                 strategy=args.strategy,
+                as_of=args.as_of,
             )
 
     if args.rerank:
@@ -602,12 +614,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     search.add_argument(
         "--rerank-top", type=int, default=None,
-        help="number of candidates to rerank (default: same as --top-k)",
+        help="number of candidates to rerank (default: the configured rerank_top)",
     )
     search.add_argument(
+        # No literal default. This used to default to an English
+        # ms-marco-MiniLM, so `--rerank` from the CLI reranked Vietnamese legal
+        # text with an English model — silently worse than the configured
+        # Vietnamese cross-encoder the benchmark actually measured.
         "--reranker-model",
-        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
-        help="cross-encoder model for reranking",
+        default=None,
+        help="cross-encoder model (default: the configured RERANK_MODEL)",
+    )
+    search.add_argument(
+        "--as-of",
+        type=_iso_date,
+        default=None,
+        help="legal-effective date for retrieval (YYYY-MM-DD, default: today)",
     )
     search.set_defaults(func=cmd_retrieve_search)
 
@@ -626,7 +648,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     answer.add_argument(
         "--as-of",
-        type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
+        type=_iso_date,
         default=None,
         help="date for temporal reasoning (format: YYYY-MM-DD, default: today)",
     )
@@ -698,7 +720,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     eval_run.add_argument(
         "--as-of",
-        type=lambda s: datetime.strptime(s, "%Y-%m-%d").date(),
+        type=_iso_date,
         default=None,
         help="legal-effective date for every query (YYYY-MM-DD)",
     )
