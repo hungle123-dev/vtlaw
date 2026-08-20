@@ -36,7 +36,10 @@ def generator_parts(monkeypatch):
 
     def build(**settings_overrides):
         llm = MagicMock()
-        llm.complete.return_value = "Phạt tiền từ 400.000 đến 600.000 đồng."
+        llm.complete.return_value = (
+            "Theo Điểm i Khoản 3 Điều 6 Nghị định 100/2019/NĐ-CP, "
+            "phạt tiền từ 400.000 đến 600.000 đồng."
+        )
         gen = AnswerGenerator(
             MagicMock(), MagicMock(), llm, _settings(**settings_overrides)
         )
@@ -120,5 +123,8 @@ class TestDecomposeWiring:
 
         answer = gen.answer("q")
 
-        assert answer.text == "Phạt tiền từ 400.000 đến 600.000 đồng."
+        assert answer.text == (
+            "Theo Điểm i Khoản 3 Điều 6 Nghị định 100/2019/NĐ-CP, "
+            "phạt tiền từ 400.000 đến 600.000 đồng."
+        )
         assert answer.sources == [HIT]
