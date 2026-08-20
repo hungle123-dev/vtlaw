@@ -1,9 +1,9 @@
-# Retrieval benchmark — 2026-08-18
+# Retrieval benchmark — 2026-08-20
 
-This is the reproducible retrieval baseline for the current worktree. It is not
-a claim of legal validity and it is not a comparison to prior JSON files: the
-embedding fingerprint and evaluation contract changed, so older numbers are not
-an apples-to-apples baseline.
+The reproducible retrieval baseline for the current worktree. Not a claim of
+legal validity, and not a comparison to older JSON files: the embedding
+fingerprint and evaluation contract have changed since, so earlier numbers are
+not an apples-to-apples baseline.
 
 ## Conditions
 
@@ -12,45 +12,119 @@ an apples-to-apples baseline.
 | Corpus | 12 NLP-LegalQA snapshot documents; 7,381 provisions; 440 AMENDS edges |
 | Snapshot manifest SHA-256 | `1ec811da809d03036d4923ebaa28bc720fde8983e6dd5b566a000584c8d77672` |
 | Retrieval | vector + BM25 + weighted RRF; `rrf_k=10`, vector/BM25 weight `3:1` |
-| Candidate/result depth | 30 candidates per leg, report top 5 |
-| Legal date | `2026-08-18` |
+| Candidate/result depth | 30 candidates per leg, 4× overfetch before the date filter, report top 5 |
+| Legal date | `2026-08-20` |
 | Embedder | `bkai-foundation-models/vietnamese-bi-encoder` at `84f9d9ada0d1a3c37557398b9ae9fcedcdf40be0` |
-| Embedding fingerprint | `…|pyvi-ViTokenizer|v2` |
-| Reranker / decomposition | disabled |
+| Embedding fingerprint | `…\|pyvi-ViTokenizer\|v2` |
+| Decomposition LLM | `gpt-4o-mini` via `api.openai.com/v1`, `temperature=0` |
+| Reranker | disabled (see below) |
+| Rows dropped by a retrieval error | 0 on every run |
 
 Commands:
 
 ```bash
 vtlaw eval run data/evaluation/qa/QA_NLP.csv \
-  --top-k 5 --as-of 2026-08-18 \
-  --output data/evaluation/results/2026-08-18-qa-nlp.json
+  --top-k 5 --as-of 2026-08-20 \
+  --output data/evaluation/results/2026-08-20-qa-nlp-baseline.json
 
 vtlaw eval run data/evaluation/qa/QA_Part2345.csv \
-  --top-k 5 --as-of 2026-08-18 \
-  --output data/evaluation/results/2026-08-18-qa-part2345.json
+  --top-k 5 --as-of 2026-08-20 \
+  --output data/evaluation/results/2026-08-20-qa-part2345-baseline.json
 ```
 
-## Results
+Add `--decompose` for the decomposition profile.
 
-| NLP-LegalQA reporting track | Rows | Recall@1 | Recall@3 | Recall@5 | MRR | p50 / p95 latency |
+## Deterministic baseline
+
+| NLP-LegalQA reporting track | Rows | Recall@1 | Recall@3 | Recall@5 | P@1 | P@3 | MRR | p50 / p95 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `QA_NLP.csv` | 94 | 0.4973 | 0.7420 | 0.7713 | 0.5106 | 0.2730 | 0.6449 | 0.189s / 0.500s |
+| `QA_Part2345.csv` | 200 | 0.3728 | 0.5110 | 0.5637 | 0.4100 | 0.2083 | 0.5127 | 0.180s / 0.276s |
+
+This path is bit-exactly reproducible: every figure above matches the
+2026-08-18 run to four decimal places, on a graph re-read from the same
+snapshot. That is the point of keeping the default free of LLM calls.
+
+`QA_NLP` p99 was 7.466s because the first retrieval loads the local embedding
+model; the p50/p95 columns are the steady-state request path.
+
+## Selected NLP-LegalQA techniques — measured experiments
+
+The upstream project contains more techniques than should be enabled by
+default. Each was evaluated against the same snapshot and legal date instead of
+being added as a portfolio checklist item.
+
+### LLM query decomposition
+
+`gpt-4o-mini` produces extra standalone phrasings; the original query is kept as
+its own leg and all result lists are fused through the existing weighted RRF.
+Full-track E2E runs, not a five-question smoke test.
+
+| Track | Rows | Recall@1 | Recall@3 | Recall@5 | MRR | p50 / p95 |
 |---|---:|---:|---:|---:|---:|---:|
-| `QA_NLP.csv` | 94 | 0.4973 | 0.7420 | 0.7713 | 0.6449 | 0.181s / 0.265s |
-| `QA_Part2345.csv` | 200 | 0.3728 | 0.5110 | 0.5620 | 0.5106 | 0.217s / 0.308s |
+| `QA_NLP.csv` hybrid + decomposition | 94 | 0.4849 | 0.7757 | 0.8599 | 0.6757 | 1.652s / 2.663s |
+| `QA_Part2345.csv` hybrid + decomposition | 200 | 0.3782 | 0.5630 | 0.6192 | 0.5637 | 1.542s / 2.725s |
 
-`QA_NLP` p99 was 6.075s because the first retrieval loaded the local embedding
-model; the remaining latency statistics are the steady-state request path.
+Recall@5 improves on both tracks (+0.0886 and +0.0555) for roughly 1.4s of
+added p50. Recall@1 moves in opposite directions on the two tracks — the extra
+phrasings surface more of the labelled provisions overall while sometimes
+displacing the single best hit.
+
+**This profile is not reproducible to the digit.** Even at `temperature=0` the
+provider is not deterministic. Two runs of the identical command on identical
+data:
+
+| Track | 2026-08-18 Recall@5 | 2026-08-20 Recall@5 | Spread |
+|---|---:|---:|---:|
+| `QA_NLP.csv` | 0.8741 | 0.8599 | 0.0142 |
+| `QA_Part2345.csv` | 0.6211 | 0.6192 | 0.0019 |
+
+So the honest claim is "Recall@5 ≈ 0.86–0.87 on QA_NLP, ±0.015 run to run",
+and a single decomposition number should never be quoted as a fixed
+capability. This is exactly why the API keeps a deterministic default and
+exposes decomposition as an explicit, separately-measured profile.
+
+### Cross-encoder reranker
+
+`AITeamVN/Vietnamese_Reranker` was tested with identical 20-candidate inputs
+(2026-08-18 run; not re-measured on 2026-08-20 because the decision stands).
+
+| Track | Baseline Recall@5 / MRR / p50 | Reranked Recall@5 / MRR / p50 | Decision |
+|---|---|---|---|
+| `QA_NLP.csv` (94) | 0.7713 / 0.6271 / 0.149s | 0.6605 / 0.4839 / 7.556s | reject as default |
+| `QA_Part2345.csv` (200) | 0.5628 / 0.5163 / 0.134s | 0.5887 / 0.5539 / 8.753s | retain as experiment |
+
+The effect changes sign by track and costs ~50× the latency. The UI/API label
+`Compose + rerank` is therefore marked experimental: it has a live E2E contract
+test, but no full-track claim that it beats decomposition alone.
 
 ## Interpretation and limits
 
-- The tracks are reported separately. `QA_Part2`–`QA_Part5` overlap with the
-  larger Part files, so they are not averaged or presented as separate tests.
+- The tracks are reported separately. `QA_Part2`–`QA_Part5` concatenate exactly
+  into `QA_Part2345` — same 200 questions, same order, 50 rows each — so they
+  are not averaged or presented as separate tests. `QA_NLP` shares no question
+  with them.
+- Cutoffs beyond the requested `--top-k` are not reported. Earlier artifacts
+  carried `recall@7` and `recall@10` for a `--top-k 5` run; those equalled
+  `recall@5` and read as a plateau when they were only list truncation.
+- Rows dropped by a retrieval error are recorded in `skipped_rows` and excluded
+  from every average, so a score always states its own denominator. All four
+  runs above dropped nothing.
+- Comparison to the upstream project (README) uses the same 200 rows and the
+  same embedding model, but the two relevance predicates differ: upstream tests
+  `retrieved.startswith(reference)`, this harness additionally requires the
+  match to land on a `::` UID boundary. Re-scored on these artifacts the two
+  agree to four decimal places, so the comparison is not an artifact of the
+  predicate — but they are not the same test. Upstream's numbers are quoted from
+  its committed `eval_results/`; they were not re-measured here.
 - Labels name historical provision UIDs but do not provide a date-of-fact. A
   higher label-retrieval score can disagree with the most current rule after an
   amendment; `as_of` and the AMENDS annotations handle only the evidence the
   corpus actually contains.
-- These are retrieval metrics, not grounded-answer faithfulness metrics. LLM
-  generation, reranking, and query decomposition need their own separately
-  recorded experiment before any claim that they improve the baseline.
+- These are retrieval metrics, not a measure of legal correctness or
+  grounded-answer faithfulness. The API performs citation-provenance checking,
+  but that only verifies that an answer's citation appears in retrieved
+  evidence; it does not validate the substantive legal conclusion.
 - Result JSON files are intentionally ignored by Git. Re-run the commands after
   any corpus, model, index, or retrieval-configuration change and update this
   report only from those generated artifacts.
