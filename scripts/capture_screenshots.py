@@ -56,6 +56,15 @@ def main() -> int:
             # The pending bubble carries .thinking until the response replaces it.
             page.wait_for_selector(".thinking", state="detached", timeout=90_000)
             page.wait_for_timeout(400)
+
+            # The transcript scrolls internally, so full_page alone captures a
+            # box already scrolled past the user's question. Expand it for the
+            # shot only — the max-height is right for real use.
+            page.evaluate(
+                "() => { const m = document.getElementById('messages');"
+                " m.style.maxHeight = 'none'; m.style.overflow = 'visible'; }"
+            )
+            page.wait_for_timeout(200)
             target = OUT / f"{name}.png"
             page.screenshot(path=str(target), full_page=True)
             print(f"wrote {target}")

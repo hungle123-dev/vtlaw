@@ -19,6 +19,28 @@ honest about both what the graph proves and what the fixed source data cannot.
 → [Portfolio case study](docs/portfolio-case-study.md) ·
 [Benchmark report](docs/benchmark.md) · [Data provenance](data/README.md)
 
+## The four retrieval paths, as they render
+
+A plain-language question goes through hybrid retrieval, and every cited
+provision is checked against the evidence that was actually retrieved:
+
+![Hybrid retrieval with a verified citation](docs/images/ui-hybrid-answer.png)
+
+A full `Điểm / Khoản / Điều + document` citation resolves to exactly one
+provision — no approximate search runs at all:
+
+![Exact citation lookup](docs/images/ui-exact-citation.png)
+
+A counting or metadata question routes to a parameterized read-only graph
+template, not generated Cypher, and answers with its legal date:
+
+![Safe graph template route](docs/images/ui-graph-template.png)
+
+A follow-up is rewritten into a standalone question, and that rewrite is what
+both retrieval *and* generation receive:
+
+![Multi-turn follow-up rewrite](docs/images/ui-followup-rewrite.png)
+
 ## Measured against the upstream project
 
 Both sets of numbers are retrieval metrics on the **same 200 questions**:

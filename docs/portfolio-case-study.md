@@ -90,6 +90,8 @@ concatenate exactly into `QA_Part2345`. Full conditions and limits:
 
 ## 90-second demo
 
+![Hybrid retrieval, evidence panel, and the citation-provenance verdict](images/ui-hybrid-answer.png)
+
 ```powershell
 docker compose up -d
 vtlaw graph status
@@ -111,6 +113,9 @@ plain-language question follows hybrid retrieval. Then ask
 `Nghị định 168/2024/NĐ-CP có bao nhiêu điều?` for the safe graph-template
 route, and a follow-up to show the rewritten standalone question. Every reply
 carries its citation-provenance verdict and per-stage timings.
+
+Screenshots of all four paths are in the [README](../README.md#the-four-retrieval-paths-as-they-render);
+regenerate them with `scripts/capture_screenshots.py` against a running API.
 
 ## Honest boundary
 
