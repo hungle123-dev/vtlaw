@@ -85,6 +85,7 @@ def _settings(**overrides):
         "rrf_bm25_weight": 1.0,
         "rerank_enabled": False,
         "rerank_top": 15,
+        "overfetch_factor": 4,
     }
     return MagicMock(**{**defaults, **overrides})
 
@@ -414,6 +415,18 @@ class TestVectorSearch:
 
         assert results == []
 
+    def test_overfetch_factor_reaches_the_query(self, mock_session, mock_embedder):
+        """The configured factor must be passed, not a hardcoded one.
+
+        `overfetch_factor` was a settings field nothing read: both legs used a
+        literal 4, so tuning the documented knob changed nothing.
+        """
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        vector_search(mock_session, mock_embedder, "query", k=5, overfetch=7)
+
+        assert mock_session.run.call_args.kwargs["overfetch"] == 7
+
 
 class TestBM25Search:
     def test_returns_hits_from_session(self, mock_session):
@@ -459,6 +472,13 @@ class TestBM25Search:
         results = bm25_search(mock_session, "query", k=5)
 
         assert results == []
+
+    def test_overfetch_factor_scales_the_limit(self, mock_session):
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        bm25_search(mock_session, "query", k=5, overfetch=7)
+
+        assert mock_session.run.call_args.kwargs["k"] == 35
 
 
 # ---------------------------------------------------------------------------

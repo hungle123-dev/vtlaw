@@ -35,6 +35,7 @@ from vtlaw.embed import Embedder, segment
 from vtlaw.graph.client import GraphClient
 from vtlaw.graph.schema import PROVISION_LABELS
 from vtlaw.parse import article_uid, clause_uid, point_uid
+from vtlaw.parse.patterns import RE_DOC_IDENTITY
 
 log = logging.getLogger(__name__)
 
@@ -74,9 +75,6 @@ class SearchResult:
     hits: list[Hit]
     strategy: str = "hybrid"  # "hybrid" | "vector" | "bm25"
 
-    def top_k(self, k: int) -> list[Hit]:
-        return self.hits[:k]
-
     def summary(self) -> str:
         if not self.hits:
             return f"{self.strategy}: no results"
@@ -112,9 +110,7 @@ class RetrievalResult:
         return f"{tag}: {len(self.hits)} hits, top={top.uid} score={top.score:.3f}"
 
 
-_CITATION_DOCUMENT = re.compile(
-    r"(?<!\w)(?P<doc>\d{1,3}/\d{4}/(?:nđ-cp|qh\d+))(?!\w)", re.IGNORECASE
-)
+_CITATION_DOCUMENT = RE_DOC_IDENTITY
 _CITATION_ARTICLE = re.compile(r"\bđiều\s+(?P<number>\d+[a-z]?)\b", re.IGNORECASE)
 _CITATION_CLAUSE = re.compile(r"\bkhoản\s+(?P<number>\d+[a-z]?)\b", re.IGNORECASE)
 _CITATION_POINT = re.compile(r"\bđiểm\s+(?P<letter>[a-zđ])\b", re.IGNORECASE)
@@ -161,6 +157,7 @@ def vector_search(
     k: int,
     *,
     as_of: date | None = None,
+    overfetch: int = 4,
 ) -> list[Hit]:
     """Vector similarity search against all provision labels."""
     vector = embedder.encode_query(query)
@@ -185,7 +182,7 @@ def vector_search(
             """,
             index=f"{label.lower()}_embedding",
             k=k,
-            overfetch=4,
+            overfetch=overfetch,
             vector=vector,
             as_of=cutoff,
         ).data()
@@ -240,6 +237,7 @@ def bm25_search(
     k: int,
     *,
     as_of: date | None = None,
+    overfetch: int = 4,
 ) -> list[Hit]:
     """BM25 keyword search against all provision labels."""
     # Tokenize for BM25: same segmentation as the embedding model expects, then
@@ -265,7 +263,7 @@ def bm25_search(
             """,
             index=f"{label.lower()}_fulltext",
             search_text=tokenised,
-            k=k * 4,  # overfetch before filtering
+            k=k * overfetch,  # overfetch before filtering
             as_of=cutoff,
         ).data()
 
@@ -489,24 +487,37 @@ class HybridRetriever:
 
         pool = max(fetch_k or self._settings.fetch_k, k)
         phrasings = sub_queries or [query]
+        overfetch = self._settings.overfetch_factor
 
         with self._client.session() as session:
             if strategy == "vector":
                 legs = [
-                    (vector_search(session, self._embedder, q, pool, as_of=as_of), 1.0)
+                    (
+                        vector_search(
+                            session, self._embedder, q, pool,
+                            as_of=as_of, overfetch=overfetch,
+                        ),
+                        1.0,
+                    )
                     for q in phrasings
                 ]
             elif strategy == "bm25":
-                legs = [(bm25_search(session, q, pool, as_of=as_of), 1.0) for q in phrasings]
+                legs = [
+                    (bm25_search(session, q, pool, as_of=as_of, overfetch=overfetch), 1.0)
+                    for q in phrasings
+                ]
             else:  # hybrid
                 legs = []
                 for q in phrasings:
                     legs.append((
-                        vector_search(session, self._embedder, q, pool, as_of=as_of),
+                        vector_search(
+                            session, self._embedder, q, pool,
+                            as_of=as_of, overfetch=overfetch,
+                        ),
                         self._settings.rrf_vector_weight,
                     ))
                     legs.append((
-                        bm25_search(session, q, pool, as_of=as_of),
+                        bm25_search(session, q, pool, as_of=as_of, overfetch=overfetch),
                         self._settings.rrf_bm25_weight,
                     ))
 

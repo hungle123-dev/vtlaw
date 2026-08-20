@@ -33,9 +33,15 @@ RE_SECTION = re.compile(r"^Mục\s+(\d+)\.?\s*(.*)", re.IGNORECASE)
 
 # Article and clause numbers may carry a letter suffix: an amending document
 # inserts provisions as "Điều 18a" or "khoản 2a" so existing numbering stays
-# intact. A pattern of ^(\d+)\. skips every one of them. Measured on this corpus:
-# 7 articles (11a, 31b, 58e, 58g, 58h, 58i, 58k) and 10 clauses (1b, 2b, 3a, 4a,
-# 4b, 5a, 5b, 5c, 18a) — 17 provisions of real legal text.
+# intact, and a pattern of ^(\d+)\. skips every one of them.
+#
+# On THIS corpus the suffix branch never fires: all 18 suffixed headers
+# (articles 11a, 31b×2, 58e, 58g, 58h, 58i, 58k; clauses 1b, 2b, 3a, 4a, 4b,
+# 5a×2, 5b, 5c, 18a) sit inside quoted amendment blocks, which the parser
+# treats as content rather than structure — `vtlaw parse check` reports
+# letter-suffixed=0. The optional `[a-z]` is kept because the next amending
+# document to be added may insert one at the top level, and a silently skipped
+# provision is worse than an unused branch.
 RE_ARTICLE = re.compile(r"^Điều\s+(\d+[a-z]?)\.?\s*(.*)")
 
 # Clause numbers are bounded to two digits. The highest in the corpus is 75, and
@@ -65,6 +71,16 @@ RE_FOOTER = re.compile(
 
 QUOTE_OPEN = ('"', "“")   # " and “
 QUOTE_CLOSE = ('"', "”")  # " and ”
+
+# Document identity as it appears in prose: "168/2024/NĐ-CP", "36/2024/QH15".
+# One definition, because three modules match it — the citation resolver, the
+# graph-template parameter extractor, and the answer citation checker. When they
+# drifted apart, a document kind the checker did not recognise made every answer
+# citing it read as unsupported.
+DOC_IDENTITY = r"\d{1,3}/\d{4}/(?:nđ-cp|qh\d+)"
+
+# Standalone occurrence: not glued to surrounding word characters.
+RE_DOC_IDENTITY = re.compile(rf"(?<!\w)(?P<doc>{DOC_IDENTITY})(?!\w)", re.IGNORECASE)
 
 
 def point_sort_key(letter: str) -> int:
