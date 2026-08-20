@@ -70,7 +70,7 @@ naive RAG on Vietnamese traffic law:
 | Decomposition reproducibility | ±0.014 Recall@5 run-to-run; reported as a range, not a point |
 | vs upstream basic RAG (same 200 rows) | 0.5637 vs 0.4892 Recall@5, zero LLM calls either side |
 | Reranker decision | rejected as default: regresses QA_NLP, costs 7–9 s p50 |
-| Stale-citation rate | 0.484 → 0.226 on the 31 questions where two decrees compete |
+| Stale-citation rate | 0.484 → 0.065 on the 31 questions where two decrees compete |
 | Latency | 0.18 s p50 baseline; 1.5–1.7 s p50 with decomposition |
 | Quality gates | 378 offline tests, isolated Neo4j integration suite, Ruff, Docker build/import/non-root check |
 
@@ -131,9 +131,17 @@ even looking.
 
 I measured it instead of guessing: 15 of 31 questions where two decrees compete
 cited only the superseded one. Naming the newest decree explicitly in the prompt
-took that to 7. The remaining 7 are not a prompting problem — they are behaviours
-the newer decree does not clearly cover, and the corpus holds no consolidated
-text to arbitrate. That number is recorded, not rounded away.
+took that to 7 — and chasing the remaining 7 found the real cause. The whole
+ancestor hierarchy was missing from the prompt: `nodes(path)` read through the
+driver's `Result.data()` loses the node labels, so every label test fell through
+and the parent Clause holding the penalty amount never arrived. The model had an
+offence with no amount attached and borrowed a plausible-looking number from a
+neighbouring clause. Fixing the projection took the rate to 0.065.
+
+The unit tests passed the whole time, because their fixtures used a node shape
+Neo4j never sends. The remaining 2 questions are behaviours the newer decree does
+not clearly cover, and the corpus holds no consolidated text to arbitrate. That
+number is recorded, not rounded away.
 
 This is a production-minded portfolio system, not a legal-advice product. It uses
 only the fixed NLP-LegalQA artifacts. Amendment instructions are modeled as graph

@@ -84,10 +84,18 @@ Non-trivial logic leaves one runnable check behind. Prefer a test that fails
 for the specific reason the bug existed, with the measured evidence in the
 docstring, over a generic assertion.
 
-Watch for tests that pass for the wrong reason. Two real cases here: a fixture
+Watch for tests that pass for the wrong reason. Three real cases here: a fixture
 that `return`ed inside a `with patch(...)` block, so the patches were gone
-before the test body ran; and `assert "http://" not in page`, which allows
-`//cdn.example/x.js` and uppercase schemes.
+before the test body ran; `assert "http://" not in page`, which allows
+`//cdn.example/x.js` and uppercase schemes; and a hierarchy fixture that
+flattened Neo4j labels alongside node properties — a shape the driver never
+sends, which hid the whole ancestor path being dropped from every prompt.
+
+**A Neo4j Node read through `Result.data()` has no labels.** `nodes(path)` comes
+back as bare property dicts, so `label == "Clause"` silently never matches.
+Project what you need server-side: `{labels: labels(n), props: properties(n)}`.
+This dropped the parent Clause — where the penalty amount lives — from every
+generated answer while all tests passed.
 
 Integration tests **wipe Neo4j**. They require `VTLAW_TEST_WIPE=1` and should
 only run against CI's throwaway service container or an expendable local

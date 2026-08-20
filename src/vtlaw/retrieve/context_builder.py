@@ -38,7 +38,7 @@ MATCH path = (d:Document)
       -[:HAS_ARTICLE|HAS_CLAUSE|HAS_POINT*]->(target)
 WHERE target.uid = target_uid
 RETURN target.uid AS uid,
-       nodes(path)[1..] AS hierarchy,
+       [n IN nodes(path)[1..] | {labels: labels(n), props: properties(n)}] AS hierarchy,
        d.doc_identity AS doc_identity,
        toString(d.effect_date) AS effect_date
 """
@@ -74,13 +74,19 @@ def fetch_hierarchy(
 
     for record in records:
         uid = record["uid"]
-        nodes = record["hierarchy"] or []
+        entries = record["hierarchy"] or []
 
         lines: list[str] = []
-        for node in nodes:
-            # Handle both Neo4j Node objects (.labels) and plain dicts ("labels" key)
-            labels = list(node.labels) if hasattr(node, "labels") else node.get("labels", [])
+        for index, entry in enumerate(entries):
+            # The query projects {labels, props} explicitly. Reading `labels(n)`
+            # server-side is the only way to get them: `nodes(path)` through
+            # Result.data() arrives as bare property dicts, so every label test
+            # fell through and the whole hierarchy — including the parent Clause
+            # that carries the penalty amount — was dropped from the context.
+            labels = entry.get("labels") or []
+            node = entry.get("props") or {}
             label = labels[0] if labels else ""
+            is_target = index == len(entries) - 1
 
             if label == "Article":
                 title = node.get("title")
@@ -91,8 +97,9 @@ def fetch_hierarchy(
             elif label == "Clause":
                 number = node.get("number", "")
                 content = (node.get("content") or "").strip()
-                # If this is the target (last node), just label it
-                if node == nodes[-1]:
+                # The target's own content is appended below as "Nội dung"; an
+                # ancestor Clause contributes the penalty the Point refers to.
+                if is_target:
                     lines.append(f"Khoản {number}.")
                 elif content:
                     lines.append(f"Khoản {number}.\n{content}")
@@ -110,8 +117,8 @@ def fetch_hierarchy(
                 )
 
         # Target's own content
-        target_node = nodes[-1] if nodes else None
-        main_content = (target_node.get("content") or "").strip() if target_node else ""
+        target = (entries[-1].get("props") or {}) if entries else {}
+        main_content = (target.get("content") or "").strip()
 
         # Document header
         doc_id = record["doc_identity"] or ""

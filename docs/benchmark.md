@@ -116,16 +116,34 @@ So it needed its own measurement. `scripts/measure_citation_currency.py` scores
 the questions where the defect is possible at all — evidence spanning two or
 more penalty decrees — and asks whether the answer cited only a superseded one:
 
-| Prompt | Contested questions | Cited only a superseded decree | Rate |
+| Change | Contested questions | Cited only a superseded decree | Rate |
 |---|---:|---:|---:|
-| Effective date in each provision header only | 31 | 15 | 0.484 |
+| Starting point | 31 | 15 | 0.484 |
 | Newest decree named explicitly before the evidence | 31 | 7 | 0.226 |
+| Ancestor hierarchy actually reaching the prompt | 31 | **2** | **0.065** |
 
-Eight answers fixed, none newly broken. The dates were already in the context —
-each provision header carries `Hiệu lực: <date>` — but the evidence list is
-ordered by retrieval score, so the model anchored on hit #1. Stating the ordering
-as a fact read from the graph, rather than leaving it to be inferred, halved the
-rate.
+Two separate causes, found in that order.
+
+**The evidence list is ordered by retrieval score.** The effective date was
+already in every provision header, but the model anchored on hit #1 and cited
+whatever decree ranked first. Stating the ordering as a fact read from the graph,
+rather than leaving it to be inferred, took 0.484 to 0.226.
+
+**The ancestor hierarchy was silently missing.** `fetch_hierarchy` walks UP from
+a hit to build `Điều → Khoản → Điểm`, and the parent Clause is where a penalty
+amount lives. Its Cypher returned `nodes(path)`, but read through
+`Result.data()` a Node arrives as a bare property dict with **no labels at all** —
+so every `label == "Article"` / `"Clause"` test fell through and the whole path
+was dropped. Each provision reached the prompt as its own one-line content and
+nothing else. The model had an offence with no amount attached, so it borrowed a
+number from whichever nearby clause looked plausible; that is how
+`10.000.000 – 14.000.000 đồng`, a Khoản 9 aggregate covering other violations,
+attached itself to a red-light question. Projecting
+`{labels: labels(n), props: properties(n)}` server-side took 0.226 to 0.065.
+
+The unit tests passed throughout, because their fixtures flattened labels
+alongside the properties — a shape Neo4j never sends. That is the second test in
+this project found to pass for the wrong reason.
 
 A `Luật` and a `Nghị định` are not compared: they are different instruments, not
 two versions of one rule. A question that names a decree ("Nghị định
@@ -133,10 +151,10 @@ two versions of one rule. A question that names a decree ("Nghị định
 is correct rather than stale — scoring it as stale was a false positive in the
 first version of this measurement.
 
-The remaining 0.226 is not solved by prompting. Those are behaviours the newer
-decree does not obviously cover, where picking the older text may even be right,
-and the corpus holds no consolidated version to check against. Recorded, not
-claimed as fixed. Artifacts: `2026-08-20-citation-currency-{before,after}.json`.
+The remaining 0.065 is two questions about behaviours the newer decree does not
+clearly cover, where the older text may even be the right answer, and the corpus
+holds no consolidated version to arbitrate. Recorded, not claimed as fixed.
+Artifacts: `2026-08-20-citation-currency-{before,after,hierarchy-fixed}.json`.
 
 ## Interpretation and limits
 

@@ -43,6 +43,19 @@ def mock_client():
     return MagicMock()
 
 
+def _node(label: str, **props) -> dict:
+    """One hierarchy entry in the shape the Cypher projection actually returns.
+
+    The query asks for `{labels: labels(n), props: properties(n)}` because
+    `nodes(path)` read through Result.data() arrives as bare property dicts with
+    no labels at all. Fixtures that flattened labels alongside the properties
+    tested a shape Neo4j never sends, which hid a real bug: every label test fell
+    through, so the parent Clause carrying the penalty amount never reached the
+    prompt.
+    """
+    return {"labels": [label], "props": props}
+
+
 def _mock_data(mock_client, data):
     """Helper to set mock Neo4j query data."""
     mock_client.session.return_value.__enter__.return_value.run.return_value.data.return_value = (  # noqa: E501
@@ -71,9 +84,9 @@ class TestFetchHierarchy:
             {
                 "uid": "168/2024/NĐ-CP::article::6::clause::3::point::a",
                 "hierarchy": [
-                    {"labels": ["Article"], "number": "6", "title": "Vi phạm tốc độ"},
-                    {"labels": ["Clause"], "number": "3", "content": "Phạt tiền từ 800.000đ"},
-                    {"labels": ["Point"], "letter": "a", "content": "Chạy quá tốc độ 5-10 km/h"},
+                    _node("Article", number="6", title="Vi phạm tốc độ"),
+                    _node("Clause", number="3", content="Phạt tiền từ 800.000đ"),
+                    _node("Point", letter="a", content="Chạy quá tốc độ 5-10 km/h"),
                 ],
                 "doc_identity": "168/2024/NĐ-CP",
                 "effect_date": "2025-01-01",
@@ -90,13 +103,17 @@ class TestFetchHierarchy:
         assert "Vi phạm tốc độ" in ctx
         assert "Khoản 3" in ctx
         assert "Điểm a" in ctx
+        # The whole reason for walking UP: the Point names the offence, the
+        # parent Clause carries the money. An answer built without it states a
+        # penalty amount the evidence never contained.
+        assert "Phạt tiền từ 800.000đ" in ctx
 
     def test_handles_article_without_title(self, mock_client):
         _mock_data(mock_client, [
             {
                 "uid": "test::article::1",
                 "hierarchy": [
-                    {"labels": ["Article"], "number": "1", "title": None},
+                    _node("Article", number="1", title=None),
                 ],
                 "doc_identity": "test",
                 "effect_date": None,
@@ -112,7 +129,7 @@ class TestFetchHierarchy:
             {
                 "uid": "test::clause::1",
                 "hierarchy": [
-                    {"labels": ["Clause"], "number": "1", "content": "Main content"},
+                    _node("Clause", number="1", content="Main content"),
                 ],
                 "doc_identity": "test",
                 "effect_date": "2025-01-01",
@@ -282,7 +299,7 @@ class TestBuildFullContext:
                     {
                         "uid": uid,
                         "hierarchy": [
-                            {"labels": ["Article"], "number": "1", "title": "Test"},
+                            _node("Article", number="1", title="Test"),
                         ],
                         "doc_identity": "test",
                         "effect_date": "2025-01-01",
@@ -326,7 +343,7 @@ class TestBuildFullContext:
                     {
                         "uid": uid,
                         "hierarchy": [
-                            {"labels": ["Point"], "letter": "a", "content": "Point a"},
+                            _node("Point", letter="a", content="Point a"),
                         ],
                         "doc_identity": "test",
                         "effect_date": "2025-01-01",
