@@ -170,6 +170,7 @@ def mock_app():
         # API-key auth with a key no test could supply.
         mock_state.settings.api_key = ""
         mock_state.settings.rate_limit_per_minute = 1000
+        mock_state.settings.intent_router_enabled = False
         mock_state.llm_configured = False
         mock_state.graph = MagicMock()
 
@@ -193,6 +194,10 @@ def mock_app():
         )
         mock_state.retriever = mock_retriever
         mock_state.generator = None
+        mock_state.router = None
+        mock_state.rewriter = None
+        mock_state.decomposer = None
+        mock_state.graph_queries = None
 
         mock_get_state.return_value = mock_state
 
@@ -287,6 +292,8 @@ def client_without_state():
         llm_model = "test"
         rerank_top = 30
         context_k = 8
+        api_key = ""
+        intent_router_enabled = False
 
     from unittest.mock import MagicMock, patch
 
@@ -303,7 +310,9 @@ def client_without_state():
         mock_get_state.return_value = mock_state
 
         from vtlaw.api.app import app
-        return TestClient(app)
+        # yield, not return: returning exits the `with` block, so get_state is
+        # unpatched by the time the test runs and /health hits real Neo4j.
+        yield TestClient(app)
 
 
 class TestMetricsEndpoint:
