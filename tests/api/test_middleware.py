@@ -51,11 +51,16 @@ def _state(*, api_key="", rate_limit=1000):
     state.settings.llm_model = "m"
     state.settings.api_key = api_key
     state.settings.rate_limit_per_minute = rate_limit
+    state.settings.intent_router_enabled = False
     state.llm_configured = False
     state.graph = MagicMock()
     state.cache = None
     state.retriever.search.return_value = MagicMock(hits=[HIT], strategy="hybrid")
     state.generator = None
+    state.router = None
+    state.rewriter = None
+    state.decomposer = None
+    state.graph_queries = None
     return state
 
 

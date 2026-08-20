@@ -102,6 +102,11 @@ class Settings(BaseSettings):
     # reproducible retrieval baseline; benchmark it as a separate experiment.
     decompose_queries: bool = False
 
+    # Classifying the original turn prevents a greeting or off-topic question
+    # from being rewritten into a legal query. It is only used when an LLM key
+    # is configured; disabling it keeps the deterministic retrieval baseline.
+    intent_router_enabled: bool = True
+
     def cors_origin_list(self) -> list[str]:
         """`cors_origins` as a list. Comma-separated in the environment."""
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

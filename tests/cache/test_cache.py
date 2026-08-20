@@ -11,6 +11,7 @@ Uses unittest.mock to mock Redis, so no Redis connection needed.
 
 from __future__ import annotations
 
+import json
 from datetime import date
 from unittest.mock import MagicMock, patch
 
@@ -87,22 +88,30 @@ class TestRetrievalCache:
         mock_redis.get.return_value = None  # first call: cache miss
 
         # Set
-        cache.set_retrieval("query", "hybrid", 30, 8, results)
+        cache.set_retrieval(
+            "query", "hybrid", 30, 8, results, reranked=True, sub_queries=["query"]
+        )
 
         # Verify setex was called with correct TTL
         mock_redis.setex.assert_called_once()
         args = mock_redis.setex.call_args[0]
         assert args[1] == 1800  # retrieval_cache_ttl
+        assert json.loads(args[2]) == {
+            "hits": results,
+            "reranked": True,
+            "sub_queries": ["query"],
+        }
 
         # Simulate Redis returning the cached value
-        import json
-        mock_redis.get.return_value = json.dumps(results)
+        mock_redis.get.return_value = args[2]
 
         # Get
         cached = cache.get_retrieval("query", "hybrid", 30, 8)
         assert cached is not None
-        assert len(cached) == 2
-        assert cached[0]["uid"] == "test::1"
+        assert len(cached.hits) == 2
+        assert cached.hits[0]["uid"] == "test::1"
+        assert cached.reranked is True
+        assert cached.sub_queries == ["query"]
 
     def test_cache_miss_returns_none(self, cache, mock_redis):
         """Should return None on cache miss."""
@@ -158,6 +167,29 @@ class TestRetrievalCache:
     def test_rerank_setting_changes_the_retrieval_key(self, cache, mock_redis):
         cache.set_retrieval("query", "hybrid", 30, 8, [])
         cache._settings.rerank_enabled = True
+        cache.set_retrieval("query", "hybrid", 30, 8, [])
+
+        key1 = mock_redis.setex.call_args_list[0][0][0]
+        key2 = mock_redis.setex.call_args_list[1][0][0]
+        assert key1 != key2
+
+    def test_retrieval_profiles_use_distinct_cache_keys(self, cache, mock_redis):
+        cache.set_retrieval("query", "hybrid", 30, 8, [], profile="baseline")
+        baseline_key = mock_redis.setex.call_args.args[0]
+
+        cache.set_retrieval("query", "hybrid", 30, 8, [], profile="quality")
+        quality_key = mock_redis.setex.call_args.args[0]
+
+        assert baseline_key != quality_key
+
+    def test_overfetch_factor_changes_the_retrieval_key(self, cache, mock_redis):
+        """It changes which candidates survive the date filter, so it changes results.
+
+        Left out of the key, raising the factor keeps serving entries produced by
+        the narrower one until the TTL expires.
+        """
+        cache.set_retrieval("query", "hybrid", 30, 8, [])
+        cache._settings.overfetch_factor = 8
         cache.set_retrieval("query", "hybrid", 30, 8, [])
 
         key1 = mock_redis.setex.call_args_list[0][0][0]

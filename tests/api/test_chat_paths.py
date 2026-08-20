@@ -20,6 +20,7 @@ from unittest.mock import MagicMock, patch
 
 from fastapi.testclient import TestClient
 
+from vtlaw.cache import CachedRetrieval
 from vtlaw.retrieve.search import Hit
 
 HIT = Hit(
@@ -46,6 +47,9 @@ def _state(*, cached_hits=None, cached_answer=None, llm=False, api_key=""):
     state.llm_configured = llm
     state.graph = MagicMock()
     state.decomposer = None
+    state.rewriter = None
+    state.router = None
+    state.graph_queries = None
 
     cache = MagicMock()
     cache.get_retrieval.return_value = cached_hits
@@ -72,7 +76,9 @@ def client_for(state):
     from a closed `with` block silently falls through to the real AppState and
     talks to Neo4j.
     """
-    with patch("vtlaw.api.app.get_state", return_value=state):
+    with patch("vtlaw.api.app.get_state", return_value=state), patch(
+        "vtlaw.api.app._rate_limiter", None
+    ):
         from vtlaw.api.app import app
 
         yield TestClient(app)
@@ -96,6 +102,22 @@ class TestRetrievalCacheHit:
 
         state.retriever.search.assert_not_called()
         state.retriever.search_and_rerank.assert_not_called()
+
+    def test_cache_hit_keeps_retrieval_metadata(self):
+        state = _state(
+            cached_hits=CachedRetrieval(
+                hits=[asdict(HIT)],
+                reranked=True,
+                sub_queries=["quá tốc độ phạt bao nhiêu"],
+            )
+        )
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "quá tốc độ phạt bao nhiêu", "profile": "quality"}
+            )
+
+        assert response.json()["reranked"] is True
+        assert response.json()["sub_queries"] == ["quá tốc độ phạt bao nhiêu"]
 
     def test_repeated_question_stays_200(self):
         """A second identical question is exactly what used to 500."""
@@ -162,6 +184,17 @@ class TestLLMConfigured:
 
         assert state.cache.set_answer.call_args.args[-1] == "Phạt tiền từ 800.000 đồng."
 
+    def test_reports_an_unverified_generated_citation(self):
+        state = _state(llm=True)
+        state.generator.generate_from_hits.return_value = (
+            "Theo Điều 1 Nghị định 100/2019/NĐ-CP, bị phạt."
+        )
+        with client_for(state) as client:
+            response = client.post("/chat", json={"question": "q"})
+
+        assert response.json()["citation_status"] == "unsupported"
+        assert response.json()["unsupported_citations"] == ["100/2019/NĐ-CP::article::1"]
+
 
 class TestNoCache:
     def test_works_without_cache(self):
@@ -198,10 +231,143 @@ class TestQueryDecomposition:
         state.decomposer.decompose.return_value = [{"query": "vượt đèn đỏ xe mô tô"}]
 
         with client_for(state) as client:
-            response = client.post("/chat", json={"question": "vượt đèn đỏ phạt thế nào"})
+            response = client.post(
+                "/chat",
+                json={"question": "vượt đèn đỏ phạt thế nào", "profile": "decomposition"},
+            )
 
         assert response.status_code == 200
         assert state.retriever.search_and_rerank.call_args.kwargs["sub_queries"] == [
             "vượt đèn đỏ phạt thế nào",
             "vượt đèn đỏ xe mô tô",
         ]
+
+    def test_quality_profile_composes_decomposition_and_real_reranking(self):
+        state = _state(llm=True)
+        state.decomposer = MagicMock()
+        state.decomposer.decompose.return_value = [{"query": "vượt đèn đỏ xe mô tô"}]
+        with client_for(state) as client:
+            response = client.post(
+                "/chat",
+                json={"question": "vượt đèn đỏ phạt thế nào", "profile": "quality"},
+            )
+
+        assert response.status_code == 200
+        assert response.json()["profile"] == "quality"
+        assert response.json()["sub_queries"] == [
+            "vượt đèn đỏ phạt thế nào",
+            "vượt đèn đỏ xe mô tô",
+        ]
+        assert state.retriever.search_and_rerank.call_args.kwargs["rerank_enabled"] is True
+
+    def test_baseline_profile_does_not_inherit_experimental_server_flags(self):
+        state = _state(llm=True)
+        state.settings.decompose_queries = True
+        state.settings.rerank_enabled = True
+        state.decomposer = MagicMock()
+        with client_for(state) as client:
+            response = client.post("/chat", json={"question": "vượt đèn đỏ phạt thế nào"})
+
+        assert response.status_code == 200
+        assert response.json()["profile"] == "baseline"
+        state.decomposer.decompose.assert_not_called()
+        assert state.retriever.search_and_rerank.call_args.kwargs["rerank_enabled"] is False
+
+
+class TestConversationRewrite:
+    def test_follow_up_is_resolved_before_retrieval_and_reported(self):
+        state = _state(llm=True)
+        state.rewriter = MagicMock()
+        state.rewriter.rewrite.return_value = "mức phạt xe ô tô vượt đèn đỏ"
+        history = [{"role": "user", "content": "xe máy vượt đèn đỏ phạt bao nhiêu?"}]
+
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "còn ô tô thì sao?", "history": history}
+            )
+
+        assert response.status_code == 200
+        assert response.json()["resolved_question"] == "mức phạt xe ô tô vượt đèn đỏ"
+        assert state.retriever.search_and_rerank.call_args.args[0] == (
+            "mức phạt xe ô tô vượt đèn đỏ"
+        )
+
+    def test_generation_receives_the_resolved_question_not_the_raw_turn(self):
+        """Retrieval and generation must be asked the same question.
+
+        Retrieval ran on the rewrite; handing the generator "còn ô tô thì sao?"
+        makes it answer a question the evidence was never gathered for.
+        """
+        state = _state(llm=True)
+        state.rewriter = MagicMock()
+        state.rewriter.rewrite.return_value = "mức phạt xe ô tô vượt đèn đỏ"
+        history = [{"role": "user", "content": "xe máy vượt đèn đỏ phạt bao nhiêu?"}]
+
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "còn ô tô thì sao?", "history": history}
+            )
+
+        assert response.status_code == 200
+        generated_question = state.generator.generate_from_hits.call_args.args[0]
+        assert generated_question == "mức phạt xe ô tô vượt đèn đỏ"
+        # The response still echoes what the user actually typed.
+        assert response.json()["question"] == "còn ô tô thì sao?"
+
+
+class TestIntentRouting:
+    def test_routes_before_rewriting_a_follow_up(self):
+        state = _state(llm=True)
+        state.settings.intent_router_enabled = True
+        state.router = MagicMock()
+        state.router.route.return_value = "retrieve"
+        state.rewriter = MagicMock()
+        state.rewriter.rewrite.return_value = "mức phạt xe ô tô vượt đèn đỏ"
+        history = [{"role": "user", "content": "xe máy vượt đèn đỏ phạt bao nhiêu?"}]
+
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "còn ô tô thì sao?", "history": history}
+            )
+
+        assert response.status_code == 200
+        assert response.json()["intent"] == "retrieve"
+        state.router.route.assert_called_once_with("còn ô tô thì sao?")
+        state.rewriter.rewrite.assert_called_once()
+
+    def test_reject_does_not_call_retrieval_or_rewriter(self):
+        state = _state(llm=True)
+        state.settings.intent_router_enabled = True
+        state.router = MagicMock()
+        state.router.route.return_value = "reject"
+        state.rewriter = MagicMock()
+
+        with client_for(state) as client:
+            response = client.post("/chat", json={"question": "nấu phở thế nào?"})
+
+        assert response.status_code == 200
+        assert response.json()["intent"] == "reject"
+        assert response.json()["sources"] == []
+        state.retriever.search_and_rerank.assert_not_called()
+        state.rewriter.rewrite.assert_not_called()
+
+    def test_runs_a_supported_graph_template_without_retrieval(self):
+        state = _state(llm=True)
+        state.settings.intent_router_enabled = True
+        state.router = MagicMock()
+        state.router.route.return_value = "cypher_query"
+        state.graph_queries = MagicMock()
+        state.graph_queries.answer.return_value = MagicMock(
+            operation="article_count", answer="Nghị định 168/2024/NĐ-CP có 89 điều."
+        )
+
+        with client_for(state) as client:
+            response = client.post(
+                "/chat", json={"question": "Nghị định 168/2024/NĐ-CP có bao nhiêu điều?"}
+            )
+
+        assert response.status_code == 200
+        assert response.json()["intent"] == "cypher_query"
+        assert response.json()["graph_operation"] == "article_count"
+        state.graph_queries.answer.assert_called_once()
+        state.retriever.search_and_rerank.assert_not_called()
