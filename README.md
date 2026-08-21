@@ -64,17 +64,25 @@ and provenance safeguards.
 
 ## Measured results
 
-| Track | Recall | Precision | MRR | p50 latency | Decision |
-|---|---:|---:|---:|---:|---|
-| Current hash-verified QA_NLP baseline, k=8 (94 rows) | Recall@8 **0.2766** | P@8 0.0638 | **0.2289** | 0.348s | served default |
-| Current QA_NLP GPU reranker, k=8 | Recall@8 0.2606 | P@8 **0.0691** | 0.1838 | 1.362s | opt-in experiment |
-| Historical QA_Part2345 baseline, k=5 (200 rows) | Recall@5 **0.6012** | — | 0.5885 | — | historical only |
+All results below are full-track, `k=8`, `git_dirty: false` artifacts from
+commit `19600d3`. The supplied QA labels carry no date of fact, so this is a
+**label-retrieval** benchmark: temporal filtering and amendment demotion are
+disabled only while scoring labels. The API/UI still apply the selected `as_of`
+date and use the temporal graph in production.
 
-The reranker improved Precision@8 slightly but reduced Recall@8 and MRR while
-adding latency, so it is deliberately **not** the default. The historical k=5
-result is retained as historical evidence, not presented as the current
-contract. Full commands, caveats, and reproducible artifacts are in
-[docs/benchmark.md](docs/benchmark.md).
+| Track / profile | Recall@8 | Precision@8 | MRR@8 | p50 latency | Decision |
+|---|---:|---:|---:|---:|---|
+| QA_NLP (94), hybrid baseline | 0.8121 | 0.1649 | 0.6495 | 0.102s | reference |
+| QA_NLP (94), query composition | **0.9025** | **0.1769** | **0.7061** | 1.429s | default quality profile |
+| QA_NLP (94), GPU cross-encoder | 0.7261 | 0.1503 | 0.4715 | 0.993s | experimental; rejected as default |
+| QA Part 2–5 (200), hybrid baseline | 0.6002 | 0.1888 | 0.5185 | 0.080s | reference |
+| QA Part 2–5 (200), query composition | **0.6691** | **0.2037** | **0.5655** | 1.482s | confirms default choice |
+
+Query composition improves Recall@8 on both independent tracks; it costs about
+1.3–1.4s p50 because it makes an LLM call. The real CUDA reranker loses to the
+baseline on every reported QA_NLP metric, so it remains visible as an
+experiment rather than being enabled for résumé theatre. Commands, artifacts,
+and evaluation limits are in [docs/benchmark.md](docs/benchmark.md).
 
 ## Try it locally
 

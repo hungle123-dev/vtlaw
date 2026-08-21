@@ -102,15 +102,18 @@ def test_ui_uses_the_streaming_contract_and_current_benchmark_copy():
     assert '"/chat/stream"' in page
     assert "getReader()" in page
     assert re.search(r"0\.9025.*QA_NLP Recall@8", page, re.DOTALL)
-    assert re.search(r"0\.6716.*QA Part 2–5 Recall@8", page, re.DOTALL)
+    assert re.search(r"0\.6691.*QA Part 2–5 Recall@8", page, re.DOTALL)
     assert "0.86" not in page
 
 
 def test_public_docs_label_current_and_historical_benchmarks_truthfully():
     readme = (Path(__file__).parents[2] / "README.md").read_text(encoding="utf-8")
 
-    assert re.search(r"hash-verified.*k=8.*Recall@8.*0\.2766", readme, re.IGNORECASE)
-    assert re.search(r"historical.*k=5.*Recall@5.*0\.6012", readme, re.IGNORECASE)
+    assert "git_dirty: false" in readme
+    assert "QA_NLP (94), query composition" in readme
+    assert re.search(r"0\.9025.*0\.1769.*0\.7061", readme, re.DOTALL)
+    assert re.search(r"0\.6691.*0\.2037.*0\.5655", readme, re.DOTALL)
+    assert "0.2766" not in readme
 
 
 def test_ui_renders_safe_chunks_without_draft_or_replace_logic():

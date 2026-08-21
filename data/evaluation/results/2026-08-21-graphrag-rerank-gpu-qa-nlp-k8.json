@@ -1,0 +1,2924 @@
+{
+  "strategy": "hybrid+rerank",
+  "top_k": 8,
+  "candidate_k": 30,
+  "fetch_k": 30,
+  "rerank_top": 30,
+  "context_k": 8,
+  "command": "vtlaw eval run data/evaluation/qa/QA_NLP.csv --top-k 8 --rerank --output data/evaluation/results/2026-08-21-graphrag-rerank-gpu-qa-nlp-k8.json",
+  "dataset": "data/evaluation/qa/QA_NLP.csv",
+  "dataset_sha256": "d4053a9eb482218cf128b34cf2ab48184f0490af5d97c6ca08201cef1627197d",
+  "inputs": {
+    "dataset": {
+      "path": "data/evaluation/qa/QA_NLP.csv",
+      "sha256": "d4053a9eb482218cf128b34cf2ab48184f0490af5d97c6ca08201cef1627197d"
+    },
+    "snapshot_manifest": {
+      "path": "data\\snapshot\\manifest.json",
+      "sha256": "1ec811da809d03036d4923ebaa28bc720fde8983e6dd5b566a000584c8d77672"
+    }
+  },
+  "as_of": null,
+  "temporal_graph": false,
+  "label_currency": {
+    "status": "not_applicable",
+    "reason": "benchmark_without_as_of"
+  },
+  "provenance": {
+    "snapshot_manifest_sha256": "1ec811da809d03036d4923ebaa28bc720fde8983e6dd5b566a000584c8d77672",
+    "git_commit": "19600d333309bdcf4463396056cae2d99f96096c",
+    "git_dirty": false
+  },
+  "selection": {
+    "limit": null,
+    "method": "all_valid_rows",
+    "loaded_rows": 94,
+    "selected_rows": 94
+  },
+  "configuration": {
+    "embed_model": "bkai-foundation-models/vietnamese-bi-encoder",
+    "embed_model_revision": "84f9d9ada0d1a3c37557398b9ae9fcedcdf40be0",
+    "rerank_enabled": true,
+    "heuristic_rerank": false,
+    "temporal_graph": false,
+    "rerank_top": 30,
+    "rerank_model": "AITeamVN/Vietnamese_Reranker",
+    "rerank_model_revision": "f536976248403314225d7fdfdbc87f0e9516a54e",
+    "query_decomposition": false,
+    "llm_model": null,
+    "rrf_k": 10,
+    "rrf_vector_weight": 3.0,
+    "rrf_bm25_weight": 1.0,
+    "overfetch_factor": 4
+  },
+  "total_rows": 94,
+  "dataset_rows": 94,
+  "skipped_rows": [],
+  "aggregate": {
+    "recall_at_k": {
+      "1": 0.2845744680851064,
+      "3": 0.5531914893617021,
+      "5": 0.6710992907801419,
+      "8": 0.726063829787234
+    },
+    "precision_at_k": {
+      "1": 0.2978723404255319,
+      "3": 0.21985815602836878,
+      "8": 0.1502659574468085
+    },
+    "mrr": 0.4715425531914894
+  },
+  "latency": {
+    "p50": 0.9926149845123291,
+    "p95": 1.437371015548706,
+    "p99": 22.018526077270508,
+    "avg": 1.2487927294792014
+  },
+  "rows": [
+    {
+      "question": "Quy tắc tham gia giao thông đường bộ được quy định như thế nào?",
+      "references": [
+        "36/2024/QH15::article::10"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::10::clause::1",
+        "36/2024/QH15::article::3::clause::4",
+        "36/2024/QH15::article::10::clause::2",
+        "44/2019/QH14::article::35::clause::1",
+        "36/2024/QH15::article::3::clause::2",
+        "36/2024/QH15::article::2::clause::1",
+        "36/2024/QH15::article::3::clause::6",
+        "36/2024/QH15::article::3"
+      ],
+      "latency_s": 22.019,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.6666666666666666,
+        "8": 0.25
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đấu giá biển số xe được quy định như nào trong Luật Trật tự, an toàn giao thông đường bộ?",
+      "references": [
+        "36/2024/QH15::article::37"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::37",
+        "36/2024/QH15::article::37::clause::1",
+        "36/2024/QH15::article::37::clause::2",
+        "36/2024/QH15::article::37::clause::4",
+        "36/2024/QH15::article::38::clause::2::point::a",
+        "36/2024/QH15::article::88::clause::4",
+        "36/2024/QH15::article::38::clause::2::point::c",
+        "36/2024/QH15::article::37::clause::7"
+      ],
+      "latency_s": 1.754,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "8": 0.625
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người trúng đấu giá biển số xe có quyền như nào?",
+      "references": [
+        "36/2024/QH15::article::38::clause::1"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::38::clause::1",
+        "36/2024/QH15::article::38::clause::2",
+        "36/2024/QH15::article::38",
+        "36/2024/QH15::article::38::clause::2::point::a",
+        "36/2024/QH15::article::37::clause::4",
+        "36/2024/QH15::article::38::clause::2::point::c",
+        "36/2024/QH15::article::38::clause::1::point::đ",
+        "36/2024/QH15::article::38::clause::1::point::c"
+      ],
+      "latency_s": 1.432,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.375
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người trúng đấu giá biển số xe phải có nghĩa vụ như thế nào?",
+      "references": [
+        "36/2024/QH15::article::38::clause::1"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::38::clause::2",
+        "36/2024/QH15::article::38",
+        "36/2024/QH15::article::38::clause::2::point::a",
+        "36/2024/QH15::article::38::clause::2::point::b",
+        "36/2024/QH15::article::38::clause::2::point::c",
+        "36/2024/QH15::article::38::clause::1::point::đ",
+        "36/2024/QH15::article::38::clause::1::point::d",
+        "36/2024/QH15::article::38::clause::1::point::c"
+      ],
+      "latency_s": 1.401,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.375
+      },
+      "mrr": 0.16666666666666666,
+      "sub_queries": null
+    },
+    {
+      "question": "Xe ô tô trở trẻ em mầm non, học sinh được quy định như thế nào?",
+      "references": [
+        "36/2024/QH15::article::46"
+      ],
+      "retrieved": [
+        "35/2024/QH15::article::70::clause::1",
+        "36/2024/QH15::article::46::clause::1::point::b",
+        "36/2024/QH15::article::46::clause::2",
+        "36/2024/QH15::article::46::clause::1",
+        "168/2024/NĐ-CP::article::26::clause::6::point::d",
+        "168/2024/NĐ-CP::article::26::clause::6::point::b",
+        "36/2024/QH15::article::46::clause::4",
+        "168/2024/NĐ-CP::article::27::clause::3::point::d"
+      ],
+      "latency_s": 1.067,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.6666666666666666,
+        "8": 0.5
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Quy định về kiểm định khí thải đối với mô tô, xe gắn máy?",
+      "references": [
+        "36/2024/QH15::article::42"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::42::clause::2",
+        "168/2024/NĐ-CP::article::32::clause::1::point::b",
+        "36/2024/QH15::article::42::clause::5::point::đ",
+        "168/2024/NĐ-CP::article::53::clause::2",
+        "36/2024/QH15::article::34::clause::1::point::g",
+        "36/2024/QH15::article::42::clause::5::point::b",
+        "168/2024/NĐ-CP::article::18::clause::2::point::b",
+        "100/2019/NĐ-CP::article::21::clause::2::point::b"
+      ],
+      "latency_s": 1.378,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.6666666666666666,
+        "8": 0.375
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Điểm của giấy phép lái xe được quy định như thế nào?",
+      "references": [
+        "36/2024/QH15::article::58"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::58::clause::1",
+        "36/2024/QH15::article::58",
+        "168/2024/NĐ-CP::article::21::clause::13::point::a",
+        "36/2024/QH15::article::58::clause::4",
+        "36/2024/QH15::article::58::clause::3",
+        "168/2024/NĐ-CP::article::6::clause::16::point::a",
+        "168/2024/NĐ-CP::article::49",
+        "36/2024/QH15::article::58::clause::6"
+      ],
+      "latency_s": 1.055,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.6666666666666666,
+        "8": 0.625
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Giấy phép lái xe theo quy định mới có bao nhiêu hạng?",
+      "references": [
+        "36/2024/QH15::article::57::clause::1"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::60::clause::5",
+        "36/2024/QH15::article::60::clause::3::point::a",
+        "118/2025/QH15::article::7::clause::12::point::a",
+        "36/2024/QH15::article::57::clause::1",
+        "36/2024/QH15::article::60::clause::3::point::e",
+        "36/2024/QH15::article::89::clause::2::point::k",
+        "36/2024/QH15::article::89::clause::2::point::i",
+        "36/2024/QH15::article::57::clause::1::point::d"
+      ],
+      "latency_s": 0.688,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.25
+      },
+      "mrr": 0.25,
+      "sub_queries": null
+    },
+    {
+      "question": "Cấp đổi giấy phép lái xe được cấp trước ngày 01/01/2025 được quy định như thế nào?",
+      "references": [
+        "36/2024/QH15::article::89::clause::3"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::89::clause::3",
+        "36/2024/QH15::article::89::clause::4",
+        "36/2024/QH15::article::89::clause::1",
+        "36/2024/QH15::article::62",
+        "36/2024/QH15::article::89::clause::2",
+        "36/2024/QH15::article::89::clause::3::point::a",
+        "118/2025/QH15::article::7::clause::14::point::a",
+        "36/2024/QH15::article::89::clause::3::point::b"
+      ],
+      "latency_s": 1.001,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.375
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Nghị định số 100/2019/NĐ-CP ngày 30/12/2019 của Chính phủ quy \nđịnh về nội dung gì? Và có hiệu lực từ khi nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::1::clause::1",
+        "100/2019/NĐ-CP::article::84"
+      ],
+      "retrieved": [
+        "44/2019/QH14::article::28::clause::3",
+        "123/2021/NĐ-CP::article::2",
+        "44/2019/QH14::article::7::clause::3",
+        "44/2019/QH14::article::23::clause::1::point::b",
+        "44/2019/QH14::article::23::clause::1::point::a",
+        "44/2019/QH14::article::7::clause::4",
+        "123/2021/NĐ-CP::article::2::clause::4",
+        "123/2021/NĐ-CP::article::2::clause::3"
+      ],
+      "latency_s": 0.617,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Nghị định quy định xử phạt vi phạm hành chính trong lĩnh vực giao \nthông đường bộ có quy định xử phạt đối với người điều khiển các loại máy kéo, \ncác loại xe tương tự xe ô tô, các loại xe tương tự xe mô tô, xe máy điện, các loại xe \ntương tự xe gắn máy, xe máy điện?",
+      "references": [
+        "100/2019/NĐ-CP::article::3::clause::1"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::30::clause::11",
+        "100/2019/NĐ-CP::article::30::clause::13",
+        "168/2024/NĐ-CP::article::38::clause::1",
+        "100/2019/NĐ-CP::article::30::clause::12",
+        "100/2019/NĐ-CP::article::30::clause::7",
+        "100/2019/NĐ-CP::article::30::clause::10",
+        "100/2019/NĐ-CP::article::30::clause::8",
+        "100/2019/NĐ-CP::article::30::clause::9"
+      ],
+      "latency_s": 1.045,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "XPVPHC trong lĩnh vực giao thông ngoài hình thức xử phạt chính, \nngười có thẩm quyền có thể áp dụng những biện pháp khắc phục hậu quả nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::4::clause::1",
+        "100/2019/NĐ-CP::article::4::clause::2"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::32::clause::19",
+        "100/2019/NĐ-CP::article::11::clause::12",
+        "100/2019/NĐ-CP::article::4::clause::1::point::e",
+        "168/2024/NĐ-CP::article::3::clause::3",
+        "168/2024/NĐ-CP::article::45::clause::1",
+        "100/2019/NĐ-CP::article::78::clause::1",
+        "168/2024/NĐ-CP::article::3::clause::2",
+        "168/2024/NĐ-CP::article::3::clause::3::point::a"
+      ],
+      "latency_s": 1.413,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.5,
+        "5": 0.5,
+        "8": 0.5
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.3333333333333333,
+      "sub_queries": null
+    },
+    {
+      "question": "Khi lái xe ô tô đi trên đường mà không chấp hành hiệu lệnh, chỉ \ndẫn của biển báo hiệu, vạch kẻ đường thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::1"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::11::clause::1::point::b",
+        "100/2019/NĐ-CP::article::10::clause::1::point::b",
+        "100/2019/NĐ-CP::article::9::clause::1::point::b",
+        "100/2019/NĐ-CP::article::8::clause::1::point::c",
+        "168/2024/NĐ-CP::article::9::clause::1::point::c",
+        "100/2019/NĐ-CP::article::6::clause::1::point::a",
+        "168/2024/NĐ-CP::article::10::clause::1::point::b",
+        "100/2019/NĐ-CP::article::5::clause::1::point::a"
+      ],
+      "latency_s": 1.007,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.125,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô tham gia giao thông mà khi chuyển hướng \nkhông nhường đường cho: Các xe đi ngược chiều; người đi bộ đang qua đường \ntại nơi không có vạch kẻ đường cho người đi bộ thì có bị xử phạt không? Nếu có \nmức xử phạt là bao nhiêu?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::1::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::7::clause::5::point::c",
+        "168/2024/NĐ-CP::article::8::clause::5::point::e",
+        "168/2024/NĐ-CP::article::6::clause::5::point::m",
+        "100/2019/NĐ-CP::article::5::clause::5::point::đ",
+        "100/2019/NĐ-CP::article::7::clause::1::point::c",
+        "100/2019/NĐ-CP::article::5::clause::1::point::c",
+        "100/2019/NĐ-CP::article::6::clause::1::point::đ",
+        "168/2024/NĐ-CP::article::6::clause::5::point::c"
+      ],
+      "latency_s": 1.143,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.16666666666666666,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô khi tham gia giao thông dừng xe không có \ntín hiệu báo cho người điều khiển phương tiện khác biết bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::1::point::d"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::9",
+        "100/2019/NĐ-CP::article::5::clause::1::point::d",
+        "100/2019/NĐ-CP::article::7::clause::2::point::g",
+        "168/2024/NĐ-CP::article::6::clause::1::point::b",
+        "168/2024/NĐ-CP::article::8::clause::2::point::d",
+        "168/2024/NĐ-CP::article::6::clause::1::point::a",
+        "100/2019/NĐ-CP::article::5::clause::1::point::a",
+        "100/2019/NĐ-CP::article::10::clause::1::point::h"
+      ],
+      "latency_s": 0.993,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi  bấm còi trong đô thị và khu đông dân cư vào ban đêm có \nbị xử phạt vi phạm hành chính không? Mức phạt là bao nhiêu?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::1::point::g"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::b",
+        "100/2019/NĐ-CP::article::7::clause::3::point::d",
+        "15/2012/QH13::article::21::clause::1::point::b",
+        "100/2019/NĐ-CP::article::30::clause::14",
+        "100/2019/NĐ-CP::article::11::clause::12",
+        "15/2012/QH13::article::21::clause::1::point::a",
+        "88/2025/QH15::article::1::clause::28::point::c",
+        "168/2024/NĐ-CP::article::1::clause::1::point::a"
+      ],
+      "latency_s": 0.833,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Khi điều khiển xe ô tô chuyển làn đường không đúng nơi cho phép \nhoặc không có tín hiệu báo trước thì bị xử phạt như thế nào theo quy định?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::a"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::2::point::a",
+        "100/2019/NĐ-CP::article::5::clause::2::point::a",
+        "168/2024/NĐ-CP::article::7::clause::1::point::e",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i",
+        "168/2024/NĐ-CP::article::6::clause::5::point::g",
+        "168/2024/NĐ-CP::article::8::clause::6::point::h",
+        "100/2019/NĐ-CP::article::5::clause::5::point::đ",
+        "168/2024/NĐ-CP::article::6::clause::5::point::b"
+      ],
+      "latency_s": 0.959,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi chở nhiều người ngồi trên buồng lái có bị xử phạt VPHC \nkhông? Mức phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::2::point::b",
+        "100/2019/NĐ-CP::article::5::clause::2::point::c",
+        "36/2024/QH15::article::45::clause::1::point::đ",
+        "168/2024/NĐ-CP::article::6::clause::5::point::p",
+        "100/2019/NĐ-CP::article::24::clause::2::point::c",
+        "15/2012/QH13::article::21::clause::1::point::b",
+        "168/2024/NĐ-CP::article::1::clause::1::point::a",
+        "118/2025/QH15::article::7::clause::3"
+      ],
+      "latency_s": 0.794,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe gây tai nạn giao thông mà không đưa người bị \nnạn đi cấp cứu  bị xử phạt VPHC như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::đ"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::13",
+        "100/2019/NĐ-CP::article::5::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::7::clause::3::point::g",
+        "100/2019/NĐ-CP::article::6::clause::3::point::e",
+        "168/2024/NĐ-CP::article::7::clause::5::point::a",
+        "168/2024/NĐ-CP::article::6::clause::4::point::g",
+        "168/2024/NĐ-CP::article::8::clause::5::point::d",
+        "168/2024/NĐ-CP::article::6::clause::8"
+      ],
+      "latency_s": 1.0,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Lái xe ô tô quay đầu xe ở phần đường dành cho người đi bộ qua \nđường trừ trường hợp tổ chức giao thông tại những khu vực này có bố trí nơi \nquay đầu xe thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::k"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::k",
+        "168/2024/NĐ-CP::article::6::clause::4::point::i",
+        "168/2024/NĐ-CP::article::8::clause::4::point::đ",
+        "100/2019/NĐ-CP::article::7::clause::2::point::a",
+        "36/2024/QH15::article::15::clause::4",
+        "36/2024/QH15::article::14::clause::6::point::h",
+        "36/2024/QH15::article::18::clause::4::point::g",
+        "100/2019/NĐ-CP::article::6::clause::1::point::p"
+      ],
+      "latency_s": 0.977,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đối với các xe không phải xe ưu tiên mà người lái xe ô tô bấm còi, \nrú ga liên tục trong khu dân cư bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::b",
+        "100/2019/NĐ-CP::article::7::clause::3::point::d",
+        "100/2019/NĐ-CP::article::6::clause::3::point::c",
+        "168/2024/NĐ-CP::article::6::clause::3::point::b",
+        "168/2024/NĐ-CP::article::8::clause::3::point::b",
+        "168/2024/NĐ-CP::article::7::clause::9::point::k",
+        "36/2024/QH15::article::21::clause::2",
+        "100/2019/NĐ-CP::article::5::clause::2::point::i"
+      ],
+      "latency_s": 0.782,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe khi tham gia giao thông chuyển hướng không \ngiảm tốc độ hoặc không có tín hiệu báo hướng rẽ bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::c"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::4::point::a",
+        "168/2024/NĐ-CP::article::7::clause::3::point::a",
+        "168/2024/NĐ-CP::article::6::clause::3::point::c",
+        "100/2019/NĐ-CP::article::5::clause::3::point::c",
+        "100/2019/NĐ-CP::article::6::clause::3::point::a",
+        "36/2024/QH15::article::15::clause::2",
+        "168/2024/NĐ-CP::article::7::clause::6::point::d",
+        "168/2024/NĐ-CP::article::6::clause::5::point::o"
+      ],
+      "latency_s": 0.954,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.25,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe khi tham gia giao thông không sử dụng đèn \nchiếu sáng vào ban đêm bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::g"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::9",
+        "168/2024/NĐ-CP::article::13::clause::2::point::a",
+        "100/2019/NĐ-CP::article::16::clause::2::point::a",
+        "100/2019/NĐ-CP::article::8::clause::1::point::i",
+        "168/2024/NĐ-CP::article::13::clause::1",
+        "168/2024/NĐ-CP::article::7::clause::1::point::g",
+        "168/2024/NĐ-CP::article::6::clause::3::point::g",
+        "100/2019/NĐ-CP::article::6::clause::1::point::l"
+      ],
+      "latency_s": 1.409,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi quay đầu xe nơi đường hẹp, đường dốc có bị xử phạt \nVPHC không?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::k"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::5",
+        "123/2021/NĐ-CP::article::2::clause::3::point::a",
+        "36/2024/QH15::article::15::clause::4",
+        "168/2024/NĐ-CP::article::6::clause::4::point::i",
+        "168/2024/NĐ-CP::article::8::clause::4::point::d",
+        "100/2019/NĐ-CP::article::7::clause::4::point::g",
+        "100/2019/NĐ-CP::article::6::clause::1::point::p",
+        "168/2024/NĐ-CP::article::7::clause::2::point::k"
+      ],
+      "latency_s": 0.957,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi không giảm tốc độ và nhường đường khi điều khiển xe \nchạy từ trong ngõ ra bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::m"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::m",
+        "100/2019/NĐ-CP::article::6::clause::2::point::b",
+        "168/2024/NĐ-CP::article::7::clause::6::point::c",
+        "168/2024/NĐ-CP::article::6::clause::5::point::n",
+        "168/2024/NĐ-CP::article::9::clause::1::point::n",
+        "168/2024/NĐ-CP::article::6::clause::5::point::o",
+        "168/2024/NĐ-CP::article::7::clause::6::point::d",
+        "168/2024/NĐ-CP::article::6::clause::3::point::p"
+      ],
+      "latency_s": 0.79,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người ngồi trên xe ô tô không thắt dây an toàn khi xe đang chạy có \nbị xử phạt vi phạm không? Mức phạt là bao nhiêu?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::p",
+        "100/2019/NĐ-CP::article::5::clause::3::point::q"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::11::clause::5",
+        "168/2024/NĐ-CP::article::12::clause::4",
+        "15/2012/QH13::article::21::clause::1::point::b",
+        "168/2024/NĐ-CP::article::1::clause::1::point::a",
+        "36/2024/QH15::article::9::clause::28",
+        "36/2024/QH15::article::49::clause::1::point::b",
+        "36/2024/QH15::article::28::clause::2",
+        "15/2012/QH13::article::21::clause::1::point::a"
+      ],
+      "latency_s": 0.816,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi sử dụng điện thoại di động khi đang lái xe ô tô bị xử phạt \nnhư thế nào theo quy định?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::4::point::a"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::4::point::h",
+        "100/2019/NĐ-CP::article::5::clause::10",
+        "100/2019/NĐ-CP::article::5::clause::3",
+        "100/2019/NĐ-CP::article::5::clause::1",
+        "100/2019/NĐ-CP::article::5::clause::4",
+        "100/2019/NĐ-CP::article::5::clause::2",
+        "36/2024/QH15::article::9::clause::6",
+        "168/2024/NĐ-CP::article::7::clause::4::point::đ"
+      ],
+      "latency_s": 0.778,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe không đủ điều kiện để thu phí theo hình \nthức điện tử tự động không dừng có bị xử phạt không? Nếu có mức phạt là bao \nnhiêu?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::4::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::4::point::a",
+        "100/2019/NĐ-CP::article::5::clause::4::point::c",
+        "15/2012/QH13::article::21::clause::1::point::b",
+        "168/2024/NĐ-CP::article::47::clause::6",
+        "36/2024/QH15::article::9::clause::28",
+        "100/2019/NĐ-CP::article::30::clause::14",
+        "15/2012/QH13::article::21::clause::1::point::a",
+        "168/2024/NĐ-CP::article::1::clause::1::point::a"
+      ],
+      "latency_s": 0.862,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người lái xe ô tô vượt đèn đỏ, đèn vàng hay không chấp hành hiệu \nlệnh của Cảnh sát giao thông bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::5::point::a",
+        "100/2019/NĐ-CP::article::5::clause::5::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::9",
+        "100/2019/NĐ-CP::article::5::clause::11",
+        "100/2019/NĐ-CP::article::47::clause::1",
+        "168/2024/NĐ-CP::article::6::clause::9::point::b",
+        "100/2019/NĐ-CP::article::5::clause::5::point::a",
+        "100/2019/NĐ-CP::article::28::clause::10",
+        "100/2019/NĐ-CP::article::5::clause::5::point::d",
+        "100/2019/NĐ-CP::article::5::clause::5::point::b"
+      ],
+      "latency_s": 0.785,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.5,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.25
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi lái xe ô tô chạy quá tốc độ thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::3::point::a",
+        "100/2019/NĐ-CP::article::5::clause::5::point::i",
+        "100/2019/NĐ-CP::article::5::clause::6::point::a",
+        "100/2019/NĐ-CP::article::5::clause::7::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::12",
+        "100/2019/NĐ-CP::article::5::clause::5::point::i",
+        "100/2019/NĐ-CP::article::5::clause::10",
+        "100/2019/NĐ-CP::article::5::clause::8",
+        "100/2019/NĐ-CP::article::5::clause::7",
+        "168/2024/NĐ-CP::article::6::clause::5::point::đ",
+        "100/2019/NĐ-CP::article::5::clause::7::point::c",
+        "100/2019/NĐ-CP::article::5::clause::6"
+      ],
+      "latency_s": 1.411,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.25,
+        "5": 0.25,
+        "8": 0.5
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe ô tô sau khi sử dụng rượu, bia bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::5::clause::6::point::c",
+        "100/2019/NĐ-CP::article::5::clause::8::point::c",
+        "100/2019/NĐ-CP::article::5::clause::10::point::a"
+      ],
+      "retrieved": [
+        "44/2019/QH14::article::23::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::5::clause::10",
+        "100/2019/NĐ-CP::article::5::clause::7",
+        "100/2019/NĐ-CP::article::5::clause::8",
+        "100/2019/NĐ-CP::article::5::clause::3",
+        "100/2019/NĐ-CP::article::5::clause::6",
+        "100/2019/NĐ-CP::article::5::clause::4",
+        "100/2019/NĐ-CP::article::5::clause::5"
+      ],
+      "latency_s": 0.556,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi vượt xe trước không báo hiệu thì có bị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::1::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::1::point::b",
+        "100/2019/NĐ-CP::article::5::clause::5::point::d",
+        "100/2019/NĐ-CP::article::5::clause::2::point::a",
+        "168/2024/NĐ-CP::article::6::clause::5::point::a",
+        "168/2024/NĐ-CP::article::7::clause::4::point::c",
+        "100/2019/NĐ-CP::article::6::clause::4::point::c",
+        "168/2024/NĐ-CP::article::7::clause::1::point::b",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i"
+      ],
+      "latency_s": 0.963,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi chuyển làn mà không có tín hiệu báo trước có bị xử phạt \nkhông?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::1::point::i"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::5::clause::2::point::a",
+        "168/2024/NĐ-CP::article::6::clause::2::point::a",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i",
+        "168/2024/NĐ-CP::article::7::clause::1::point::e",
+        "168/2024/NĐ-CP::article::8::clause::6::point::h",
+        "168/2024/NĐ-CP::article::6::clause::5::point::g",
+        "168/2024/NĐ-CP::article::7::clause::3::point::a",
+        "100/2019/NĐ-CP::article::5::clause::3::point::c"
+      ],
+      "latency_s": 0.903,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.3333333333333333,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy trên đường không báo hiệu khi rẽ trái, rẽ phải thì bị xử \nphạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::a"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::7::clause::3::point::a",
+        "100/2019/NĐ-CP::article::6::clause::5",
+        "168/2024/NĐ-CP::article::7::clause::1::point::a",
+        "100/2019/NĐ-CP::article::6::clause::1::point::a",
+        "100/2019/NĐ-CP::article::6::clause::3::point::a",
+        "36/2024/QH15::article::14::clause::2",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i",
+        "123/2021/NĐ-CP::article::2::clause::5"
+      ],
+      "latency_s": 0.886,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy trên đường chở theo 2 người lớn thì bị xử phạt như thế \nnào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::2::point::l"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::7::clause::2::point::g",
+        "100/2019/NĐ-CP::article::6::clause::2::point::l",
+        "100/2019/NĐ-CP::article::6::clause::3::point::b",
+        "168/2024/NĐ-CP::article::7::clause::3::point::b",
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "36/2024/QH15::article::33::clause::3::point::b",
+        "36/2024/QH15::article::33::clause::1",
+        "168/2024/NĐ-CP::article::12::clause::5"
+      ],
+      "latency_s": 1.181,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy chở theo 3 người trên xe thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::b",
+        "168/2024/NĐ-CP::article::7::clause::3::point::b",
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "168/2024/NĐ-CP::article::7::clause::2::point::g",
+        "36/2024/QH15::article::33::clause::1",
+        "100/2019/NĐ-CP::article::6::clause::2::point::l",
+        "100/2019/NĐ-CP::article::6::clause::6",
+        "100/2019/NĐ-CP::article::6::clause::8"
+      ],
+      "latency_s": 1.141,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi đi xe máy mà sai làn đường quy định thì bị xử phạt như \nthế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::g"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::g",
+        "100/2019/NĐ-CP::article::6::clause::5",
+        "168/2024/NĐ-CP::article::7::clause::3::point::d",
+        "168/2024/NĐ-CP::article::7::clause::1::point::a",
+        "100/2019/NĐ-CP::article::6::clause::1::point::a",
+        "100/2019/NĐ-CP::article::6::clause::1",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i",
+        "168/2024/NĐ-CP::article::7::clause::1::point::e"
+      ],
+      "latency_s": 0.886,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Khi đi xe máy vào đường cấm thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::3::point::i"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "100/2019/NĐ-CP::article::6::clause::3::point::i",
+        "100/2019/NĐ-CP::article::6::clause::5",
+        "168/2024/NĐ-CP::article::7::clause::6::point::b",
+        "100/2019/NĐ-CP::article::6",
+        "168/2024/NĐ-CP::article::9::clause::3::point::c",
+        "100/2019/NĐ-CP::article::8::clause::3::point::c",
+        "100/2019/NĐ-CP::article::6::clause::7"
+      ],
+      "latency_s": 1.142,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Vừa đi xe máy vừa đeo tai nghe bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::4::point::h"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::4::point::h",
+        "100/2019/NĐ-CP::article::6::clause::1",
+        "168/2024/NĐ-CP::article::7::clause::4::point::đ",
+        "168/2024/NĐ-CP::article::32::clause::3::point::c",
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "100/2019/NĐ-CP::article::6",
+        "100/2019/NĐ-CP::article::11::clause::3",
+        "123/2021/NĐ-CP::article::2::clause::30::point::g"
+      ],
+      "latency_s": 1.216,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy vượt đèn đỏ, đèn vàng thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::4::point::e"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::4::point::c",
+        "168/2024/NĐ-CP::article::7::clause::4::point::c",
+        "100/2019/NĐ-CP::article::6::clause::9",
+        "100/2019/NĐ-CP::article::6::clause::1::point::a",
+        "36/2024/QH15::article::14::clause::4",
+        "36/2024/QH15::article::14",
+        "168/2024/NĐ-CP::article::7::clause::1::point::b",
+        "168/2024/NĐ-CP::article::7::clause::2::point::b"
+      ],
+      "latency_s": 1.027,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy ngược chiều của đường một chiều thì bị xử phạt như \nthế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::5"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::5",
+        "168/2024/NĐ-CP::article::7::clause::7::point::a",
+        "168/2024/NĐ-CP::article::6::clause::9::point::d",
+        "168/2024/NĐ-CP::article::8::clause::7::point::d",
+        "100/2019/NĐ-CP::article::7::clause::4::point::c",
+        "100/2019/NĐ-CP::article::5::clause::5::point::c",
+        "100/2019/NĐ-CP::article::6::clause::8",
+        "100/2019/NĐ-CP::article::6::clause::7"
+      ],
+      "latency_s": 1.154,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi dùng chân điều khiển xe bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::8::point::a"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::6::clause::12",
+        "168/2024/NĐ-CP::article::6::clause::13",
+        "168/2024/NĐ-CP::article::6::clause::11",
+        "168/2024/NĐ-CP::article::6::clause::9",
+        "168/2024/NĐ-CP::article::6::clause::10",
+        "168/2024/NĐ-CP::article::6::clause::7",
+        "168/2024/NĐ-CP::article::6::clause::3",
+        "168/2024/NĐ-CP::article::6::clause::2"
+      ],
+      "latency_s": 0.526,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe bằng một bánh khi tham gia giao thông bị \nxử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::8::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::32::clause::11",
+        "168/2024/NĐ-CP::article::32::clause::14",
+        "168/2024/NĐ-CP::article::32::clause::2",
+        "168/2024/NĐ-CP::article::6::clause::10",
+        "168/2024/NĐ-CP::article::6::clause::9",
+        "168/2024/NĐ-CP::article::6::clause::7",
+        "168/2024/NĐ-CP::article::6::clause::11",
+        "168/2024/NĐ-CP::article::6::clause::5"
+      ],
+      "latency_s": 0.597,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người đi bộ đi qua đường không đúng nơi quy định có vi phạm và \nbị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::9::clause::1::point::a"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::10::clause::1::point::a",
+        "100/2019/NĐ-CP::article::9::clause::1::point::a",
+        "100/2019/NĐ-CP::article::9",
+        "168/2024/NĐ-CP::article::10",
+        "168/2024/NĐ-CP::article::10::clause::2",
+        "168/2024/NĐ-CP::article::10::clause::1",
+        "100/2019/NĐ-CP::article::9::clause::1",
+        "36/2024/QH15::article::10::clause::1"
+      ],
+      "latency_s": 0.753,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người đi bộ có được đi vào đường cao tốc không? Vi phạm bị xử \nphạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::9::clause::2"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::9::clause::2",
+        "168/2024/NĐ-CP::article::10::clause::2",
+        "100/2019/NĐ-CP::article::9::clause::1",
+        "168/2024/NĐ-CP::article::10::clause::1",
+        "168/2024/NĐ-CP::article::10::clause::2::point::a",
+        "36/2024/QH15::article::33::clause::3::point::b",
+        "36/2024/QH15::article::27::clause::4",
+        "100/2019/NĐ-CP::article::8::clause::4::point::a"
+      ],
+      "latency_s": 1.099,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi đá bóng, đá cầu trái phép trên đường bộ bị xử phạt như \nthế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::11::clause::2::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::11::clause::2::point::b",
+        "168/2024/NĐ-CP::article::12::clause::2::point::b",
+        "168/2024/NĐ-CP::article::35::clause::1",
+        "36/2024/QH15::article::9::clause::21",
+        "100/2019/NĐ-CP::article::12::clause::3::point::a",
+        "168/2024/NĐ-CP::article::12::clause::6::point::c",
+        "168/2024/NĐ-CP::article::12::clause::11::point::a",
+        "36/2024/QH15::article::9::clause::20"
+      ],
+      "latency_s": 0.792,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi phơi thóc, lúa trên đường bộ có bị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::1::point::b"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::47::clause::5::point::a",
+        "100/2019/NĐ-CP::article::12::clause::10::point::a",
+        "168/2024/NĐ-CP::article::12::clause::2::point::g",
+        "100/2019/NĐ-CP::article::12::clause::1::point::b",
+        "100/2019/NĐ-CP::article::12",
+        "100/2019/NĐ-CP::article::12::clause::6::point::a",
+        "168/2024/NĐ-CP::article::17::clause::2::point::b",
+        "168/2024/NĐ-CP::article::12::clause::14::point::b"
+      ],
+      "latency_s": 0.93,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.25,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi trồng cây trong phạm vi đất dành cho đường bộ làm che \nkhuất tầm nhìn của người điều khiển phương tiện giao thông có bị xử phạt \nkhông?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::2::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12",
+        "35/2024/QH15::article::16::clause::4::point::b",
+        "100/2019/NĐ-CP::article::12::clause::2::point::b",
+        "100/2019/NĐ-CP::article::7::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::5::clause::4::point::d",
+        "36/2024/QH15::article::15::clause::4",
+        "168/2024/NĐ-CP::article::6::clause::4::point::b",
+        "100/2019/NĐ-CP::article::12::clause::3::point::b"
+      ],
+      "latency_s": 1.4,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.3333333333333333,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy không mang theo Giấy đăng ký xe có vi phạm và bị xử \nphạt hay không?",
+      "references": [
+        "100/2019/NĐ-CP::article::21::clause::2::point::b"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::11",
+        "100/2019/NĐ-CP::article::21::clause::2::point::b",
+        "100/2019/NĐ-CP::article::21::clause::3::point::b",
+        "100/2019/NĐ-CP::article::17::clause::4::point::đ",
+        "100/2019/NĐ-CP::article::21::clause::2::point::c",
+        "100/2019/NĐ-CP::article::30::clause::5::point::h",
+        "100/2019/NĐ-CP::article::30::clause::1",
+        "100/2019/NĐ-CP::article::30::clause::5::point::k"
+      ],
+      "latency_s": 1.401,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người 17 tuổi đi xe máy có bị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::21::clause::4::point::a"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::11",
+        "168/2024/NĐ-CP::article::18::clause::1",
+        "100/2019/NĐ-CP::article::21::clause::1",
+        "36/2024/QH15::article::59::clause::1::point::a",
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "100/2019/NĐ-CP::article::6::clause::2::point::k",
+        "100/2019/NĐ-CP::article::6",
+        "168/2024/NĐ-CP::article::18::clause::4::point::a"
+      ],
+      "latency_s": 1.4,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển mô tô hai bánh mà không có Giấy phép lái xe \nthì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::21::clause::5"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::21::clause::2::point::c",
+        "168/2024/NĐ-CP::article::18::clause::2::point::d",
+        "100/2019/NĐ-CP::article::6::clause::10::point::d",
+        "100/2019/NĐ-CP::article::6::clause::10::point::b",
+        "168/2024/NĐ-CP::article::18::clause::3::point::a",
+        "100/2019/NĐ-CP::article::21::clause::3::point::a",
+        "100/2019/NĐ-CP::article::17::clause::4::point::d",
+        "168/2024/NĐ-CP::article::18::clause::7::point::a"
+      ],
+      "latency_s": 0.706,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe mô tô không có Giấy đăng ký xe bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::17::clause::2::point::a"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::16::clause::6::point::đ",
+        "100/2019/NĐ-CP::article::30::clause::1",
+        "100/2019/NĐ-CP::article::30::clause::14::point::c",
+        "100/2019/NĐ-CP::article::19::clause::3::point::d",
+        "100/2019/NĐ-CP::article::17::clause::4::point::đ",
+        "168/2024/NĐ-CP::article::18::clause::2::point::d",
+        "100/2019/NĐ-CP::article::21::clause::2::point::c",
+        "100/2019/NĐ-CP::article::17::clause::4::point::b"
+      ],
+      "latency_s": 1.314,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe mô tô mà không có Giấy chứng nhận bảo \nhiểm trách nhiệm dân sự thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::21::clause::2::point::a"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::11",
+        "100/2019/NĐ-CP::article::21::clause::2::point::a",
+        "168/2024/NĐ-CP::article::18::clause::2::point::b",
+        "168/2024/NĐ-CP::article::18::clause::2::point::a",
+        "168/2024/NĐ-CP::article::7::clause::9",
+        "168/2024/NĐ-CP::article::7::clause::8",
+        "100/2019/NĐ-CP::article::21::clause::4::point::b",
+        "100/2019/NĐ-CP::article::21::clause::2::point::c"
+      ],
+      "latency_s": 1.482,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Theo quy định của pháp luật hành vi không đội mũ bảo hiểm khi \nđi xe máy bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::3"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::11::clause::3",
+        "123/2021/NĐ-CP::article::2::clause::7",
+        "100/2019/NĐ-CP::article::8::clause::3::point::đ",
+        "168/2024/NĐ-CP::article::9::clause::4::point::đ",
+        "123/2021/NĐ-CP::article::2::clause::6",
+        "168/2024/NĐ-CP::article::7::clause::2::point::i",
+        "100/2019/NĐ-CP::article::6::clause::2::point::k",
+        "123/2021/NĐ-CP::article::2::clause::4::point::b"
+      ],
+      "latency_s": 1.209,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi dừng xe, đỗ xe không đúng nơi quy định khi đi xe máy thì \nbị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::2::point::a",
+        "100/2019/NĐ-CP::article::6::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::6::clause::2::point::h"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::9",
+        "100/2019/NĐ-CP::article::6::clause::8",
+        "100/2019/NĐ-CP::article::6::clause::7",
+        "100/2019/NĐ-CP::article::6::clause::6",
+        "100/2019/NĐ-CP::article::6::clause::4",
+        "100/2019/NĐ-CP::article::6::clause::2",
+        "100/2019/NĐ-CP::article::6::clause::1",
+        "100/2019/NĐ-CP::article::6::clause::3"
+      ],
+      "latency_s": 0.62,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe máy sau khi uống rượu bị xử phạt như thế \nnào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::8::point::e",
+        "100/2019/NĐ-CP::article::6::clause::7::point::c",
+        "100/2019/NĐ-CP::article::6::clause::6::point::c"
+      ],
+      "retrieved": [
+        "44/2019/QH14::article::7::clause::6",
+        "100/2019/NĐ-CP::article::6::clause::10::point::c",
+        "100/2019/NĐ-CP::article::6::clause::8",
+        "100/2019/NĐ-CP::article::6::clause::6",
+        "100/2019/NĐ-CP::article::6::clause::4",
+        "100/2019/NĐ-CP::article::6::clause::2",
+        "100/2019/NĐ-CP::article::6::clause::3",
+        "100/2019/NĐ-CP::article::6::clause::1"
+      ],
+      "latency_s": 1.32,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe máy chạy quá tốc độ cho phép thì bị xử phạt \nnhư thế nào theo quy định?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::7::point::a",
+        "100/2019/NĐ-CP::article::6::clause::4::point::a",
+        "100/2019/NĐ-CP::article::6::clause::2::point::c"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::3",
+        "100/2019/NĐ-CP::article::6::clause::2",
+        "100/2019/NĐ-CP::article::6::clause::4",
+        "100/2019/NĐ-CP::article::6::clause::8",
+        "100/2019/NĐ-CP::article::6::clause::7",
+        "100/2019/NĐ-CP::article::6::clause::1",
+        "168/2024/NĐ-CP::article::7::clause::4::point::a",
+        "100/2019/NĐ-CP::article::6::clause::4::point::a"
+      ],
+      "latency_s": 0.711,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.3333333333333333
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.125,
+      "sub_queries": null
+    },
+    {
+      "question": "Người đi xe máy không nhường đường cho xe cứu thương bị xử \nphạt thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::5"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::6::clause::1::point::h",
+        "168/2024/NĐ-CP::article::7::clause::1::point::đ",
+        "100/2019/NĐ-CP::article::6",
+        "100/2019/NĐ-CP::article::6::clause::9",
+        "100/2019/NĐ-CP::article::6::clause::1::point::m",
+        "168/2024/NĐ-CP::article::7::clause::5::point::a",
+        "36/2024/QH15::article::15::clause::3",
+        "100/2019/NĐ-CP::article::6::clause::2::point::e"
+      ],
+      "latency_s": 0.484,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đi xe máy mà buông cả hai tay, lạng lách, đánh võng hay đi xe trên \nmột bánh thì bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::6::clause::8::point::a",
+        "100/2019/NĐ-CP::article::6::clause::8::point::b",
+        "100/2019/NĐ-CP::article::6::clause::8::point::c"
+      ],
+      "retrieved": [
+        "36/2024/QH15::article::33::clause::3::point::d",
+        "100/2019/NĐ-CP::article::6::clause::2",
+        "100/2019/NĐ-CP::article::6::clause::1",
+        "168/2024/NĐ-CP::article::9::clause::3::point::b",
+        "100/2019/NĐ-CP::article::6::clause::8::point::a",
+        "168/2024/NĐ-CP::article::7::clause::11::point::a",
+        "168/2024/NĐ-CP::article::7::clause::9::point::a",
+        "100/2019/NĐ-CP::article::8::clause::2::point::a"
+      ],
+      "latency_s": 0.941,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.3333333333333333,
+        "8": 0.3333333333333333
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe đạp điện vượt đèn đỏ, dừng xe đột ngột, \nchuyển hướng mà không có báo hiệu trước bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::8::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::8::clause::1::point::c"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::8::clause::1::point::b",
+        "168/2024/NĐ-CP::article::9::clause::1::point::b",
+        "100/2019/NĐ-CP::article::6::clause::1::point::i",
+        "100/2019/NĐ-CP::article::6::clause::1::point::b",
+        "168/2024/NĐ-CP::article::6::clause::1::point::a",
+        "100/2019/NĐ-CP::article::8::clause::2::point::đ",
+        "168/2024/NĐ-CP::article::9::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::6::clause::1::point::a"
+      ],
+      "latency_s": 1.008,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.5
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.16666666666666666,
+      "sub_queries": null
+    },
+    {
+      "question": "Sau khi uống rượu mà đi xe đạp thì có bị xử phạt vi phạm không?",
+      "references": [
+        "100/2019/NĐ-CP::article::8::clause::4::point::c",
+        "100/2019/NĐ-CP::article::8::clause::3::point::e",
+        "100/2019/NĐ-CP::article::8::clause::1::point::q"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::12::clause::1",
+        "44/2019/QH14::article::7::clause::6",
+        "100/2019/NĐ-CP::article::11::clause::1",
+        "100/2019/NĐ-CP::article::8::clause::1::point::h",
+        "168/2024/NĐ-CP::article::9::clause::1::point::h",
+        "100/2019/NĐ-CP::article::8",
+        "168/2024/NĐ-CP::article::9",
+        "100/2019/NĐ-CP::article::8::clause::1::point::q"
+      ],
+      "latency_s": 1.061,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.3333333333333333
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.125,
+      "sub_queries": null
+    },
+    {
+      "question": "Người đi bộ tham gia giao thông bị xử phạt trong trường hợp nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::9"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::10",
+        "100/2019/NĐ-CP::article::9",
+        "168/2024/NĐ-CP::article::10::clause::2",
+        "100/2019/NĐ-CP::article::9::clause::1",
+        "168/2024/NĐ-CP::article::10::clause::1",
+        "100/2019/NĐ-CP::article::9::clause::1::point::a",
+        "168/2024/NĐ-CP::article::10::clause::1::point::a",
+        "36/2024/QH15::article::30"
+      ],
+      "latency_s": 0.648,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.375
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe thực hiện hành vi đổ trái phép rác, đất, cát, \nđá, vật liệu, chất phế thải ra đường phố có bị xử phạt vi phạm hành chính không?",
+      "references": [
+        "100/2019/NĐ-CP::article::20::clause::4"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::17::clause::4",
+        "100/2019/NĐ-CP::article::20::clause::4",
+        "100/2019/NĐ-CP::article::20::clause::3",
+        "168/2024/NĐ-CP::article::17::clause::3",
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::27",
+        "168/2024/NĐ-CP::article::17::clause::2::point::b",
+        "100/2019/NĐ-CP::article::20::clause::2::point::c"
+      ],
+      "latency_s": 0.893,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người 15 tuổi điều khiển xe máy điện tham gia giao thông có xử \nphạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::21::clause::1"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::11",
+        "100/2019/NĐ-CP::article::21::clause::1",
+        "168/2024/NĐ-CP::article::18::clause::1",
+        "100/2019/NĐ-CP::article::17",
+        "100/2019/NĐ-CP::article::6",
+        "168/2024/NĐ-CP::article::18::clause::6",
+        "15/2012/QH13::article::134::clause::3",
+        "123/2021/NĐ-CP::article::2::clause::7"
+      ],
+      "latency_s": 1.393,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người bán hàng rong, bán hàng hóa nhỏ lẻ trên vỉa hè các tuyến \nphố bị xử phạt như thế nào”",
+      "references": [
+        "100/2019/NĐ-CP::article::12"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::12::clause::9",
+        "100/2019/NĐ-CP::article::12::clause::1::point::a",
+        "168/2024/NĐ-CP::article::12::clause::2::point::e",
+        "168/2024/NĐ-CP::article::12::clause::7",
+        "168/2024/NĐ-CP::article::12::clause::12",
+        "168/2024/NĐ-CP::article::52::clause::9::point::c",
+        "100/2019/NĐ-CP::article::12::clause::6::point::e",
+        "168/2024/NĐ-CP::article::6::clause::3::point::e"
+      ],
+      "latency_s": 1.199,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi phơi thóc, lúa, rơm rạ trên đường bộ có bị xử phạt \nkhông?",
+      "references": [
+        "100/2019/NĐ-CP::article::12"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::47::clause::5::point::a",
+        "100/2019/NĐ-CP::article::12::clause::10::point::a",
+        "168/2024/NĐ-CP::article::12::clause::2::point::g",
+        "100/2019/NĐ-CP::article::12::clause::1::point::b",
+        "100/2019/NĐ-CP::article::49::clause::1::point::đ",
+        "100/2019/NĐ-CP::article::12",
+        "168/2024/NĐ-CP::article::17::clause::2::point::b",
+        "168/2024/NĐ-CP::article::12::clause::14::point::b"
+      ],
+      "latency_s": 0.951,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.375
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi trồng cây trong phạm vi đất dành cho đường bộ làm che \nkhuất tầm nhìn bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::2::point::b",
+        "35/2024/QH15::article::16::clause::4::point::b",
+        "100/2019/NĐ-CP::article::12",
+        "100/2019/NĐ-CP::article::12::clause::2",
+        "100/2019/NĐ-CP::article::12::clause::9",
+        "100/2019/NĐ-CP::article::7::clause::2::point::đ",
+        "100/2019/NĐ-CP::article::12::clause::1",
+        "100/2019/NĐ-CP::article::12::clause::8"
+      ],
+      "latency_s": 1.386,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.6666666666666666,
+        "8": 0.75
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi xả nước ra đường bộ không đúng nơi quy định bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::2::point::đ"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::12::clause::2::point::đ",
+        "15/2012/QH13::article::23::clause::1",
+        "100/2019/NĐ-CP::article::9::clause::1",
+        "168/2024/NĐ-CP::article::10::clause::1",
+        "100/2019/NĐ-CP::article::11",
+        "100/2019/NĐ-CP::article::30",
+        "168/2024/NĐ-CP::article::10"
+      ],
+      "latency_s": 1.389,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi sử dụng đường bộ trái quy định để tổ chức hoạt động văn \nhóa bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::3::point::a"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::3::point::a",
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::12::clause::9",
+        "100/2019/NĐ-CP::article::12::clause::8",
+        "100/2019/NĐ-CP::article::12::clause::1",
+        "100/2019/NĐ-CP::article::12::clause::3",
+        "168/2024/NĐ-CP::article::12::clause::6",
+        "100/2019/NĐ-CP::article::12::clause::5"
+      ],
+      "latency_s": 1.165,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi treo băng rôn, biểu ngữ trái phép, treo biển hiệu, biển \nquảng cáo trên đất của đường bộ ở đoạn đường ngoài đô thị bị xử phạt như thế \nnào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::3::point::d",
+        "100/2019/NĐ-CP::article::12::clause::3::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::12::clause::7",
+        "100/2019/NĐ-CP::article::12::clause::3::point::d",
+        "100/2019/NĐ-CP::article::12::clause::5::point::b",
+        "100/2019/NĐ-CP::article::12::clause::2::point::d",
+        "100/2019/NĐ-CP::article::12::clause::3::point::c",
+        "100/2019/NĐ-CP::article::53::clause::3::point::c",
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::12::clause::3::point::b"
+      ],
+      "latency_s": 0.939,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.5,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi đổ rác ra đường bộ không đúng nơi quy định bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::4"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::20::clause::3",
+        "100/2019/NĐ-CP::article::12::clause::2::point::đ",
+        "123/2021/NĐ-CP::article::1::clause::28",
+        "168/2024/NĐ-CP::article::12::clause::7",
+        "36/2024/QH15::article::9::clause::20",
+        "100/2019/NĐ-CP::article::11",
+        "100/2019/NĐ-CP::article::12::clause::6::point::a"
+      ],
+      "latency_s": 1.403,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi chiếm dụng lòng đường làm nơi trông, giữ xe bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::8::point::a",
+        "100/2019/NĐ-CP::article::12::clause::7",
+        "100/2019/NĐ-CP::article::12::clause::5::point::d",
+        "100/2019/NĐ-CP::article::12::clause::5::point::c"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::7",
+        "168/2024/NĐ-CP::article::12::clause::12",
+        "168/2024/NĐ-CP::article::12::clause::7",
+        "100/2019/NĐ-CP::article::12::clause::6::point::i",
+        "100/2019/NĐ-CP::article::12::clause::5::point::d",
+        "100/2019/NĐ-CP::article::12::clause::6::point::g",
+        "100/2019/NĐ-CP::article::12::clause::8::point::a",
+        "100/2019/NĐ-CP::article::12::clause::5::point::b"
+      ],
+      "latency_s": 0.764,
+      "recall_at_k": {
+        "1": 0.25,
+        "3": 0.25,
+        "5": 0.5,
+        "8": 0.75
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.375
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi gắn vào công trình báo hiệu đường bộ các nội dung \nkhông liên quan tới ý nghĩa, mục đích của công trình đường bộ bị xử phạt như \nthế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::6::point::c"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::6::point::c",
+        "35/2024/QH15::article::7::clause::4",
+        "35/2024/QH15::article::23::clause::1",
+        "100/2019/NĐ-CP::article::13::clause::1",
+        "35/2024/QH15::article::22::clause::1::point::b",
+        "100/2019/NĐ-CP::article::39::clause::4",
+        "100/2019/NĐ-CP::article::39",
+        "100/2019/NĐ-CP::article::15::clause::10::point::a"
+      ],
+      "latency_s": 0.767,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi sử dụng trái phép đất của đường bộ làm nơi tập kết hoạch \ntrung chuyển hàng hóa bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::6::point::đ"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::6::point::d",
+        "100/2019/NĐ-CP::article::12",
+        "100/2019/NĐ-CP::article::12::clause::2",
+        "100/2019/NĐ-CP::article::12::clause::1",
+        "100/2019/NĐ-CP::article::12::clause::9",
+        "100/2019/NĐ-CP::article::12::clause::8",
+        "100/2019/NĐ-CP::article::12::clause::2::point::d",
+        "100/2019/NĐ-CP::article::12::clause::3"
+      ],
+      "latency_s": 0.873,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi chiếm dụng đất đường bộ để xây dựng nhà ở bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::12::clause::9::point::a"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::12::clause::4",
+        "100/2019/NĐ-CP::article::12::clause::7",
+        "100/2019/NĐ-CP::article::12",
+        "100/2019/NĐ-CP::article::12::clause::8",
+        "100/2019/NĐ-CP::article::13::clause::5",
+        "100/2019/NĐ-CP::article::12::clause::9",
+        "100/2019/NĐ-CP::article::13::clause::4",
+        "100/2019/NĐ-CP::article::13::clause::3"
+      ],
+      "latency_s": 0.767,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi thi công trên đường bộ đang khai thác không treo biển \nbáo thông tin công trình bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::13::clause::1"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::13::clause::1",
+        "100/2019/NĐ-CP::article::13::clause::5::point::c",
+        "35/2024/QH15::article::32",
+        "35/2024/QH15::article::32::clause::1",
+        "100/2019/NĐ-CP::article::56",
+        "35/2024/QH15::article::32::clause::6",
+        "100/2019/NĐ-CP::article::13::clause::7::point::a",
+        "100/2019/NĐ-CP::article::13"
+      ],
+      "latency_s": 0.952,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi để vật liệu, đất đá, phương tiện thi công ngoài phạm vi \nthi công gây cản trở giao thông ?",
+      "references": [
+        "100/2019/NĐ-CP::article::13::clause::2::point::c"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::13::clause::2::point::c",
+        "100/2019/NĐ-CP::article::13::clause::2::point::a",
+        "100/2019/NĐ-CP::article::13::clause::4::point::b",
+        "100/2019/NĐ-CP::article::20::clause::2::point::c",
+        "35/2024/QH15::article::32::clause::6",
+        "36/2024/QH15::article::9::clause::20",
+        "100/2019/NĐ-CP::article::13::clause::6",
+        "100/2019/NĐ-CP::article::13::clause::3::point::b"
+      ],
+      "latency_s": 0.974,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi tổ chức thi công trên đường bộ đang khai thác không có \nbiện pháp bảo đảm an toàn giao thông để xảy ra ùn tắc bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::13::clause::3::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::13::clause::1",
+        "100/2019/NĐ-CP::article::13::clause::3::point::b",
+        "35/2024/QH15::article::32::clause::6",
+        "100/2019/NĐ-CP::article::13::clause::6",
+        "100/2019/NĐ-CP::article::13::clause::5::point::b",
+        "100/2019/NĐ-CP::article::13::clause::5::point::c",
+        "35/2024/QH15::article::32",
+        "35/2024/QH15::article::32::clause::2"
+      ],
+      "latency_s": 1.063,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi tổ chức thi công trên đường bộ đang khai thác không thực \nhiện các biện pháp bảo đảm an toan giao thông để xảy ra tai nạn giao thông bị phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::13::clause::5::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::56::clause::4",
+        "100/2019/NĐ-CP::article::13::clause::1",
+        "100/2019/NĐ-CP::article::13::clause::6",
+        "35/2024/QH15::article::32::clause::6",
+        "100/2019/NĐ-CP::article::13::clause::5::point::b",
+        "100/2019/NĐ-CP::article::13::clause::3::point::b",
+        "100/2019/NĐ-CP::article::13::clause::5",
+        "100/2019/NĐ-CP::article::13::clause::4"
+      ],
+      "latency_s": 1.013,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi xây dựng hoặc thành lập bến xe, bãi đỗ xe, trạm dừng \nnghỉ, trạm thu phí đường bộ không bảo đảm tiêu chuẩn kỹ thuật bị xử phạt như \nthế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::14::clause::1::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::14",
+        "100/2019/NĐ-CP::article::15::clause::9",
+        "100/2019/NĐ-CP::article::14::clause::2::point::b",
+        "100/2019/NĐ-CP::article::14::clause::1::point::a",
+        "100/2019/NĐ-CP::article::14::clause::1::point::b",
+        "100/2019/NĐ-CP::article::14::clause::1",
+        "100/2019/NĐ-CP::article::4::clause::2::point::d",
+        "35/2024/QH15::article::39::clause::1"
+      ],
+      "latency_s": 0.85,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe ô tô kinh doanh vận tải hành khách lắp \nthêm hay tháo bớt ghế không đúng với thông số kỹ thuật được ghi trong Giấy \nchứng nhận kiểm định an toàn kỹ thuật và bảo vệ môi trường của xe bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::16::clause::3::point::e"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::17::point::l",
+        "168/2024/NĐ-CP::article::32::clause::11::point::d",
+        "100/2019/NĐ-CP::article::80::clause::3::point::đ",
+        "168/2024/NĐ-CP::article::13::clause::3::point::d",
+        "168/2024/NĐ-CP::article::47::clause::3::point::e",
+        "168/2024/NĐ-CP::article::13::clause::4::point::b",
+        "168/2024/NĐ-CP::article::32::clause::14::point::h",
+        "100/2019/NĐ-CP::article::30::clause::9::point::g"
+      ],
+      "latency_s": 1.422,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe gắn biển số không đúng với Giấy đăng ký xe \nbị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::16::clause::4::point::b"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::16::clause::6::point::c",
+        "100/2019/NĐ-CP::article::17::clause::4::point::b",
+        "100/2019/NĐ-CP::article::30::clause::14::point::a",
+        "100/2019/NĐ-CP::article::30::clause::8::point::g",
+        "100/2019/NĐ-CP::article::16::clause::6::point::đ",
+        "168/2024/NĐ-CP::article::13::clause::8::point::b",
+        "100/2019/NĐ-CP::article::30::clause::5::point::k",
+        "100/2019/NĐ-CP::article::17::clause::2::point::c"
+      ],
+      "latency_s": 1.437,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 0.0,
+        "8": 0.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.0
+      },
+      "mrr": 0.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Đối với các hành vi vi phạm quy định về điều kiện của người điều \nkhiển xe máy chuyên dùng bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::22"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::22",
+        "168/2024/NĐ-CP::article::19",
+        "168/2024/NĐ-CP::article::16",
+        "168/2024/NĐ-CP::article::19::clause::2",
+        "100/2019/NĐ-CP::article::19",
+        "100/2019/NĐ-CP::article::22::clause::2",
+        "168/2024/NĐ-CP::article::19::clause::1",
+        "168/2024/NĐ-CP::article::16::clause::4"
+      ],
+      "latency_s": 0.987,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô thực hiện hành vi chở khách vượt quá \nquy định được phép chở của phương tiện bị xử phạt như thế nào theo quy định?",
+      "references": [
+        "100/2019/NĐ-CP::article::23::clause::4",
+        "100/2019/NĐ-CP::article::23::clause::2"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::23::clause::2",
+        "168/2024/NĐ-CP::article::20::clause::2",
+        "168/2024/NĐ-CP::article::20::clause::4",
+        "100/2019/NĐ-CP::article::23::clause::4",
+        "100/2019/NĐ-CP::article::23::clause::8::point::c",
+        "100/2019/NĐ-CP::article::23::clause::8::point::a",
+        "168/2024/NĐ-CP::article::32::clause::18::point::đ",
+        "100/2019/NĐ-CP::article::30::clause::14::point::h"
+      ],
+      "latency_s": 0.993,
+      "recall_at_k": {
+        "1": 0.5,
+        "3": 0.5,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô thực hiện hành vi đón, trả khách không \nđúng nơi quy định trên những tuyến đường đã xác định nơi đón, trả khách bị xử \nphạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::23::clause::5::point::đ"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::20::clause::5::point::c",
+        "100/2019/NĐ-CP::article::23::clause::5::point::đ",
+        "168/2024/NĐ-CP::article::47::clause::3::point::k",
+        "100/2019/NĐ-CP::article::23::clause::5::point::k",
+        "168/2024/NĐ-CP::article::20::clause::5::point::g",
+        "100/2019/NĐ-CP::article::23::clause::1",
+        "100/2019/NĐ-CP::article::23::clause::8",
+        "100/2019/NĐ-CP::article::23::clause::3"
+      ],
+      "latency_s": 0.781,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô thực hiện hành vi đón, trả hành khách trên \nđường cao tốc bị xử phạt thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::23::clause::7"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::20::clause::8",
+        "123/2021/NĐ-CP::article::2::clause::12::point::c",
+        "168/2024/NĐ-CP::article::21::clause::9",
+        "123/2021/NĐ-CP::article::2::clause::13::point::c",
+        "100/2019/NĐ-CP::article::23::clause::7::point::a",
+        "168/2024/NĐ-CP::article::26::clause::8::point::c",
+        "100/2019/NĐ-CP::article::24::clause::6::point::c",
+        "100/2019/NĐ-CP::article::23"
+      ],
+      "latency_s": 0.676,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.2,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi điều khiển xe tham gia kinh doanh vận tải hành khách có \ngắn thiết bị giám sát hành trình của xe nhưng thiết bị không hoạt động bị xử phạt \nnhư thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::23::clause::6::point::đ"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::12::point::b",
+        "100/2019/NĐ-CP::article::23::clause::5::point::g",
+        "168/2024/NĐ-CP::article::20::clause::6::point::đ",
+        "100/2019/NĐ-CP::article::23::clause::6::point::đ",
+        "168/2024/NĐ-CP::article::47::clause::3::point::g",
+        "168/2024/NĐ-CP::article::26::clause::7::point::c",
+        "100/2019/NĐ-CP::article::80::clause::3::point::e",
+        "123/2021/NĐ-CP::article::2::clause::13::point::b"
+      ],
+      "latency_s": 1.409,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.125
+      },
+      "mrr": 0.25,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô tải vận chuyển hàng hóa nhưng không \nchốt, đóng cố định cửa sau thùng xe có bị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::24::clause::1::point::c"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::47::clause::5::point::h",
+        "100/2019/NĐ-CP::article::24::clause::1::point::c",
+        "168/2024/NĐ-CP::article::21::clause::1::point::b",
+        "100/2019/NĐ-CP::article::24::clause::1::point::a",
+        "168/2024/NĐ-CP::article::21::clause::8::point::đ",
+        "100/2019/NĐ-CP::article::24::clause::3::point::a",
+        "35/2024/QH15::article::63::clause::2",
+        "168/2024/NĐ-CP::article::21::clause::5::point::c"
+      ],
+      "latency_s": 0.911,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Người điều khiển xe ô tô tải chở hàng vượt quá trọng tải cho phép \ntham gia giao thông được ghi trong giấy chứng nhận kiểm định an toàn kỹ thuật \nvà bảo vệ môi trường của xe bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::24"
+      ],
+      "retrieved": [
+        "168/2024/NĐ-CP::article::26::clause::5",
+        "123/2021/NĐ-CP::article::1::clause::10",
+        "168/2024/NĐ-CP::article::21::clause::2::point::a",
+        "100/2019/NĐ-CP::article::24::clause::2::point::a",
+        "168/2024/NĐ-CP::article::21::clause::8::point::a",
+        "100/2019/NĐ-CP::article::24::clause::8::point::a",
+        "168/2024/NĐ-CP::article::21::clause::7::point::a",
+        "100/2019/NĐ-CP::article::24::clause::7::point::a"
+      ],
+      "latency_s": 1.417,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.0,
+        "8": 0.375
+      },
+      "mrr": 0.25,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi bán biển số phương tiện giao thông cơ giới đường bộ trái \nphép bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::29::clause::1"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::16",
+        "100/2019/NĐ-CP::article::29::clause::1",
+        "168/2024/NĐ-CP::article::31::clause::2",
+        "100/2019/NĐ-CP::article::29::clause::2",
+        "168/2024/NĐ-CP::article::31::clause::1",
+        "100/2019/NĐ-CP::article::29",
+        "168/2024/NĐ-CP::article::31",
+        "168/2024/NĐ-CP::article::37::clause::1"
+      ],
+      "latency_s": 1.438,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành vi sản xuất, lắp ráp trái phép phương tiện giao thông cơ giới \nđường bộ bị xử phạt như thế nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::29::clause::2"
+      ],
+      "retrieved": [
+        "123/2021/NĐ-CP::article::2::clause::16",
+        "100/2019/NĐ-CP::article::29::clause::2",
+        "168/2024/NĐ-CP::article::31::clause::2",
+        "100/2019/NĐ-CP::article::29::clause::3",
+        "168/2024/NĐ-CP::article::31::clause::3",
+        "100/2019/NĐ-CP::article::29",
+        "168/2024/NĐ-CP::article::31",
+        "100/2019/NĐ-CP::article::29::clause::1"
+      ],
+      "latency_s": 1.388,
+      "recall_at_k": {
+        "1": 0.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 0.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 0.5,
+      "sub_queries": null
+    },
+    {
+      "question": "Nhân viên phục vụ trên xe buýt, xe vận chuyển hành khách không \nhỗ trợ, giúp đỡ hành khách đi xe là người cao tuổi bị xử phạt như thế nào nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::31::clause::1::point::a"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::31::clause::1::point::a",
+        "100/2019/NĐ-CP::article::31",
+        "100/2019/NĐ-CP::article::31::clause::3",
+        "100/2019/NĐ-CP::article::31::clause::2",
+        "100/2019/NĐ-CP::article::31::clause::4",
+        "100/2019/NĐ-CP::article::31::clause::1",
+        "35/2024/QH15::article::59::clause::3",
+        "100/2019/NĐ-CP::article::31::clause::5"
+      ],
+      "latency_s": 0.784,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Nhân viên phục vụ trên xe buýt, xe vận chuyển hành khách thực \nhiện hành vi thu tiền vé nhưng không trao vé cho hành khách bị xử phạt như thế \nnào nào?",
+      "references": [
+        "100/2019/NĐ-CP::article::31::clause::2"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::31::clause::2",
+        "100/2019/NĐ-CP::article::31::clause::3",
+        "100/2019/NĐ-CP::article::23::clause::3::point::l",
+        "100/2019/NĐ-CP::article::31::clause::6",
+        "100/2019/NĐ-CP::article::31",
+        "100/2019/NĐ-CP::article::23::clause::9::point::b",
+        "100/2019/NĐ-CP::article::31::clause::5",
+        "100/2019/NĐ-CP::article::31::clause::4"
+      ],
+      "latency_s": 0.711,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.125
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    },
+    {
+      "question": "Hành khách đi xe vi phạm quy định về trật tự an toàn giao thông \ncó bị xử phạt không?",
+      "references": [
+        "100/2019/NĐ-CP::article::32"
+      ],
+      "retrieved": [
+        "100/2019/NĐ-CP::article::32",
+        "168/2024/NĐ-CP::article::33",
+        "100/2019/NĐ-CP::article::31",
+        "168/2024/NĐ-CP::article::20",
+        "36/2024/QH15::article::45",
+        "100/2019/NĐ-CP::article::32::clause::1::point::b",
+        "168/2024/NĐ-CP::article::33::clause::1::point::b",
+        "168/2024/NĐ-CP::article::20::clause::1"
+      ],
+      "latency_s": 0.716,
+      "recall_at_k": {
+        "1": 1.0,
+        "3": 1.0,
+        "5": 1.0,
+        "8": 1.0
+      },
+      "precision_at_k": {
+        "1": 1.0,
+        "3": 0.3333333333333333,
+        "8": 0.25
+      },
+      "mrr": 1.0,
+      "sub_queries": null
+    }
+  ]
+}

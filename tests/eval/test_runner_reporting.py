@@ -690,13 +690,16 @@ def test_public_docs_record_measured_currency_stages():
     assert "2026-08-20-citation-currency-hierarchy-fixed.json" in public_docs
     assert "2026-08-20" in public_docs
     assert "python -m vtlaw" not in public_docs
-    assert "No `2026-08-21-release-evidence-k8.json` result is claimed here" not in public_docs
-    assert "2026-08-21-release-evidence-k8.json" in docs["docs/benchmark.md"]
+    benchmark = docs["docs/benchmark.md"]
+    for artifact in (
+        "2026-08-21-graphrag-baseline-qa-nlp-k8.json",
+        "2026-08-21-graphrag-composition-qa-nlp-k8.json",
+        "2026-08-21-graphrag-rerank-gpu-qa-nlp-k8.json",
+        "2026-08-21-graphrag-baseline-qa-part2345-k8.json",
+        "2026-08-21-graphrag-composition-qa-part2345-k8.json",
+    ):
+        assert artifact in benchmark
+    assert "git_dirty: false" in benchmark
     assert "--as-of 2026-08-21" in docs["docs/benchmark.md"]
     assert "fetches 30 candidates per retrieval leg" in public_docs
     assert "fused candidate pool" in public_docs
-    assert "Result JSON files are intentionally ignored by Git." not in docs["docs/benchmark.md"]
-    assert (
-        "Result JSON files are ignored by Git except "
-        "`data/evaluation/results/2026-08-21-release-evidence-k8.json`."
-    ) in docs["docs/benchmark.md"]
