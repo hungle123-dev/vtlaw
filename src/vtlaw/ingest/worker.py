@@ -53,9 +53,6 @@ class ReindexJob(BaseModel):
     output_dir: str = "data/snapshot"
 
 
-Jobs = ScrapeJob | ParseJob | ReindexJob
-
-
 def _graph_client(settings: Settings | None = None):
     """Lazy import: the worker module is imported by arq before Neo4j is needed."""
     from vtlaw.graph.client import GraphClient

@@ -2,7 +2,7 @@
 
 Tests cover:
 - Hit dataclass construction and properties
-- fuse_rrf: RRF fusion logic with various input combinations
+- fuse_weighted: RRF fusion logic with various input combinations
 - rerank: cross-encoder reranking with mocked model
 - HybridRetriever: facade with mocked Neo4j session
 
@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from neo4j import Session
 
+from vtlaw.config import Settings
 from vtlaw.graph.client import GraphClient
 from vtlaw.retrieve.search import (
     Hit,
@@ -24,7 +25,7 @@ from vtlaw.retrieve.search import (
     SearchResult,
     _load_cross_encoder,
     bm25_search,
-    fuse_rrf,
+    fuse_weighted,
     rerank,
     vector_search,
 )
@@ -84,7 +85,7 @@ def _settings(**overrides):
         "rrf_vector_weight": 3.0,
         "rrf_bm25_weight": 1.0,
         "rerank_enabled": False,
-        "rerank_top": 15,
+        "rerank_top": 30,
         "overfetch_factor": 4,
     }
     return MagicMock(**{**defaults, **overrides})
@@ -115,17 +116,17 @@ class TestHit:
 
 
 # ---------------------------------------------------------------------------
-# fuse_rrf
+# fuse_weighted
 # ---------------------------------------------------------------------------
 
 
-class TestFuseRRF:
+class TestFuseWeighted:
     def test_combines_disjoint_lists(self):
         """Two lists with no overlap should produce union."""
         vec = [make_hit(uid="a"), make_hit(uid="b")]
         bm25 = [make_hit(uid="c"), make_hit(uid="d")]
 
-        fused = fuse_rrf(vec, bm25, k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10)
 
         assert len(fused) == 4
         uids = {h.uid for h in fused}
@@ -136,7 +137,7 @@ class TestFuseRRF:
         vec = [make_hit(uid="both"), make_hit(uid="vec_only")]
         bm25 = [make_hit(uid="both"), make_hit(uid="bm25_only")]
 
-        fused = fuse_rrf(vec, bm25, k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10)
 
         # "both" appears at rank 0 in both lists → highest RRF score
         assert fused[0].uid == "both"
@@ -149,23 +150,23 @@ class TestFuseRRF:
         vec = [make_hit(uid="x")]
         bm25 = [make_hit(uid="x")]
 
-        fused = fuse_rrf(vec, bm25, k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10)
 
         expected = 1.0 / (0 + 1 + RRF_K) + 1.0 / (0 + 1 + RRF_K)
         assert abs(fused[0].score - expected) < 1e-10
 
     def test_empty_lists(self):
-        assert fuse_rrf([], [], k=10) == []
+        assert fuse_weighted([([], 1.0), ([], 1.0)], k=10) == []
 
     def test_one_empty_list(self):
         vec = [make_hit(uid="a"), make_hit(uid="b")]
-        assert len(fuse_rrf(vec, [], k=10)) == 2
+        assert len(fuse_weighted([(vec, 1.0), ([], 1.0)], k=10)) == 2
 
     def test_respects_k(self):
         vec = [make_hit(uid=f"v{i}") for i in range(20)]
         bm25 = [make_hit(uid=f"b{i}") for i in range(20)]
 
-        fused = fuse_rrf(vec, bm25, k=5)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=5)
 
         assert len(fused) == 5
 
@@ -173,7 +174,7 @@ class TestFuseRRF:
         vec = [make_hit(uid="a", doc_identity="doc1", content="content1")]
         bm25 = [make_hit(uid="b", doc_identity="doc2", content="content2")]
 
-        fused = fuse_rrf(vec, bm25, k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10)
 
         by_uid = {h.uid: h for h in fused}
         assert by_uid["a"].doc_identity == "doc1"
@@ -187,18 +188,15 @@ class TestFuseRRF:
         A stray second accumulation in the BM25 loop would double every
         BM25-only score and silently invert the weighting.
         """
-        fused = fuse_rrf([], [make_hit(uid="b")], k=10, rrf_k=10, bm25_weight=1.0)
+        fused = fuse_weighted([([], 1.0), ([make_hit(uid="b")], 1.0)], k=10, rrf_k=10)
 
         assert abs(fused[0].score - 1.0 / 11) < 1e-12
 
     def test_vector_weight_outranks_bm25_at_equal_rank(self):
         """The whole point of the weights: same rank, stronger leg wins."""
-        fused = fuse_rrf(
-            [make_hit(uid="from_vec")],
-            [make_hit(uid="from_bm25")],
+        fused = fuse_weighted(
+            [([make_hit(uid="from_vec")], 3.0), ([make_hit(uid="from_bm25")], 1.0)],
             k=10,
-            vector_weight=3.0,
-            bm25_weight=1.0,
         )
 
         assert [h.uid for h in fused] == ["from_vec", "from_bm25"]
@@ -207,8 +205,8 @@ class TestFuseRRF:
         """rrf_k damps rank. Smaller k => bigger gap between rank 1 and rank 2."""
         hits = [make_hit(uid="first"), make_hit(uid="second")]
 
-        flat = fuse_rrf(hits, [], k=10, rrf_k=60)
-        sharp = fuse_rrf(hits, [], k=10, rrf_k=1)
+        flat = fuse_weighted([(hits, 1.0)], k=10, rrf_k=60)
+        sharp = fuse_weighted([(hits, 1.0)], k=10, rrf_k=1)
 
         assert sharp[0].score / sharp[1].score > flat[0].score / flat[1].score
 
@@ -216,7 +214,7 @@ class TestFuseRRF:
         """Omitting the weights keeps the textbook 1:1 behaviour."""
         vec, bm25 = [make_hit(uid="v")], [make_hit(uid="b")]
 
-        fused = fuse_rrf(vec, bm25, k=10, rrf_k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10, rrf_k=10)
 
         assert fused[0].score == fused[1].score
 
@@ -224,7 +222,7 @@ class TestFuseRRF:
         vec = [make_hit(uid="low", score=0.01), make_hit(uid="high", score=0.99)]
         bm25 = []
 
-        fused = fuse_rrf(vec, bm25, k=10)
+        fused = fuse_weighted([(vec, 1.0), (bm25, 1.0)], k=10)
 
         # RRF replaces original scores, but the ranking order is preserved
         # because rank 0 gets a higher RRF contribution than rank 1.
@@ -246,7 +244,11 @@ class TestRerank:
         later tests silently score against it instead of their own mock.
         """
         _load_cross_encoder.cache_clear()
-        yield
+        with patch(
+            "vtlaw.retrieve.search.available_memory_bytes",
+            return_value=8 * 1024**3,
+        ):
+            yield
         _load_cross_encoder.cache_clear()
 
     def test_with_mocked_cross_encoder(self):
@@ -339,6 +341,25 @@ class TestRerank:
             reranked = rerank(hits, "query", k=1, reranker_model="test-model")
 
         assert reranked is None
+
+    def test_skips_before_loading_when_available_memory_is_below_the_guard(self):
+        """An optional CPU model must not be allowed to crash the API host."""
+        hits = [make_hit(uid="a")]
+
+        with (
+            patch("vtlaw.retrieve.search.available_memory_bytes", return_value=1),
+            patch("vtlaw.retrieve.search._load_cross_encoder") as load_model,
+        ):
+            reranked = rerank(
+                hits,
+                "query",
+                k=1,
+                reranker_model="test-model",
+                min_available_memory_bytes=2,
+            )
+
+        assert reranked is None
+        load_model.assert_not_called()
 
     def test_uses_embedding_text_for_pairs(self):
         """rerank should build (query, embedding_text) pairs."""
@@ -487,15 +508,67 @@ class TestBM25Search:
 
 
 class TestHybridRetriever:
+    def test_served_defaults_align_candidate_budget_and_return_eight(self, mock_embedder):
+        settings = Settings(neo4j_password="test")
+        assert settings.fetch_k == settings.rerank_top == 30
+        assert settings.context_k == 8
+
+        pool = [make_hit(uid=f"doc::article::{i}") for i in range(30)]
+        retriever = HybridRetriever(MagicMock(), mock_embedder, settings)
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=pool, strategy="hybrid")
+        )
+
+        with patch("vtlaw.retrieve.search.rerank", return_value=pool):
+            result = retriever.search_and_rerank(
+                "query",
+                k=settings.context_k,
+                fetch_k=settings.fetch_k,
+                rerank_top=settings.rerank_top,
+                rerank_enabled=True,
+                heuristic_rerank=True,
+            )
+
+        assert retriever.search.call_args.kwargs["k"] == 30
+        assert retriever.search.call_args.kwargs["fetch_k"] == 30
+        assert len(result.hits) == 8
+
     def test_exact_citation_bypasses_approximate_search(self, mock_embedder):
         hit = make_hit(uid="168/2024/NĐ-CP::article::6")
         retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
 
-        with patch("vtlaw.retrieve.search.citation_search", return_value=[hit]) as lookup:
+        lookup_result = MagicMock(had_full_citation=True, hits=[hit])
+        with patch(
+            "vtlaw.retrieve.search.citation_search", return_value=lookup_result
+        ) as lookup:
             result = retriever.search("Điều 6 168/2024/NĐ-CP", k=5)
 
         assert result.hits == [hit]
+        assert result.strategy == "exact_citation"
         lookup.assert_called_once()
+
+    def test_unknown_full_citation_never_calls_approximate_search(self, mock_embedder):
+        approximate = make_hit(uid="similar::article::999")
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        lookup_result = MagicMock(had_full_citation=True, hits=[])
+
+        with (
+            patch("vtlaw.retrieve.search.citation_search", return_value=lookup_result),
+            patch(
+                "vtlaw.retrieve.search.vector_search", return_value=[approximate]
+            ) as vector,
+            patch(
+                "vtlaw.retrieve.search.bm25_search", return_value=[approximate]
+            ) as bm25,
+        ):
+            result = retriever.search(
+                "Điểm a Khoản 3 Điều 999 999/2099/NĐ-CP", k=5
+            )
+
+        assert result.hits == []
+        assert result.strategy == "exact_citation"
+        vector.assert_not_called()
+        bm25.assert_not_called()
 
     def test_search_returns_search_result(self, mock_session, mock_embedder):
         mock_session.run.return_value = MagicMock(data=lambda: [])
@@ -635,6 +708,63 @@ class TestHybridRetriever:
         assert reranker.call_args.args[0] == pool
         assert reranker.call_args.args[2] == 2
         assert result.hits == pool[:2]
+
+    def test_temporal_heuristic_keeps_candidate_pool_before_cutting_to_k(
+        self, mock_embedder
+    ):
+        """AMENDS must see an in-force candidate below the initial top-k."""
+        stale = make_hit(uid="stale", score=0.9)
+        current = make_hit(uid="current", score=0.7)
+        pool = [stale, make_hit(uid="other", score=0.8), current]
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings(fetch_k=3))
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=pool, strategy="hybrid")
+        )
+
+        with patch(
+            "vtlaw.retrieve.heuristics.apply_heuristic_rerank",
+            return_value=[current, pool[1], stale],
+        ) as heuristic:
+            result = retriever.search_and_rerank(
+                "query", k=2, heuristic_rerank=True, rerank_enabled=False
+            )
+
+        assert retriever.search.call_args.kwargs["k"] == 3
+        assert heuristic.call_args.args[0] == pool
+        assert result.hits == [current, pool[1]]
+
+    def test_temporal_heuristic_keeps_reranked_pool_before_cutting_to_k(
+        self, mock_embedder
+    ):
+        stale = make_hit(uid="stale", score=0.9)
+        current = make_hit(uid="current", score=0.7)
+        pool = [stale, make_hit(uid="other", score=0.8), current]
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings(fetch_k=3))
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=pool, strategy="hybrid")
+        )
+
+        with (
+            patch(
+                "vtlaw.retrieve.search.rerank", return_value=[stale, pool[1], current]
+            ) as reranker,
+            patch(
+                "vtlaw.retrieve.heuristics.apply_heuristic_rerank",
+                return_value=[current, pool[1], stale],
+            ) as heuristic,
+        ):
+            result = retriever.search_and_rerank(
+                "query",
+                k=2,
+                fetch_k=3,
+                rerank_top=3,
+                heuristic_rerank=True,
+                rerank_enabled=True,
+            )
+
+        assert reranker.call_args.args[2] == 3
+        assert heuristic.call_args.args[0] == [stale, pool[1], current]
+        assert result.hits == [current, pool[1]]
 
     def test_temporal_heuristic_uses_as_of_date(self, mock_embedder):
         hit = make_hit()

@@ -152,6 +152,8 @@ class AnswerGenerator:
         as_of: date | None = None,
         temperature: float = 0.3,
         max_tokens: int | None = None,
+        evidence_uids: set[str] | None = None,
+        rendered_evidence: dict[str, Hit] | None = None,
     ) -> str:
         """Generate answer text for hits that were retrieved elsewhere.
 
@@ -161,8 +163,17 @@ class AnswerGenerator:
         if not hits:
             return NO_HITS_TEXT
 
-        # Build enriched context using graph hierarchy
-        enriched = build_full_context(self._client, hits, as_of=as_of)
+        # Build enriched context using graph hierarchy. The sidecar receives
+        # records only when their text is actually rendered.
+        rendered_evidence_uids = evidence_uids if evidence_uids is not None else set()
+        evidence_records = rendered_evidence if rendered_evidence is not None else {}
+        enriched = build_full_context(
+            self._client,
+            hits,
+            as_of=as_of,
+            evidence_uids=rendered_evidence_uids,
+            rendered_evidence=evidence_records,
+        )
         log.info(
             "enriched context: %d chars from %d provisions",
             sum(len(v) for v in enriched.values()),
@@ -177,19 +188,32 @@ class AnswerGenerator:
         parts.append("")
 
         for i, hit in enumerate(hits, 1):
-            parts.append(f"{i}. {enriched.get(hit.uid) or format_provision(hit)}")
+            context = enriched.get(hit.uid)
+            if not context:
+                context = format_provision(hit)
+                rendered_evidence_uids.add(hit.uid)
+                evidence_records[hit.uid] = hit
+            parts.append(f"{i}. {context}")
             parts.append("")
 
-        user_prompt = build_user_prompt(question, "\n".join(parts))
+        rendered_context = "\n".join(parts)
+        user_prompt = build_user_prompt(question, rendered_context)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
         text = self._llm.complete(
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_prompt},
-            ],
+            messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
         )
-        text = self._enforce_grounded_citations(question, text, hits)
+        text = self._enforce_grounded_citations(
+            question,
+            text,
+            hits,
+            rendered_evidence=evidence_records,
+            rendered_context=rendered_context,
+        )
 
         log.info("answer: %d chars", len(text))
         return text
@@ -239,16 +263,21 @@ class AnswerGenerator:
         ]
 
     def _enforce_grounded_citations(
-        self, question: str, answer: str, hits: list[Hit]
+        self,
+        question: str,
+        answer: str,
+        hits: list[Hit],
+        *,
+        rendered_evidence: dict[str, Hit],
+        rendered_context: str,
     ) -> str:
         """Repair one invalid citation pass, then prefer deterministic evidence."""
-        check = assess_citations(answer, hits)
-        if check.status == "verified":
+        evidence_uids = set(rendered_evidence)
+        check = assess_citations(answer, hits, evidence_uids=evidence_uids)
+        if check.status == "verified" and all(uid in rendered_evidence for uid in check.cited):
             return answer
 
-        allowed = "\n\n".join(
-            f"[{uid_to_citation(hit.uid)}]\n{hit.embedding_text}" for hit in hits
-        )
+        allowed = "\n".join(f"- {uid_to_citation(uid)}" for uid in sorted(evidence_uids))
         repair_prompt = f"""Viết lại câu trả lời pháp luật dưới đây.
 Chỉ giữ các dữ kiện được hỗ trợ bởi ngữ cảnh trước đó và chỉ dùng các trích dẫn
 trong danh sách cho phép. Phải có ít nhất một trích dẫn đầy đủ. Không giải thích
@@ -259,7 +288,10 @@ Câu hỏi: {question}
 Câu trả lời cần sửa:
 {answer}
 
-Evidence và trích dẫn cho phép:
+Ngữ cảnh đã hiển thị cho mô hình:
+{rendered_context}
+
+Các trích dẫn cho phép:
 {allowed}"""
         try:
             repaired = self._llm.complete(
@@ -274,19 +306,25 @@ Evidence và trích dẫn cho phép:
             )
         except Exception as exc:  # noqa: BLE001 - a provider failure must not leak claims
             log.warning("citation repair failed: %s", exc)
-            return self._grounded_fallback(hits)
+            return self._grounded_fallback(rendered_evidence)
 
-        if assess_citations(repaired, hits).status == "verified":
+        repaired_check = assess_citations(repaired, hits, evidence_uids=evidence_uids)
+        if repaired_check.status == "verified" and all(
+            uid in rendered_evidence for uid in repaired_check.cited
+        ):
             return repaired
         log.warning("citation repair remained ungrounded; returning source fallback")
-        return self._grounded_fallback(hits)
+        return self._grounded_fallback(rendered_evidence)
 
     @staticmethod
-    def _grounded_fallback(hits: list[Hit]) -> str:
+    def _grounded_fallback(rendered_evidence: dict[str, Hit]) -> str:
+        if not rendered_evidence:
+            return "Tôi không thể xác minh một câu trả lời tự động từ ngữ cảnh đã hiển thị."
         sources = "\n".join(
-            f"- {uid_to_citation(hit.uid)}: {hit.content}" for hit in hits
+            f"- {uid_to_citation(hit.uid)}: {hit.content}"
+            for hit in rendered_evidence.values()
         )
         return (
             "Tôi không thể xác minh một câu trả lời tự động chỉ từ các nguồn đã "
-            "truy xuất. Dữ liệu đã truy xuất:\n" + sources
+            "hiển thị. Dữ liệu đã hiển thị:\n" + sources
         )

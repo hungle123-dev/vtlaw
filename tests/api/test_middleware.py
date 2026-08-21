@@ -55,7 +55,9 @@ def _state(*, api_key="", rate_limit=1000):
     state.llm_configured = False
     state.graph = MagicMock()
     state.cache = None
-    state.retriever.search.return_value = MagicMock(hits=[HIT], strategy="hybrid")
+    state.retriever.search_and_rerank.return_value = MagicMock(
+        hits=[HIT], retrieval_score="hybrid", reranked=False
+    )
     state.generator = None
     state.router = None
     state.rewriter = None
@@ -134,11 +136,10 @@ class TestUnprotectedWarning:
 
         assert any(r.levelname == "WARNING" for r in caplog.records)
 
-    def test_errors_when_bound_publicly_without_a_key(self, caplog):
-        """Open plus a public bind is the case that costs money; log louder."""
-        warn_if_unprotected(_settings(api_key="", api_host="0.0.0.0"))
-
-        assert any(r.levelname == "ERROR" for r in caplog.records)
+    def test_rejects_public_binding_without_a_key(self):
+        """A public, unauthenticated /chat must never finish starting."""
+        with pytest.raises(RuntimeError, match="API_KEY"):
+            warn_if_unprotected(_settings(api_key="", api_host="0.0.0.0"))
 
     def test_silent_when_key_is_set(self, caplog):
         warn_if_unprotected(_settings(api_key="secret", api_host="0.0.0.0"))
@@ -205,6 +206,32 @@ class TestRequestId:
 
 
 class TestChatEnforcement:
+    @pytest.mark.parametrize("path", ["/chat", "/chat/stream"])
+    def test_localhost_host_header_does_not_bypass_required_key(
+        self, client_factory, path
+    ):
+        client = client_factory(_state(api_key="secret"))
+
+        missing = client.post(
+            path, json={"question": "q"}, headers={"Host": "localhost"}
+        )
+        wrong = client.post(
+            path,
+            json={"question": "q"},
+            headers={"Host": "localhost", API_KEY_HEADER: "wrong"},
+        )
+        accepted = client.post(
+            path,
+            json={"question": "q"},
+            headers={"Host": "localhost", API_KEY_HEADER: "secret"},
+        )
+
+        assert [missing.status_code, wrong.status_code, accepted.status_code] == [
+            401,
+            401,
+            200,
+        ]
+
     def test_chat_rejects_without_key(self, client_factory):
         client = client_factory(_state(api_key="secret"))
 
@@ -237,3 +264,16 @@ class TestChatEnforcement:
 
         assert blocked.status_code == 429
         assert int(blocked.headers["Retry-After"]) > 0
+
+    def test_open_chat_ignores_supplied_api_keys_for_rate_limiting(self, client_factory):
+        """Without API_KEY, arbitrary headers must not create new client budgets."""
+        client = client_factory(_state(), rate_limit=1)
+
+        responses = [
+            client.post(
+                "/chat", json={"question": "q"}, headers={API_KEY_HEADER: supplied_key}
+            )
+            for supplied_key in ("first", "second")
+        ]
+
+        assert [response.status_code for response in responses] == [200, 429]

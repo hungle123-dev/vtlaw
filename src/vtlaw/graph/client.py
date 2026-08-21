@@ -14,7 +14,7 @@ from neo4j import Driver, GraphDatabase, Session
 from neo4j.exceptions import Neo4jError
 
 from vtlaw.config import Settings, get_settings
-from vtlaw.graph.schema import ALL_SCHEMA_STATEMENTS
+from vtlaw.graph.schema import ALL_SCHEMA_STATEMENTS, PROVISION_LABELS
 
 log = logging.getLogger(__name__)
 
@@ -77,6 +77,39 @@ class GraphClient:
                 'WHERE type <> "LOOKUP" '
                 "RETURN name, type, state, populationPercent ORDER BY name"
             ).data()
+
+    def readiness(self) -> dict[str, object]:
+        """Report whether all retrieval indexes and provision vectors are ready."""
+        from vtlaw.embed import embedding_coverage
+
+        indexes = self.index_states()
+        coverage = embedding_coverage(self)
+        required_indexes = {
+            (f"{label.lower()}_{kind}", index_type)
+            for label in PROVISION_LABELS
+            for kind, index_type in (("embedding", "VECTOR"), ("fulltext", "FULLTEXT"))
+        }
+        online_indexes = {
+            (row.get("name"), row.get("type"))
+            for row in indexes
+            if isinstance(row, dict) and row.get("state") == "ONLINE"
+        }
+        coverage_by_label = {
+            row.get("label"): row
+            for row in coverage
+            if isinstance(row, dict)
+        }
+        embeddings_ready = set(coverage_by_label) == set(PROVISION_LABELS) and all(
+            isinstance(coverage_by_label[label].get("total"), int)
+            and coverage_by_label[label].get("embedded")
+            == coverage_by_label[label].get("total")
+            for label in PROVISION_LABELS
+        )
+        return {
+            "ready": required_indexes <= online_indexes and embeddings_ready,
+            "indexes": indexes,
+            "embedding_coverage": coverage,
+        }
 
     def wipe(self) -> None:
         """Delete all data, keeping the schema. For tests and re-imports."""

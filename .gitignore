@@ -22,4 +22,6 @@ data/snapshots/
 
 # Eval output. Measured numbers belong in the report, not in git: a stale JSON
 # here once had us quoting recall taken from a graph with zero embeddings.
-data/evaluation/results/
+data/evaluation/results/*
+!data/evaluation/results/2026-08-21-release-evidence-k8.json
+!data/evaluation/results/2026-08-21-qa-nlp-rerank-gpu-k8.json

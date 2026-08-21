@@ -32,16 +32,23 @@ class CitationCheck:
     unsupported: list[str]
 
 
-def assess_citations(answer: str, sources: list[Hit]) -> CitationCheck:
+def assess_citations(
+    answer: str,
+    sources: list[Hit],
+    *,
+    evidence_uids: set[str] | None = None,
+) -> CitationCheck:
     """Return whether every explicit provision citation is covered by a source.
 
     A child hit supports citing its parent Article/Clause, but a broad Article
-    hit cannot support a more specific Point the retrieval did not return.
+    hit cannot support a more specific Point the retrieval did not return. An
+    explicit ``evidence_uids`` set replaces raw sources only when it describes
+    the provisions actually rendered into the prompt.
     """
     cited = list(dict.fromkeys(_citation_uid(match) for match in _CITATION.finditer(answer)))
     if not cited:
         return CitationCheck("missing", [], [])
-    source_uids = [source.uid for source in sources]
+    source_uids = evidence_uids if evidence_uids is not None else {source.uid for source in sources}
     unsupported = [
         uid
         for uid in cited

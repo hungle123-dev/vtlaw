@@ -21,7 +21,9 @@ candidates independently, and the final score is the sum of
 
 from __future__ import annotations
 
+import ctypes
 import logging
+import os
 import re
 from dataclasses import dataclass
 from datetime import date
@@ -46,6 +48,37 @@ RRF_K = 60
 # Cross-encoder input cap. The reranker config advertises 8194 positions; left
 # unpinned, every pair pads to that and CPU inference becomes unusable.
 RERANK_MAX_LENGTH = 256
+# A CPU cross-encoder is loaded beside the bi-encoder already resident in the
+# API. Refuse the optional quality profile before a native model load can take
+# down a memory-constrained Windows host.
+RERANK_MIN_AVAILABLE_MEMORY_BYTES = 2 * 1024**3
+
+
+def available_memory_bytes() -> int | None:
+    """Return currently available physical memory, or ``None`` if unknown."""
+    if os.name == "nt":
+        class MemoryStatus(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        status = MemoryStatus()
+        status.dwLength = ctypes.sizeof(status)
+        if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
+            return int(status.ullAvailPhys)
+        return None
+    try:
+        return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_AVPHYS_PAGES")
+    except (AttributeError, OSError, ValueError):
+        return None
 
 
 @dataclass(frozen=True)
@@ -73,7 +106,7 @@ class SearchResult:
 
     query: str
     hits: list[Hit]
-    strategy: str = "hybrid"  # "hybrid" | "vector" | "bm25"
+    strategy: str = "hybrid"  # "hybrid" | "vector" | "bm25" | "exact_citation"
 
     def summary(self) -> str:
         if not self.hits:
@@ -91,6 +124,14 @@ class CitationTarget:
 
     uid: str
     label: Literal["Article", "Clause", "Point"]
+
+
+@dataclass(frozen=True)
+class CitationLookupResult:
+    """Whether an exact citation was recognized, independently of its hits."""
+
+    had_full_citation: bool
+    hits: list[Hit]
 
 
 @dataclass
@@ -288,7 +329,7 @@ def citation_search(
     query: str,
     *,
     as_of: date | None = None,
-) -> list[Hit]:
+) -> CitationLookupResult:
     """Look up an explicit Điều/Khoản/Điểm citation exactly.
 
     The same document-effective filter as approximate retrieval applies: a
@@ -297,7 +338,7 @@ def citation_search(
     """
     target = resolve_citation(query)
     if target is None:
-        return []
+        return CitationLookupResult(had_full_citation=False, hits=[])
 
     cutoff = (as_of or date.today()).isoformat()
     with client.session() as session:
@@ -314,17 +355,20 @@ def citation_search(
             as_of=cutoff,
         ).data()
 
-    return [
-        Hit(
-            uid=row["uid"],
-            score=1.0,
-            doc_identity=row["doc_identity"],
-            label=target.label,
-            content=row["content"] or "",
-            title=row.get("title"),
-        )
-        for row in rows
-    ]
+    return CitationLookupResult(
+        had_full_citation=True,
+        hits=[
+            Hit(
+                uid=row["uid"],
+                score=1.0,
+                doc_identity=row["doc_identity"],
+                label=target.label,
+                content=row["content"] or "",
+                title=row.get("title"),
+            )
+            for row in rows
+        ],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -367,27 +411,6 @@ def fuse_weighted(
     return fused[:k]
 
 
-def fuse_rrf(
-    vector_hits: list[Hit],
-    bm25_hits: list[Hit],
-    k: int,
-    *,
-    rrf_k: int = RRF_K,
-    vector_weight: float = 1.0,
-    bm25_weight: float = 1.0,
-) -> list[Hit]:
-    """Fuse one vector list with one BM25 list.
-
-    The weights exist because the legs are not equally good. Measured here,
-    vector beats BM25 at every depth; weighting them equally let BM25's ordering
-    pull the fused list below plain vector search. Defaults keep the unweighted
-    textbook behaviour — callers pass the measured weights from settings.
-    """
-    return fuse_weighted(
-        [(vector_hits, vector_weight), (bm25_hits, bm25_weight)], k, rrf_k=rrf_k
-    )
-
-
 @lru_cache(maxsize=2)
 def _load_cross_encoder(model_name: str, revision: str):
     """Load and cache the cross-encoder.
@@ -409,6 +432,7 @@ def rerank(
     k: int,
     reranker_model: str = "AITeamVN/Vietnamese_Reranker",
     reranker_revision: str = RERANK_MODEL_REVISION,
+    min_available_memory_bytes: int = RERANK_MIN_AVAILABLE_MEMORY_BYTES,
 ) -> list[Hit] | None:
     """Cross-encoder rerank: score (query, provision) pairs directly.
 
@@ -420,6 +444,17 @@ def rerank(
     """
     if not hits:
         return hits[:k]
+    available_memory = available_memory_bytes()
+    if (
+        available_memory is not None
+        and available_memory < min_available_memory_bytes
+    ):
+        log.warning(
+            "reranker skipped: %d MiB available, %d MiB required before model load",
+            available_memory // 1024**2,
+            min_available_memory_bytes // 1024**2,
+        )
+        return None
 
     try:
         model = _load_cross_encoder(reranker_model, reranker_revision)
@@ -481,9 +516,13 @@ class HybridRetriever:
         A decomposed question can surface provisions the original wording misses.
         Include the original query in the list to keep its exact terms.
         """
-        exact_hits = citation_search(self._client, query, as_of=as_of)
-        if exact_hits:
-            return SearchResult(query=query, hits=exact_hits[:k], strategy=strategy)
+        citation = citation_search(self._client, query, as_of=as_of)
+        if citation.had_full_citation:
+            return SearchResult(
+                query=query,
+                hits=citation.hits[:k],
+                strategy="exact_citation",
+            )
 
         pool = max(fetch_k or self._settings.fetch_k, k)
         phrasings = sub_queries or [query]
@@ -549,7 +588,8 @@ class HybridRetriever:
             reranker_model: Cross-encoder model name.
             rerank_enabled: Override the configured cross-encoder opt-in.
             heuristic_rerank: If True, demote provisions an amendment has
-                abolished or replaced, after cross-encoder rerank.
+                abolished or replaced across the candidate pool before returning
+                the requested top-k.
             as_of: Legal-effective cutoff applied to retrieval and amendment
                 demotion. ``None`` uses the current date.
             sub_queries: Extra phrasings to retrieve with, fused into one list.
@@ -562,6 +602,8 @@ class HybridRetriever:
             self._settings.rerank_enabled if rerank_enabled is None else rerank_enabled
         )
         candidate_k = max(k, rerank_top or self._settings.rerank_top) if should_rerank else k
+        if heuristic_rerank:
+            candidate_k = max(candidate_k, fetch_k or self._settings.fetch_k)
         result = self.search(
             query,
             k=candidate_k,
@@ -573,7 +615,7 @@ class HybridRetriever:
 
         if not result.hits:
             return RetrievalResult(
-                query=query, hits=[], retrieval_score=strategy, reranked=False
+                query=query, hits=[], retrieval_score=result.strategy, reranked=False
             )
 
         if should_rerank:
@@ -581,12 +623,13 @@ class HybridRetriever:
             reranked_hits = rerank(
                 result.hits,
                 query,
-                k,
+                candidate_k if heuristic_rerank else k,
                 reranker,
                 self._settings.rerank_model_revision,
+                self._settings.rerank_min_available_memory_mb * 1024**2,
             )
             if reranked_hits is None:
-                reranked_hits = result.hits[:k]
+                reranked_hits = result.hits
                 should_rerank = False
         else:
             reranked_hits = result.hits
@@ -600,7 +643,7 @@ class HybridRetriever:
 
         return RetrievalResult(
             query=query,
-            hits=reranked_hits,
-            retrieval_score=strategy,
+            hits=reranked_hits[:k],
+            retrieval_score=result.strategy,
             reranked=should_rerank,
         )

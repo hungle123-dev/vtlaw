@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -26,6 +27,13 @@ def test_ui_offers_every_retrieval_profile_the_api_accepts():
 
     for profile in accepted:
         assert f'value="{profile}"' in page, profile
+
+
+def test_ui_discloses_when_a_requested_rerank_was_not_applied():
+    """A quality profile must not silently present a baseline fallback as reranked."""
+    page = TestClient(app).get("/").text
+
+    assert "rerank skipped" in page
 
 
 def test_ui_ships_no_external_runtime_dependency():
@@ -81,3 +89,42 @@ def test_ui_does_not_shadow_the_browser_history_api():
 
     assert not re.search(r"^\s*const history\b", page, re.MULTILINE)
     assert "chatHistory" in page
+
+
+def test_ui_uses_the_streaming_contract_and_current_benchmark_copy():
+    page = TestClient(app).get("/").text
+
+    assert '"/chat/stream"' in page
+    assert "getReader()" in page
+    assert re.search(r"0\.2766.*Recall@8", page, re.DOTALL)
+    assert re.search(r"0\.6012.*historical k=5", page, re.DOTALL | re.IGNORECASE)
+    assert "QA_Part2345" in page
+    assert "0.86" not in page
+
+
+def test_public_docs_label_current_and_historical_benchmarks_truthfully():
+    readme = (Path(__file__).parents[2] / "README.md").read_text(encoding="utf-8")
+
+    assert re.search(r"hash-verified.*k=8.*Recall@8.*0\.2766", readme, re.IGNORECASE)
+    assert re.search(r"historical.*k=5.*Recall@5.*0\.6012", readme, re.IGNORECASE)
+
+
+def test_ui_renders_safe_chunks_without_draft_or_replace_logic():
+    page = TestClient(app).get("/").text
+
+    assert 'event.name === "status"' in page
+    assert 'event.name === "delta"' in page
+    assert 'event.name === "replace"' not in page
+    assert "has-draft" not in page
+    assert "Bản nháp" not in page
+    assert "finishAssistant(pending, event.data)" in page
+
+
+def test_ui_renders_retrieved_and_cited_sources_from_the_current_contract():
+    page = TestClient(app).get("/").text
+
+    assert "data.retrieved_candidates" in page
+    assert "data.cited_sources" in page
+    assert "Nguồn đã truy xuất" in page
+    assert "Nguồn đã viện dẫn" in page
+    assert "data.sources" not in page

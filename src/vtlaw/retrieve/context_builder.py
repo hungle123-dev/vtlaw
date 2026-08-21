@@ -20,13 +20,10 @@ Three strategies, each filling a gap the others leave:
 
 from __future__ import annotations
 
-import logging
 from datetime import date
 
 from vtlaw.graph.client import GraphClient
 from vtlaw.retrieve.search import Hit
-
-log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Fetch hierarchy (walk UP)
@@ -53,9 +50,35 @@ _LABEL_VI = {
 }
 
 
+def _retain_rendered_hit(
+    rendered_evidence: dict[str, Hit] | None,
+    node: dict,
+    label: str,
+    doc_identity: str,
+) -> None:
+    """Keep the full provision record for text added to the prompt."""
+    if (
+        rendered_evidence is None
+        or label not in ("Article", "Clause", "Point")
+        or not (uid := node.get("uid"))
+    ):
+        return
+    rendered_evidence[str(uid)] = Hit(
+        uid=str(uid),
+        score=0.0,
+        doc_identity=str(node.get("doc_identity") or doc_identity),
+        label=label,  # type: ignore[arg-type]
+        content=str(node.get("content") or ""),
+        title=node.get("title"),
+    )
+
+
 def fetch_hierarchy(
     client: GraphClient,
     uids: list[str],
+    *,
+    evidence_uids: set[str] | None = None,
+    rendered_evidence: dict[str, Hit] | None = None,
 ) -> dict[str, str]:
     """Walk UP from each hit to its Document, building a citation context.
 
@@ -87,6 +110,7 @@ def fetch_hierarchy(
             node = entry.get("props") or {}
             label = labels[0] if labels else ""
             is_target = index == len(entries) - 1
+            rendered = False
 
             if label == "Article":
                 title = node.get("title")
@@ -94,6 +118,7 @@ def fetch_hierarchy(
                 lines.append(
                     f"Điều {number}: {title}" if title else f"Điều {number}"
                 )
+                rendered = True
             elif label == "Clause":
                 number = node.get("number", "")
                 content = (node.get("content") or "").strip()
@@ -105,15 +130,28 @@ def fetch_hierarchy(
                     lines.append(f"Khoản {number}.\n{content}")
                 else:
                     lines.append(f"Khoản {number}.")
+                rendered = True
             elif label == "Point":
                 letter = node.get("letter", "")
                 lines.append(f"Điểm {letter}.")
+                rendered = True
             elif label in _LABEL_VI:
                 number = node.get("number", "")
                 title = node.get("title")
                 vn_label = _LABEL_VI[label]
                 lines.append(
                     f"{vn_label} {number}: {title}" if title else f"{vn_label} {number}"
+                )
+                rendered = True
+
+            if rendered and evidence_uids is not None and (node_uid := node.get("uid")):
+                evidence_uids.add(str(node_uid))
+            if rendered:
+                _retain_rendered_hit(
+                    rendered_evidence,
+                    node,
+                    label,
+                    str(record["doc_identity"] or ""),
                 )
 
         # Target's own content
@@ -145,13 +183,16 @@ MATCH (clause:Clause)-[:HAS_POINT]->(target)
 MATCH (clause)-[:HAS_POINT]->(sibling:Point)
 WHERE sibling.uid <> target_uid
 RETURN target.uid AS uid,
-       collect({letter: sibling.letter, content: sibling.content}) AS siblings
+       collect({uid: sibling.uid, letter: sibling.letter, content: sibling.content}) AS siblings
 """
 
 
 def fetch_sibling_points(
     client: GraphClient,
     uids: list[str],
+    *,
+    evidence_uids: set[str] | None = None,
+    rendered_evidence: dict[str, Hit] | None = None,
 ) -> dict[str, str]:
     """Fetch sibling Points under the same Clause.
 
@@ -179,6 +220,14 @@ def fetch_sibling_points(
             content = (s.get("content") or "").strip()
             if content:
                 lines.append(f"  Điểm {letter}. {content}")
+                if evidence_uids is not None and (sibling_uid := s.get("uid")):
+                    evidence_uids.add(str(sibling_uid))
+                _retain_rendered_hit(
+                    rendered_evidence,
+                    s,
+                    "Point",
+                    str(s.get("doc_identity") or str(s.get("uid") or "").split("::", 1)[0]),
+                )
 
         if lines:
             result[record["uid"]] = "\n".join(lines)
@@ -210,6 +259,9 @@ RETURN uid, target_label, children
 def fetch_children_context(
     client: GraphClient,
     uids: list[str],
+    *,
+    evidence_uids: set[str] | None = None,
+    rendered_evidence: dict[str, Hit] | None = None,
 ) -> dict[str, str]:
     """Fetch descendant content for Article/Clause nodes.
 
@@ -249,6 +301,19 @@ def fetch_children_context(
             elif child_label == "Point":
                 letter = child.get("letter", "?")
                 lines.append(f"  Điểm {letter}. {content}")
+            else:
+                continue
+            if evidence_uids is not None and (child_uid := child.get("uid")):
+                evidence_uids.add(str(child_uid))
+            _retain_rendered_hit(
+                rendered_evidence,
+                child,
+                child_label,
+                str(
+                    child.get("doc_identity")
+                    or str(child.get("uid") or "").split("::", 1)[0]
+                ),
+            )
 
         if lines:
             result[record["uid"]] = "\n".join(lines)
@@ -266,6 +331,8 @@ def build_full_context(
     hits: list[Hit],
     *,
     as_of: date | None = None,
+    evidence_uids: set[str] | None = None,
+    rendered_evidence: dict[str, Hit] | None = None,
 ) -> dict[str, str]:
     """Assemble complete context for each hit using all three strategies.
 
@@ -278,17 +345,31 @@ def build_full_context(
         return {}
 
     uids = [h.uid for h in hits]
-
     # Walk UP: get hierarchy for all hits
-    hierarchy = fetch_hierarchy(client, uids)
+    hierarchy = fetch_hierarchy(
+        client,
+        uids,
+        evidence_uids=evidence_uids,
+        rendered_evidence=rendered_evidence,
+    )
 
     # Walk SIDEWAYS: get siblings for Point hits
     point_uids = [h.uid for h in hits if h.label == "Point"]
-    siblings = fetch_sibling_points(client, point_uids)
+    siblings = fetch_sibling_points(
+        client,
+        point_uids,
+        evidence_uids=evidence_uids,
+        rendered_evidence=rendered_evidence,
+    )
 
     # Walk DOWN: get children for Article/Clause hits
     parent_uids = [h.uid for h in hits if h.label in ("Article", "Clause")]
-    children = fetch_children_context(client, parent_uids)
+    children = fetch_children_context(
+        client,
+        parent_uids,
+        evidence_uids=evidence_uids,
+        rendered_evidence=rendered_evidence,
+    )
 
     # Combine
     result: dict[str, str] = {}
@@ -310,6 +391,13 @@ def build_full_context(
         if child_text:
             parts.append(f"Nội dung chi tiết:\n{child_text}")
 
-        result[hit.uid] = "\n\n".join(parts) if parts else hit.content
+        if parts:
+            result[hit.uid] = "\n\n".join(parts)
+        else:
+            result[hit.uid] = hit.content
+            if evidence_uids is not None:
+                evidence_uids.add(hit.uid)
+            if rendered_evidence is not None:
+                rendered_evidence[hit.uid] = hit
 
     return result

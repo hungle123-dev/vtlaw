@@ -11,6 +11,8 @@ import logging
 import random
 import re
 import time
+from collections.abc import Iterator
+from typing import Any
 
 from openai import OpenAI, RateLimitError
 
@@ -76,26 +78,68 @@ class LLMClient:
         Raises:
             RateLimitError: If still limited after the configured retries.
         """
+        response = self._create_completion(messages, temperature, max_tokens)
+
+        content = response.choices[0].message.content or ""
+        log.info("LLM response: %d chars", len(content))
+        return content
+
+    def complete_stream(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float = 0.3,
+        max_tokens: int | None = None,
+    ) -> Iterator[str]:
+        """Yield non-empty OpenAI-compatible content deltas as they arrive.
+
+        A stream is retried only while opening it. Retrying after an emitted
+        delta would duplicate text, so a mid-stream provider failure propagates
+        to the caller instead.
+        """
+        response = self._create_completion(
+            messages, temperature, max_tokens, stream=True
+        )
+        total = 0
+        for chunk in response:
+            choices = getattr(chunk, "choices", ())
+            if not choices:
+                continue
+            content = getattr(getattr(choices[0], "delta", None), "content", None)
+            if content:
+                total += len(content)
+                yield content
+        log.info("LLM stream complete: %d chars", total)
+
+    def _create_completion(
+        self,
+        messages: list[dict[str, str]],
+        temperature: float,
+        max_tokens: int | None,
+        *,
+        stream: bool = False,
+    ) -> Any:
+        """Open a completion, retrying only initial 429 responses."""
         log.info(
-            "LLM request: model=%s messages=%d temp=%.2f",
+            "LLM request: model=%s messages=%d temp=%.2f stream=%s",
             self._settings.llm_model,
             len(messages),
             temperature,
+            stream,
         )
-
-        kwargs: dict = {
+        kwargs: dict[str, Any] = {
             "model": self._settings.llm_model,
             "messages": messages,
             "temperature": temperature,
         }
         if max_tokens is not None:
             kwargs["max_tokens"] = max_tokens
+        if stream:
+            kwargs["stream"] = True
 
         attempts = self._settings.llm_max_retries + 1
         for attempt in range(1, attempts + 1):
             try:
-                response = self._client.chat.completions.create(**kwargs)
-                break
+                return self._client.chat.completions.create(**kwargs)
             except RateLimitError as exc:
                 if attempt == attempts:
                     log.error("rate limited after %d attempts, giving up", attempts)
@@ -114,7 +158,3 @@ class LLMClient:
                     delay,
                 )
                 time.sleep(delay)
-
-        content = response.choices[0].message.content or ""
-        log.info("LLM response: %d chars", len(content))
-        return content

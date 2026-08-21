@@ -16,6 +16,7 @@ from vtlaw.parse.patterns import RE_DOC_IDENTITY
 
 if TYPE_CHECKING:
     from vtlaw.graph.client import GraphClient
+    from vtlaw.retrieve.search import Hit
 
 Operation = Literal["article_count", "signers", "amendment_history"]
 
@@ -24,6 +25,14 @@ Operation = Literal["article_count", "signers", "amendment_history"]
 class GraphAnswer:
     operation: Operation
     answer: str
+    sources: tuple[Hit, ...] = ()
+
+
+def _missing_document(operation: Operation, identity: str) -> GraphAnswer:
+    return GraphAnswer(
+        operation,
+        f"Không thể thực hiện {operation}: không có văn bản {identity} trong corpus.",
+    )
 
 
 def _document_identity(question: str) -> str | None:
@@ -71,21 +80,25 @@ class StructuredGraphQueries:
                 # which is the one thing the date selector is there to prevent.
                 """
                 MATCH (d:Document {doc_identity: $doc_identity})
-                WHERE d.effect_date <= date($as_of)
-                  AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
                 OPTIONAL MATCH (d)-[:HAS_ARTICLE]->(a:Article)
-                RETURN d.doc_identity AS doc_identity, d.doc_name AS doc_name, count(a) AS count
+                RETURN d.doc_identity AS doc_identity, d.doc_name AS doc_name,
+                       d.effect_date <= date($as_of)
+                         AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+                         AS applicable,
+                       count(a) AS count
                 """,
                 doc_identity=identity,
                 as_of=as_of.isoformat(),
             ).data()
         if not rows:
+            return _missing_document("article_count", identity)
+        row = rows[0]
+        if not row.get("applicable", True):
             return GraphAnswer(
                 "article_count",
-                f"Không có văn bản {identity} đang áp dụng trong corpus "
+                f"Văn bản {identity} có trong corpus nhưng không áp dụng "
                 f"tính đến {as_of.isoformat()}.",
             )
-        row = rows[0]
         return GraphAnswer(
             "article_count",
             f"{row['doc_identity']} có {row['count']} điều trong corpus "
@@ -97,17 +110,20 @@ class StructuredGraphQueries:
             rows = session.run(
                 """
                 MATCH (d:Document {doc_identity: $doc_identity})
-                WHERE d.effect_date <= date($as_of)
-                  AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
-                RETURN d.doc_identity AS doc_identity, d.signers AS signers
+                RETURN d.doc_identity AS doc_identity, d.signers AS signers,
+                       d.effect_date <= date($as_of)
+                         AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+                         AS applicable
                 """,
                 doc_identity=identity,
                 as_of=as_of.isoformat(),
             ).data()
         if not rows:
+            return _missing_document("signers", identity)
+        if not rows[0].get("applicable", True):
             return GraphAnswer(
                 "signers",
-                f"Không có văn bản {identity} đang áp dụng trong corpus "
+                f"Văn bản {identity} có trong corpus nhưng không áp dụng "
                 f"tính đến {as_of.isoformat()}.",
             )
         signers = rows[0].get("signers") or []
@@ -115,39 +131,95 @@ class StructuredGraphQueries:
         return GraphAnswer("signers", f"Người ký {identity}: {text}.")
 
     def _amendment_history(self, identity: str, as_of: date) -> GraphAnswer:
+        # ``Hit`` belongs to the retrieval package, whose search module imports
+        # the embedder.  Delay this concrete conversion until an amendment
+        # template actually needs evidence to keep graph package imports acyclic.
+        from vtlaw.retrieve.search import Hit
+
         with self._client.session() as session:
             rows = session.run(
                 """
-                MATCH (source)-[r:AMENDS]->(target)
-                WHERE source.doc_identity = $doc_identity OR target.doc_identity = $doc_identity
-                MATCH (source_document:Document {doc_identity: source.doc_identity})
-                WHERE source_document.effect_date IS NULL
-                   OR source_document.effect_date <= date($as_of)
-                RETURN coalesce(source.uid, source.doc_identity) AS source_uid,
-                       source.doc_identity AS source_doc,
-                       coalesce(target.uid, target.doc_identity) AS target_uid,
-                       target.doc_identity AS target_doc,
-                       r.type AS amend_type
-                ORDER BY source_document.effect_date, source_uid
-                LIMIT 20
+                MATCH (d:Document {doc_identity: $doc_identity})
+                OPTIONAL MATCH (source)-[r:AMENDS]->(target)
+                WHERE source.doc_identity = d.doc_identity OR target.doc_identity = d.doc_identity
+                OPTIONAL MATCH (source_document:Document {doc_identity: source.doc_identity})
+                WITH d, source, target, r, source_document,
+                     d.effect_date <= date($as_of)
+                       AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+                       AS applicable
+                ORDER BY source_document.effect_date, source.uid
+                WITH d, applicable,
+                     collect(
+                       CASE
+                         WHEN r IS NOT NULL
+                          AND (source_document.effect_date IS NULL
+                               OR source_document.effect_date <= date($as_of))
+                         THEN {
+                           source_uid: coalesce(source.uid, source.doc_identity),
+                           source_doc: source.doc_identity,
+                           source_label: head(labels(source)),
+                           source_content: source.content,
+                           target_uid: coalesce(target.uid, target.doc_identity),
+                           target_doc: target.doc_identity,
+                           target_label: head(labels(target)),
+                           target_content: target.content,
+                           amend_type: r.type
+                         }
+                       END
+                     ) AS amendments
+                RETURN d.doc_identity AS requested_doc,
+                       applicable, amendments[..20] AS amendments
                 """,
                 doc_identity=identity,
                 as_of=as_of.isoformat(),
             ).data()
         if not rows:
+            return _missing_document("amendment_history", identity)
+        row = rows[0]
+        if not row.get("applicable", True):
+            return GraphAnswer(
+                "amendment_history",
+                f"Văn bản {identity} có trong corpus nhưng không áp dụng "
+                f"tính đến {as_of.isoformat()}.",
+            )
+        amendments = row.get("amendments") or []
+        if not amendments:
             return GraphAnswer(
                 "amendment_history",
                 f"Không có cạnh sửa đổi/bổ sung/bãi bỏ được ghi nhận cho {identity} "
                 f"tính đến {as_of.isoformat()}.",
             )
         lines = []
-        for row in rows:
-            source = _render_reference(row["source_uid"])
-            target = _render_reference(row["target_uid"])
-            lines.append(f"- {source} {row['amend_type']} {target}.")
+        sources: dict[str, Hit] = {}
+        for amendment in amendments:
+            source = _render_reference(amendment["source_uid"])
+            target = _render_reference(amendment["target_uid"])
+            lines.append(f"- {source} {amendment['amend_type']} {target}.")
+            for side in ("source", "target"):
+                uid = amendment.get(f"{side}_uid")
+                doc_identity = amendment.get(f"{side}_doc")
+                label = amendment.get(f"{side}_label")
+                content = amendment.get(f"{side}_content") or ""
+                if (
+                    uid
+                    and doc_identity
+                    and label in {"Article", "Clause", "Point"}
+                    and content.strip()
+                ):
+                    sources.setdefault(
+                        uid,
+                        Hit(
+                            uid=uid,
+                            score=1.0,
+                            doc_identity=doc_identity,
+                            label=label,
+                            content=content,
+                        ),
+                    )
         return GraphAnswer(
             "amendment_history",
             f"Các cạnh AMENDS của {identity} tính đến {as_of.isoformat()}:\n" + "\n".join(lines),
+            tuple(sources.values()),
         )
 
 

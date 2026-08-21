@@ -1,4 +1,9 @@
-# Vietnamese Traffic-Law RAG — Production Design
+# Historical: Vietnamese Traffic-Law RAG Production Design Target
+
+> **Historical document (2026-08-14):** retained for design provenance only.
+> It is not current implementation guidance or evidence of deployed behavior;
+> current contracts and measured evidence live in the code, README, and
+> benchmark documentation.
 
 **Date:** 2026-08-15  
 **Status:** Draft v9 (post-Codex round-8 revision — atomic release reservation, per-kind regime mapping, immutable per-release artifacts, full schemas for every contract, real corpus/eval numbers, repo-truth honesty)  

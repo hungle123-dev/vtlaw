@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import subprocess
 import sys
 from datetime import date, datetime
 
@@ -487,10 +488,11 @@ def cmd_eval_run(args: argparse.Namespace) -> int:
         fetch_k=args.fetch_k,
         limit=args.limit,
         as_of=args.as_of,
+        command=subprocess.list2cmdline(["vtlaw", *sys.argv[1:]]),
     )
 
-    # Exit code: 0 if recall@5 > 0, 1 otherwise
-    return 0 if agg.recall_at_k.get(5, 0.0) > 0 else 1
+    # Exit code: 0 if the requested evaluation cutoff has a non-zero recall.
+    return 0 if agg.recall_at_k.get(args.top_k, 0.0) > 0 else 1
 
 
 # ---------------------------------------------------------------------------
@@ -689,8 +691,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="path to CSV with question,reference columns",
     )
     eval_run.add_argument(
-        "--top-k", type=int, default=10,
-        help="number of results to retrieve per question (default: 10)",
+        "--top-k", type=int, default=8,
+        help="number of results to retrieve and score per question (default: 8)",
     )
     eval_run.add_argument(
         "--strategy",
@@ -712,7 +714,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     eval_run.add_argument(
         "--fetch-k", type=int, default=None,
-        help="candidate budget per retrieval leg; reranker scores that pool (default: 4x top-k)",
+        help="candidate budget per retrieval leg and reranker (default: configured fetch_k)",
     )
     eval_run.add_argument(
         "--limit", type=int, default=None,

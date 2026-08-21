@@ -25,6 +25,7 @@ from vtlaw.graph import (
     import_documents,
 )
 from vtlaw.parse import Document, ParsedDocument, parse_corpus, parse_text
+from vtlaw.retrieve.heuristics import fetch_abolished_uids
 from vtlaw.scrape import Snapshot
 
 SNAPSHOT_ROOT = Path("data/snapshot")
@@ -400,6 +401,46 @@ def test_amendment_annotations_resolve_to_the_snapshot_graph(clean: GraphClient)
     assert stats.imported == EXPECTED_AMEND_EDGES
     assert stats.skipped == EXPECTED_UNRESOLVED_AMENDS
     assert edge_count == EXPECTED_AMEND_EDGES
+
+
+def test_article_amendment_demotes_its_clause_and_point_after_effective_date(
+    clean: GraphClient,
+):
+    """An Article-level amendment also supersedes its retrieved descendants."""
+    target = parse_text(
+        "Điều 1. Quy định cũ\n1. Khoản cũ.\na) Điểm cũ.\n",
+        make_doc("1/2020/QH1", effect_date=date(2020, 1, 1)),
+    )
+    source = parse_text(
+        "Điều 1. Quy định mới\n1. Khoản mới.\na) Điểm mới.\n",
+        make_doc("2/2025/QH1", effect_date=date(2025, 1, 1)),
+    )
+    import_documents(clean, [target, source])
+
+    target_article = "1/2020/QH1::article::1"
+    target_clause = target_article + "::clause::1"
+    target_point = target_clause + "::point::a"
+    with clean.session() as session:
+        session.run(
+            """
+            MATCH (source:Article {uid: $source_uid})
+            MATCH (target:Article {uid: $target_uid})
+            MERGE (source)-[:AMENDS {type: 'bãi bỏ'}]->(target)
+            """,
+            source_uid="2/2025/QH1::article::1",
+            target_uid=target_article,
+        )
+
+    assert fetch_abolished_uids(
+        clean, [target_article, target_clause, target_point], as_of=date(2024, 12, 31)
+    ) == {}
+    assert fetch_abolished_uids(
+        clean, [target_article, target_clause, target_point], as_of=date(2025, 1, 1)
+    ) == {
+        target_article: ["bãi bỏ"],
+        target_clause: ["bãi bỏ"],
+        target_point: ["bãi bỏ"],
+    }
 
 
 @pytest.mark.skipif(

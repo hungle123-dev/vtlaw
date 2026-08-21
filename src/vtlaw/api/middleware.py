@@ -102,11 +102,10 @@ class SlidingWindowRateLimiter:
 
 
 def require_api_key(settings: Settings, request: Request) -> None:
-    """Reject a request without a valid API key, unless no key is configured.
+    """Reject a request without a valid API key, unless local access is open.
 
-    An empty ``api_key`` leaves the endpoint open. That is the right default for
-    local development, but :func:`warn_if_unprotected` makes it loud at startup
-    rather than letting an open deployment pass unnoticed.
+    An empty ``api_key`` leaves the endpoint open for local development.
+    :func:`warn_if_unprotected` refuses a non-loopback startup without one.
     """
     if not settings.api_key:
         return
@@ -124,10 +123,10 @@ def require_api_key(settings: Settings, request: Request) -> None:
 
 
 def warn_if_unprotected(settings: Settings) -> None:
-    """Log a warning when /chat is reachable without a key.
+    """Warn for local unauthenticated access and refuse public access.
 
     /chat spends LLM tokens and CPU per call. An unauthenticated endpoint on a
-    non-loopback address can drain both, so this must never be silent.
+    non-loopback address can drain both, so it must not start.
     """
     if settings.api_key:
         return
@@ -137,10 +136,9 @@ def warn_if_unprotected(settings: Settings) -> None:
             "but set API_KEY before binding to a public address.",
             settings.api_host,
         )
-    else:
-        log.error(
-            "API_KEY is not set and the server is bound to %s, which is not "
-            "loopback. /chat is open to anyone who can reach this address and "
-            "every call spends LLM tokens. Set API_KEY.",
-            settings.api_host,
-        )
+        return
+
+    raise RuntimeError(
+        "API_KEY must be set when the server is bound to a non-loopback address "
+        f"({settings.api_host})."
+    )

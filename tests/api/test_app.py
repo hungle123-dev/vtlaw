@@ -10,7 +10,7 @@ Tests cover:
 from __future__ import annotations
 
 from datetime import date
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -189,7 +189,7 @@ def mock_app():
                     label="Point",
                 )
             ],
-            strategy="hybrid",
+            retrieval_score="hybrid",
             reranked=False,
         )
         mock_state.retriever = mock_retriever
@@ -218,6 +218,64 @@ class TestHealthEndpoint:
         assert data["llm_configured"] is False
 
 
+class TestReadinessEndpoint:
+    @staticmethod
+    def _state(*, ready: bool):
+        state = MagicMock()
+        state.graph.readiness.return_value = {
+            "ready": ready,
+            "indexes": [],
+            "embedding_coverage": [],
+        }
+        return state
+
+    @pytest.mark.parametrize(
+        ("ready", "expected_status"),
+        [(True, 200), (False, 503)],
+    )
+    def test_returns_graph_readiness_status(self, ready, expected_status):
+        from vtlaw.api.app import app
+
+        state = self._state(ready=ready)
+        with patch("vtlaw.api.app.get_state", return_value=state):
+            response = TestClient(app).get("/readyz")
+
+        assert response.status_code == expected_status
+        assert response.json()["ready"] is ready
+        state.graph.readiness.assert_called_once_with()
+
+    def test_graph_readiness_requires_indexes_and_complete_embeddings(self):
+        from vtlaw.config import Settings
+        from vtlaw.graph.client import GraphClient
+
+        indexes = [
+            {"name": f"{label}_{kind}", "type": index_type, "state": "ONLINE"}
+            for label in ("article", "clause", "point")
+            for kind, index_type in (("embedding", "VECTOR"), ("fulltext", "FULLTEXT"))
+        ]
+        coverage = [
+            {"label": label, "total": 2, "embedded": 2}
+            for label in ("Article", "Clause", "Point")
+        ]
+        graph = GraphClient(Settings(neo4j_password="test"))
+
+        with patch.object(graph, "index_states", return_value=indexes), patch(
+            "vtlaw.embed.embedding_coverage", return_value=coverage
+        ):
+            assert graph.readiness()["ready"] is True
+
+            indexes[0]["state"] = "POPULATING"
+            assert graph.readiness()["ready"] is False
+
+            indexes[0]["state"] = "ONLINE"
+            indexes[0]["type"] = "FULLTEXT"
+            assert graph.readiness()["ready"] is False
+
+            indexes[0]["type"] = "VECTOR"
+            coverage[0]["embedded"] = 1
+            assert graph.readiness()["ready"] is False
+
+
 class TestChatEndpoint:
     def test_returns_answer_and_sources(self, mock_app):
         response = mock_app.post(
@@ -228,8 +286,11 @@ class TestChatEndpoint:
         assert response.status_code == 200
         data = response.json()
         assert data["question"] == "không đội mũ bảo hiểm phạt bao nhiêu"
-        assert len(data["sources"]) == 1
-        assert data["sources"][0]["uid"] == "168/2024/NĐ-CP::article::6::clause::3::point::a"
+        assert len(data["retrieved_candidates"]) == 1
+        assert (
+            data["retrieved_candidates"][0]["uid"]
+            == "168/2024/NĐ-CP::article::6::clause::3::point::a"
+        )
         assert data["strategy"] == "hybrid"
 
     def test_rejects_empty_question(self, mock_app):
@@ -270,9 +331,144 @@ class TestChatEndpoint:
         response = mock_app.post("/chat", json={"question": "test"})
 
         data = response.json()
-        source = data["sources"][0]
+        source = data["retrieved_candidates"][0]
         assert "citation" in source
         assert "Điều" in source["citation"]
+
+    def test_cache_operations_run_in_threadpool(self, mock_app):
+        async def invoke(func, *args, **kwargs):
+            return func(*args, **kwargs)
+
+        with patch("vtlaw.api.app.run_in_threadpool", side_effect=invoke) as run:
+            response = mock_app.post("/chat", json={"question": "test"})
+
+        assert response.status_code == 200
+        dispatched = {getattr(call.args[0], "_mock_name", None) for call in run.call_args_list}
+        assert {
+            "get_retrieval",
+            "set_retrieval",
+            "get_answer",
+            "set_answer",
+        } <= dispatched
+
+
+class TestCors:
+    def test_uses_origins_loaded_by_settings_from_dotenv(self, tmp_path):
+        from vtlaw.api.app import app
+        from vtlaw.config import Settings
+
+        env_file = tmp_path / ".env"
+        env_file.write_text(
+            "NEO4J_PASSWORD=test\nCORS_ORIGINS=https://law.example, https://admin.example\n",
+            encoding="utf-8",
+        )
+        settings = Settings(_env_file=env_file)
+
+        with (
+            patch("vtlaw.api.app.get_settings", return_value=settings),
+            patch("vtlaw.api.app.get_state", return_value=MagicMock()),
+            patch("vtlaw.api.app._state", None),
+            TestClient(app) as client,
+        ):
+            response = client.options(
+                "/chat",
+                headers={
+                    "Origin": "https://admin.example",
+                    "Access-Control-Request-Method": "POST",
+                },
+            )
+
+        assert settings.cors_origin_list() == [
+            "https://law.example",
+            "https://admin.example",
+        ]
+        assert response.headers["access-control-allow-origin"] == "https://admin.example"
+
+
+class TestStreamCompletionMetrics:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("response", "outcome"),
+        [
+            (
+                {
+                    "question": "q",
+                    "answer": "verified",
+                    "retrieved_candidates": [],
+                    "cited_sources": [],
+                    "strategy": "hybrid",
+                    "reranked": False,
+                    "profile": "baseline",
+                    "citation_status": "verified",
+                },
+                "verified",
+            ),
+            (RuntimeError("pipeline failed"), "error"),
+        ],
+    )
+    async def test_closing_after_done_keeps_terminal_outcome(self, response, outcome):
+        from vtlaw.api.app import ChatRequest, ChatResponse, _stream_chat
+
+        run_result = (
+            AsyncMock(side_effect=response)
+            if isinstance(response, Exception)
+            else AsyncMock(return_value=ChatResponse(**response))
+        )
+        with patch("vtlaw.api.app._run_chat", run_result), patch(
+            "vtlaw.api.app.observe_stream_completion"
+        ) as observe:
+            stream = _stream_chat(ChatRequest(question="q"), MagicMock())
+            while "event: done" not in await anext(stream):
+                pass
+            await stream.aclose()
+
+        observe.assert_called_once_with(outcome)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("response", "outcome"),
+        [
+            (
+                {
+                    "question": "q",
+                    "answer": "verified",
+                    "retrieved_candidates": [],
+                    "cited_sources": [],
+                    "strategy": "hybrid",
+                    "reranked": False,
+                    "profile": "baseline",
+                    "citation_status": "verified",
+                },
+                "verified",
+            ),
+            (RuntimeError("pipeline failed"), "error"),
+        ],
+    )
+    async def test_records_terminal_outcome(self, response, outcome):
+        from vtlaw.api.app import ChatRequest, ChatResponse, _stream_chat
+
+        run_result = (
+            AsyncMock(side_effect=response)
+            if isinstance(response, Exception)
+            else AsyncMock(return_value=ChatResponse(**response))
+        )
+        with patch("vtlaw.api.app._run_chat", run_result), patch(
+            "vtlaw.api.app.observe_stream_completion"
+        ) as observe:
+            _ = [event async for event in _stream_chat(ChatRequest(question="q"), MagicMock())]
+
+        observe.assert_called_once_with(outcome)
+
+    @pytest.mark.asyncio
+    async def test_records_cancelled_when_consumer_closes_early(self):
+        from vtlaw.api.app import ChatRequest, _stream_chat
+
+        with patch("vtlaw.api.app.observe_stream_completion") as observe:
+            stream = _stream_chat(ChatRequest(question="q"), MagicMock())
+            await anext(stream)
+            await stream.aclose()
+
+        observe.assert_called_once_with("cancelled")
 
 
 # ---------------------------------------------------------------------------
@@ -333,3 +529,15 @@ class TestMetricsEndpoint:
         r_metrics = client_without_state.get("/metrics")
         content = r_metrics.text
         assert 'vtlaw_requests_total' in content or 'requests_total{' in content
+
+    def test_unmatched_paths_use_a_single_metrics_label(self):
+        """Raw 404 paths must not become unbounded Prometheus labels."""
+        from vtlaw.api.app import app
+
+        with patch("vtlaw.api.app.increment_requests") as increment_requests, patch(
+            "vtlaw.api.app.observe_request_duration"
+        ):
+            response = TestClient(app).get("/not-found/unique-request-path")
+
+        assert response.status_code == 404
+        assert increment_requests.call_args.args[1] == "unmatched"

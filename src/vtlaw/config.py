@@ -8,7 +8,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Model revisions are pinned so a silently-updated upstream checkpoint cannot
@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     rerank_model: str = "AITeamVN/Vietnamese_Reranker"
     rerank_model_revision: str = RERANK_MODEL_REVISION
     rerank_enabled: bool = False
+    rerank_min_available_memory_mb: int = Field(default=2048, ge=256, le=65_536)
     embed_device: Literal["auto", "cpu", "cuda"] = "auto"
     embed_batch_size: int = 32
 
@@ -73,13 +74,15 @@ class Settings(BaseSettings):
 
     # Redis cache
     redis_url: str = "redis://localhost:16379/0"
+    redis_socket_timeout_s: float = Field(default=1.0, gt=0.0, le=60.0)
+    redis_connect_timeout_s: float = Field(default=1.0, gt=0.0, le=60.0)
     answer_cache_ttl: int = 3600      # seconds — full answers
     retrieval_cache_ttl: int = 1800   # seconds — retrieval results
 
     # Retrieval budget. Server-side only — never overridable per request, so a
     # caller cannot ask for an unbounded scan.
     fetch_k: int = Field(default=30, ge=1, le=200)
-    rerank_top: int = Field(default=15, ge=1, le=100)
+    rerank_top: int = Field(default=30, ge=1, le=100)
     context_k: int = Field(default=8, ge=1, le=20)
 
     # Neo4j's vector index has no pre-filter: it returns the globally nearest k
@@ -97,6 +100,13 @@ class Settings(BaseSettings):
     rrf_vector_weight: float = Field(default=3.0, gt=0.0, le=10.0)
     rrf_bm25_weight: float = Field(default=1.0, gt=0.0, le=10.0)
 
+    @model_validator(mode="after")
+    def candidate_budgets_match(self) -> Settings:
+        """Keep the served fetch and rerank pools on one candidate budget."""
+        if self.fetch_k != self.rerank_top:
+            raise ValueError("fetch_k and rerank_top must match")
+        return self
+
     # Query decomposition adds an LLM request and makes a run non-deterministic
     # unless the provider/model/prompt are controlled. Keep it off for the
     # reproducible retrieval baseline; benchmark it as a separate experiment.
@@ -108,8 +118,8 @@ class Settings(BaseSettings):
     intent_router_enabled: bool = True
 
     def cors_origin_list(self) -> list[str]:
-        """`cors_origins` as a list. Comma-separated in the environment."""
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        """Parse comma-separated browser origins from Settings/.env."""
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     def resolved_device(self) -> str:
         if self.embed_device != "auto":

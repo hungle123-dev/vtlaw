@@ -174,8 +174,9 @@ class TestComputeRowMetrics:
 
         assert metrics.recall_at_k[1] == 1.0
         assert metrics.recall_at_k[5] == 1.0
-        assert metrics.recall_at_k[10] == 1.0
+        assert metrics.recall_at_k[8] == 1.0
         assert metrics.precision_at_k[1] == 1.0
+        assert metrics.precision_at_k[8] == pytest.approx(1 / 8)
         assert metrics.mrr == 1.0
 
     def test_partial_retrieval(self):
@@ -188,13 +189,27 @@ class TestComputeRowMetrics:
         assert metrics.precision_at_k[3] == pytest.approx(1 / 3)
         assert metrics.mrr == 0.5
 
+    def test_precision_counts_each_relevant_descendant(self):
+        """Precision is the fraction of retrieved hits that are relevant."""
+        uids = [
+            "168/2024/NĐ-CP::article::6::clause::1",
+            "168/2024/NĐ-CP::article::6::clause::2",
+            "other",
+        ]
+        refs = ["168/2024/NĐ-CP::article::6"]
+
+        metrics = compute_row_metrics(uids, refs)
+
+        assert metrics.recall_at_k[3] == 1.0
+        assert metrics.precision_at_k[3] == pytest.approx(2 / 3)
+
     def test_no_relevant_found(self):
         uids = ["other1", "other2", "other3"]
         refs = ["168/2024/NĐ-CP::article::6"]
         metrics = compute_row_metrics(uids, refs)
 
         assert metrics.recall_at_k[1] == 0.0
-        assert metrics.recall_at_k[10] == 0.0
+        assert metrics.recall_at_k[8] == 0.0
         assert metrics.mrr == 0.0
 
     def test_multiple_references(self):
@@ -236,7 +251,7 @@ class TestComputeRowMetrics:
 
         agg = aggregate_metrics([row])
 
-        assert 10 not in agg.recall_at_k
+        assert 8 not in agg.recall_at_k
         assert agg.recall_at_k[5] == 1.0
 
     def test_a_cutoff_only_some_rows_measured_averages_over_those_rows(self):
@@ -245,14 +260,14 @@ class TestComputeRowMetrics:
             ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=5
         )
         deep = compute_row_metrics(
-            ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=10
+            ["168/2024/NĐ-CP::article::6"], ["168/2024/NĐ-CP::article::6"], top_k=8
         )
 
         agg = aggregate_metrics([shallow, deep])
 
-        # Only `deep` measured recall@10, and it was perfect. Dividing by both
+        # Only `deep` measured recall@8, and it was perfect. Dividing by both
         # rows would report 0.5 and read as a regression that never happened.
-        assert agg.recall_at_k[10] == 1.0
+        assert agg.recall_at_k[8] == 1.0
         assert agg.recall_at_k[5] == 1.0
 
 
@@ -269,8 +284,8 @@ class TestAggregateMetrics:
 
     def test_single_row(self):
         row = RowMetrics()
-        row.recall_at_k = {1: 1.0, 5: 1.0, 10: 1.0}
-        row.precision_at_k = {1: 1.0, 3: 0.5}
+        row.recall_at_k = {1: 1.0, 5: 1.0, 8: 1.0}
+        row.precision_at_k = {1: 1.0, 3: 0.5, 8: 0.125}
         row.mrr = 1.0
 
         agg = aggregate_metrics([row])
@@ -280,11 +295,11 @@ class TestAggregateMetrics:
 
     def test_multiple_rows_average(self):
         row1 = RowMetrics()
-        row1.recall_at_k = {1: 1.0, 5: 1.0, 10: 1.0}
+        row1.recall_at_k = {1: 1.0, 5: 1.0, 8: 1.0}
         row1.mrr = 1.0
 
         row2 = RowMetrics()
-        row2.recall_at_k = {1: 0.0, 5: 0.5, 10: 1.0}
+        row2.recall_at_k = {1: 0.0, 5: 0.5, 8: 1.0}
         row2.mrr = 0.5
 
         agg = aggregate_metrics([row1, row2])

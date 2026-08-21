@@ -12,6 +12,8 @@ from __future__ import annotations
 from datetime import date
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from vtlaw.graph.amends import AmendStats, _resolve_uid
 from vtlaw.retrieve.heuristics import (
     ABOLISHED_PENALTY,
@@ -130,6 +132,51 @@ class TestTemporalAmendmentLookup:
         )
 
         assert session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
+    @pytest.mark.parametrize("amend_type", ("sửa đổi", "sửa đổi, bổ sung"))
+    def test_modifying_provision_is_demoted_only_after_source_effect_date(
+        self, amend_type: str
+    ):
+        old_uid = "old-doc::article::1"
+        hits = [
+            make_hit(uid=old_uid, score=0.9),
+            make_hit(uid="current-doc::article::1", score=0.85),
+        ]
+        session = MagicMock()
+
+        def lookup(query: str, **params: str) -> MagicMock:
+            assert f"'{amend_type}'" in query
+            assert "source_document.effect_date <= date($as_of)" in query
+            rows = (
+                [{"uid": old_uid, "types": [amend_type]}]
+                if params["as_of"] >= "2025-01-01"
+                else []
+            )
+            return MagicMock(data=lambda: rows)
+
+        session.run.side_effect = lookup
+        client = MagicMock()
+        client.session.return_value.__enter__.return_value = session
+
+        before_effect = apply_heuristic_rerank(hits, client, as_of=date(2024, 12, 31))
+        after_effect = apply_heuristic_rerank(hits, client, as_of=date(2025, 1, 1))
+
+        assert [hit.uid for hit in before_effect] == [old_uid, "current-doc::article::1"]
+        assert [hit.uid for hit in after_effect] == ["current-doc::article::1", old_uid]
+
+    def test_supplement_only_keeps_original_provision_rank(self):
+        hits = [
+            make_hit(uid="original", score=0.9),
+            make_hit(uid="other", score=0.85),
+        ]
+
+        with patch(
+            "vtlaw.retrieve.heuristics.fetch_abolished_uids",
+            return_value={"original": ["bổ sung"]},
+        ):
+            adjusted = apply_heuristic_rerank(hits, MagicMock())
+
+        assert [hit.uid for hit in adjusted] == ["original", "other"]
 
     def test_abolished_provision_sinks_below(self):
         """A provision marked bãi bỏ should be penalised and sink below

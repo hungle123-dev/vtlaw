@@ -65,6 +65,24 @@ def _ok(text="đáp án"):
     return _Resp()
 
 
+def _stream(*parts: str):
+    """An OpenAI-compatible streaming response with content deltas."""
+
+    class _Delta:
+        def __init__(self, content: str | None) -> None:
+            self.content = content
+
+    class _Choice:
+        def __init__(self, content: str | None) -> None:
+            self.delta = _Delta(content)
+
+    class _Chunk:
+        def __init__(self, content: str | None) -> None:
+            self.choices = [_Choice(content)]
+
+    return [_Chunk(part) for part in parts]
+
+
 class TestSuggestedDelay:
     def test_reads_the_providers_own_hint(self):
         """Gemini says "Please retry in 52.793060508s" — use that, don't guess."""
@@ -149,3 +167,27 @@ class TestRetry:
             client.complete([{"role": "user", "content": "q"}])
 
         assert slept == []
+
+
+class TestStreaming:
+    def test_yields_nonempty_content_deltas(self, monkeypatch):
+        client, _ = _client(monkeypatch)
+        calls = _responses(client, monkeypatch, [_stream("Phạt ", "tiền.", "")])
+
+        chunks = list(client.complete_stream([{"role": "user", "content": "q"}]))
+
+        assert chunks == ["Phạt ", "tiền."]
+        assert calls["n"] == 1
+
+    def test_requests_the_provider_stream(self, monkeypatch):
+        client, _ = _client(monkeypatch)
+        captured = {}
+
+        def fake_create(**kwargs):
+            captured.update(kwargs)
+            return _stream("x")
+
+        monkeypatch.setattr(client._client.chat.completions, "create", fake_create)
+
+        assert list(client.complete_stream([{"role": "user", "content": "q"}])) == ["x"]
+        assert captured["stream"] is True

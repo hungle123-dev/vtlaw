@@ -32,12 +32,27 @@ def test_citation_search_applies_the_requested_effective_date():
     client = MagicMock()
     client.session.return_value.__enter__.return_value = session
 
-    hits = citation_search(
+    result = citation_search(
         client,
         "Khoản 3 Điều 6 168/2024/NĐ-CP",
         as_of=date(2025, 1, 1),
     )
 
-    assert [hit.uid for hit in hits] == ["168/2024/NĐ-CP::article::6::clause::3"]
+    assert result.had_full_citation is True
+    assert [hit.uid for hit in result.hits] == [
+        "168/2024/NĐ-CP::article::6::clause::3"
+    ]
     assert session.run.call_args.kwargs["uid"] == "168/2024/NĐ-CP::article::6::clause::3"
     assert session.run.call_args.kwargs["as_of"] == "2025-01-01"
+
+
+def test_unknown_full_citation_is_recognized_separately_from_its_empty_hits():
+    session = MagicMock()
+    session.run.return_value.data.return_value = []
+    client = MagicMock()
+    client.session.return_value.__enter__.return_value = session
+
+    result = citation_search(client, "Điểm a Khoản 3 Điều 999 999/2099/NĐ-CP")
+
+    assert result.had_full_citation is True
+    assert result.hits == []

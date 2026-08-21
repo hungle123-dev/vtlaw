@@ -332,6 +332,184 @@ class TestBuildFullContext:
         assert "Khoản 1" in ctx
         assert "Clause content" in ctx
 
+    def test_retains_rendered_parent_clause_as_a_full_evidence_hit(self, mock_client):
+        point_uid = "168/2024/NĐ-CP::article::6::clause::3::point::a"
+        clause_uid = "168/2024/NĐ-CP::article::6::clause::3"
+
+        def mock_run(query, **kwargs):
+            mock = MagicMock()
+            if "nodes(path)" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": point_uid,
+                        "hierarchy": [
+                            _node(
+                                "Article",
+                                uid="168/2024/NĐ-CP::article::6",
+                                number="6",
+                                title="Vi phạm tốc độ",
+                            ),
+                            _node(
+                                "Clause",
+                                uid=clause_uid,
+                                number="3",
+                                content="Phạt tiền từ 800.000 đồng",
+                            ),
+                            _node(
+                                "Point",
+                                uid=point_uid,
+                                letter="a",
+                                content="Chạy quá tốc độ",
+                            ),
+                        ],
+                        "doc_identity": "168/2024/NĐ-CP",
+                        "effect_date": "2025-01-01",
+                    }
+                ]
+            else:
+                mock.data.return_value = []
+            return mock
+
+        mock_client.session.return_value.__enter__.return_value.run.side_effect = mock_run
+        point = make_hit(
+            uid=point_uid,
+            score=0.87,
+            doc_identity="168/2024/NĐ-CP",
+            label="Point",
+            content="Chạy quá tốc độ",
+        )
+        rendered_evidence: dict[str, Hit] = {}
+
+        build_full_context(
+            mock_client,
+            [point],
+            rendered_evidence=rendered_evidence,
+        )
+
+        assert rendered_evidence[point_uid] == Hit(
+            uid=point_uid,
+            score=0.0,
+            doc_identity="168/2024/NĐ-CP",
+            label="Point",
+            content="Chạy quá tốc độ",
+        )
+        assert rendered_evidence[clause_uid] == Hit(
+            uid=clause_uid,
+            score=0.0,
+            doc_identity="168/2024/NĐ-CP",
+            label="Clause",
+            content="Phạt tiền từ 800.000 đồng",
+        )
+
+    def test_graph_context_replaces_the_raw_hit_record(self, mock_client):
+        point_uid = "168/2024/NĐ-CP::article::6::clause::3::point::a"
+
+        def mock_run(query, **kwargs):
+            mock = MagicMock()
+            if "nodes(path)" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": point_uid,
+                        "hierarchy": [
+                            _node(
+                                "Point",
+                                uid=point_uid,
+                                letter="a",
+                                content="Nội dung chuẩn từ đồ thị",
+                            ),
+                        ],
+                        "doc_identity": "168/2024/NĐ-CP",
+                        "effect_date": "2025-01-01",
+                    }
+                ]
+            else:
+                mock.data.return_value = []
+            return mock
+
+        mock_client.session.return_value.__enter__.return_value.run.side_effect = mock_run
+        raw_hit = make_hit(
+            uid=point_uid,
+            score=0.87,
+            doc_identity="168/2024/NĐ-CP",
+            label="Point",
+            content="Đoạn trích cũ từ retrieval",
+        )
+        rendered_evidence: dict[str, Hit] = {}
+
+        result = build_full_context(
+            mock_client,
+            [raw_hit],
+            rendered_evidence=rendered_evidence,
+        )
+
+        assert "Nội dung chuẩn từ đồ thị" in result[point_uid]
+        assert rendered_evidence[point_uid] == Hit(
+            uid=point_uid,
+            score=0.0,
+            doc_identity="168/2024/NĐ-CP",
+            label="Point",
+            content="Nội dung chuẩn từ đồ thị",
+        )
+
+    def test_records_only_rendered_article_children_as_evidence(self, mock_client):
+        """A rendered child may be cited, but blank descendants may not."""
+        article_uid = "168/2024/NĐ-CP::article::6"
+        displayed_point = article_uid + "::clause::3::point::a"
+        undisplayed_point = article_uid + "::clause::3::point::b"
+
+        def mock_run(query, **kwargs):
+            mock = MagicMock()
+            if "nodes(path)" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": article_uid,
+                        "hierarchy": [
+                            _node("Article", uid=article_uid, number="6", title="Test"),
+                        ],
+                        "doc_identity": "168/2024/NĐ-CP",
+                        "effect_date": "2025-01-01",
+                    }
+                ]
+            elif "HAS_CLAUSE" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": article_uid,
+                        "target_label": "Article",
+                        "children": [
+                            {
+                                "label": "Point",
+                                "letter": "a",
+                                "content": "Nội dung hiển thị",
+                                "uid": displayed_point,
+                            },
+                            {
+                                "label": "Point",
+                                "letter": "b",
+                                "content": "",
+                                "uid": undisplayed_point,
+                            },
+                        ],
+                    }
+                ]
+            else:
+                mock.data.return_value = []
+            return mock
+
+        mock_client.session.return_value.__enter__.return_value.run.side_effect = mock_run
+        evidence_uids: set[str] = set()
+        rendered_evidence: dict[str, Hit] = {}
+
+        build_full_context(
+            mock_client,
+            [make_hit(uid=article_uid, label="Article")],
+            evidence_uids=evidence_uids,
+            rendered_evidence=rendered_evidence,
+        )
+
+        assert evidence_uids == {article_uid, displayed_point}
+        assert rendered_evidence[displayed_point].label == "Point"
+        assert undisplayed_point not in rendered_evidence
+
     def test_combines_hierarchy_and_siblings_for_point(self, mock_client):
         """For a Point, combines hierarchy with sibling points."""
         uid = "test::point::a"
@@ -373,11 +551,65 @@ class TestBuildFullContext:
         assert "Các điểm khác" in ctx
         assert "Điểm b" in ctx
 
+    def test_records_rendered_sibling_point_as_evidence(self, mock_client):
+        point_uid = "168/2024/NĐ-CP::article::6::clause::3::point::a"
+        sibling_uid = "168/2024/NĐ-CP::article::6::clause::3::point::b"
+
+        def mock_run(query, **kwargs):
+            mock = MagicMock()
+            if "nodes(path)" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": point_uid,
+                        "hierarchy": [
+                            _node("Point", uid=point_uid, letter="a", content="Điểm a"),
+                        ],
+                        "doc_identity": "168/2024/NĐ-CP",
+                        "effect_date": "2025-01-01",
+                    }
+                ]
+            elif "sibling" in query:
+                mock.data.return_value = [
+                    {
+                        "uid": point_uid,
+                        "siblings": [
+                            {
+                                "uid": sibling_uid,
+                                "letter": "b",
+                                "content": "Điểm b hiển thị",
+                            }
+                        ],
+                    }
+                ]
+            else:
+                mock.data.return_value = []
+            return mock
+
+        mock_client.session.return_value.__enter__.return_value.run.side_effect = mock_run
+        evidence_uids: set[str] = set()
+        rendered_evidence: dict[str, Hit] = {}
+
+        build_full_context(
+            mock_client,
+            [make_hit(uid=point_uid, label="Point")],
+            evidence_uids=evidence_uids,
+            rendered_evidence=rendered_evidence,
+        )
+
+        assert evidence_uids == {point_uid, sibling_uid}
+        assert rendered_evidence[sibling_uid].content == "Điểm b hiển thị"
+
     def test_falls_back_to_hit_content_when_no_context(self, mock_client):
         """If graph queries return nothing, uses the hit's own content."""
         _mock_data(mock_client, [])
 
         hits = [make_hit(uid="test::1", content="Fallback content")]
-        result = build_full_context(mock_client, hits)
+        rendered_evidence: dict[str, Hit] = {}
+        result = build_full_context(
+            mock_client,
+            hits,
+            rendered_evidence=rendered_evidence,
+        )
 
         assert result["test::1"] == "Fallback content"
+        assert rendered_evidence == {hits[0].uid: hits[0]}

@@ -42,7 +42,16 @@ def main() -> int:
 
         for name, question, profile, history in SHOTS:
             page.goto(BASE, wait_until="load")
-            page.select_option("#profile", profile)
+            # The profile control is inside the collapsed settings disclosure.
+            # Set it through the same change handler without altering the UI state.
+            page.eval_on_selector(
+                "#profile",
+                """(select, value) => {
+                    select.value = value;
+                    select.dispatchEvent(new Event("change", { bubbles: true }));
+                }""",
+                profile,
+            )
             # Seed multi-turn state the way a real session would have it.
             for role, content in history:
                 page.evaluate(
@@ -53,18 +62,13 @@ def main() -> int:
 
             page.fill("#question", question)
             page.click("#send")
-            # The pending bubble carries .thinking until the response replaces it.
-            page.wait_for_selector(".thinking", state="detached", timeout=90_000)
-            page.wait_for_timeout(400)
-
-            # The transcript scrolls internally, so full_page alone captures a
-            # box already scrolled past the user's question. Expand it for the
-            # shot only — the max-height is right for real use.
-            page.evaluate(
-                "() => { const m = document.getElementById('messages');"
-                " m.style.maxHeight = 'none'; m.style.overflow = 'visible'; }"
+            # A streamed draft becomes final only after citation verification;
+            # response metadata is added in that final UI state.
+            page.wait_for_selector("#messages .response-meta", timeout=90_000)
+            page.wait_for_function(
+                "() => !document.getElementById('send').disabled", timeout=90_000
             )
-            page.wait_for_timeout(200)
+            page.wait_for_timeout(400)
             target = OUT / f"{name}.png"
             page.screenshot(path=str(target), full_page=True)
             print(f"wrote {target}")

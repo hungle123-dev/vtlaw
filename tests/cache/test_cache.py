@@ -16,8 +16,10 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 
 import pytest
+from redis.exceptions import ConnectionError as RedisConnectionError
 
 from vtlaw.cache import Cache, _hash_key
+from vtlaw.config import Settings
 
 
 @pytest.fixture
@@ -32,7 +34,6 @@ def cache(mock_redis):
     with patch("vtlaw.cache.redis") as mock_redis_module:
         mock_redis_module.from_url.return_value = mock_redis
         mock_redis_module.Redis = MagicMock(return_value=mock_redis)
-        from vtlaw.config import Settings
         settings = Settings(
             neo4j_password="test",
             redis_url="redis://localhost:16379/0",
@@ -42,6 +43,31 @@ def cache(mock_redis):
         c = Cache(settings)
         c._redis = mock_redis
         return c
+
+
+def test_redis_client_uses_bounded_socket_timeouts():
+    settings = Settings(
+        neo4j_password="test",
+        redis_socket_timeout_s=1.25,
+        redis_connect_timeout_s=2.5,
+    )
+    cache = Cache(settings)
+
+    with patch("vtlaw.cache.redis.from_url") as from_url:
+        _ = cache.redis
+
+    from_url.assert_called_once_with(
+        settings.redis_url,
+        decode_responses=True,
+        socket_timeout=1.25,
+        socket_connect_timeout=2.5,
+    )
+
+
+def test_redis_response_decode_error_is_a_cache_miss(cache, mock_redis):
+    mock_redis.get.side_effect = UnicodeDecodeError("utf-8", b"\\xff", 0, 1, "invalid")
+
+    assert cache._read("ret:test") is None
 
 
 # ---------------------------------------------------------------------------
@@ -61,6 +87,10 @@ class TestHashKey:
         key1 = _hash_key(["query1", "hybrid"])
         key2 = _hash_key(["query2", "hybrid"])
         assert key1 != key2
+
+    def test_part_boundaries_produce_different_keys(self):
+        """Distinct cache inputs must not collide after string concatenation."""
+        assert _hash_key(["ab", "c"]) != _hash_key(["a", "bc"])
 
     def test_key_length(self):
         """Hash should be 16 chars (truncated SHA256)."""
@@ -82,8 +112,22 @@ class TestRetrievalCache:
     def test_set_and_get_retrieval(self, cache, mock_redis):
         """Should store and retrieve retrieval results."""
         results = [
-            {"uid": "test::1", "score": 0.9},
-            {"uid": "test::2", "score": 0.8},
+            {
+                "uid": "test::1",
+                "score": 0.9,
+                "doc_identity": "test",
+                "label": "Point",
+                "content": "one",
+                "title": None,
+            },
+            {
+                "uid": "test::2",
+                "score": 0.8,
+                "doc_identity": "test",
+                "label": "Clause",
+                "content": "two",
+                "title": None,
+            },
         ]
         mock_redis.get.return_value = None  # first call: cache miss
 
@@ -119,6 +163,35 @@ class TestRetrievalCache:
 
         result = cache.get_retrieval("query", "hybrid", 30, 8)
         assert result is None
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "not json",
+            "[]",
+            "{}",
+            '{"hits":"not rows"}',
+            '{"hits":["not a row"]}',
+            '{"hits":[{}]}',
+            (
+                '{"hits":[{"uid":"u","score":"high","doc_identity":"d",'
+                '"label":"Point","content":"c"}]}'
+            ),
+            '{"hits":[],"reranked":"yes"}',
+            '{"hits":[],"sub_queries":[1]}',
+        ],
+    )
+    def test_corrupt_or_invalid_payload_is_a_cache_miss(
+        self, cache, mock_redis, payload
+    ):
+        mock_redis.get.return_value = payload
+
+        assert cache.get_retrieval("query", "hybrid", 30, 8) is None
+
+    def test_redis_read_failure_is_a_cache_miss(self, cache, mock_redis):
+        mock_redis.get.side_effect = RedisConnectionError("unavailable")
+
+        assert cache.get_retrieval("query", "hybrid", 30, 8) is None
 
     def test_different_strategy_different_key(self, cache, mock_redis):
         """Different strategy should use different cache key."""
@@ -204,21 +277,54 @@ class TestRetrievalCache:
 
 class TestAnswerCache:
     def test_answer_set_and_get(self, cache, mock_redis):
-        """Should store and retrieve answer text."""
+        """Should store answer text together with rendered evidence UIDs."""
         answer = "Phạt tiền từ 800.000 đồng đến 1.000.000 đồng."
+        evidence_uids = {"168/2024/NĐ-CP::article::6::clause::3::point::a"}
 
-        cache.set_answer("query", "hybrid", 30, 8, answer)
+        cache.set_answer("query", "hybrid", 30, 8, answer, evidence_uids=evidence_uids)
 
         # Verify setex was called with correct TTL
         mock_redis.setex.assert_called_once()
         args = mock_redis.setex.call_args[0]
         assert args[1] == 3600  # answer_cache_ttl
 
-        # Simulate cache hit
-        mock_redis.get.return_value = answer
+        payload = json.loads(args[2])
+        assert payload == {"text": answer, "evidence_uids": sorted(evidence_uids)}
+
+        # Simulate cache hit.
+        mock_redis.get.return_value = args[2]
 
         cached = cache.get_answer("query", "hybrid", 30, 8)
-        assert cached == answer
+        assert cached is not None
+        assert cached.text == answer
+        assert cached.evidence_uids == frozenset(evidence_uids)
+
+    def test_legacy_string_entry_is_a_safe_answer_cache_miss(self, cache, mock_redis):
+        mock_redis.get.return_value = "old answer without evidence sidecar"
+
+        assert cache.get_answer("query", "hybrid", 30, 8) is None
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "{",
+            "[]",
+            '{"text":1,"evidence_uids":[]}',
+            '{"text":"answer","evidence_uids":"uid"}',
+            '{"text":"answer","evidence_uids":[1]}',
+        ],
+    )
+    def test_corrupt_or_invalid_payload_is_a_cache_miss(
+        self, cache, mock_redis, payload
+    ):
+        mock_redis.get.return_value = payload
+
+        assert cache.get_answer("query", "hybrid", 30, 8) is None
+
+    def test_redis_read_failure_is_a_cache_miss(self, cache, mock_redis):
+        mock_redis.get.side_effect = RedisConnectionError("unavailable")
+
+        assert cache.get_answer("query", "hybrid", 30, 8) is None
 
     def test_cache_miss_returns_none(self, cache, mock_redis):
         """Should return None on cache miss."""

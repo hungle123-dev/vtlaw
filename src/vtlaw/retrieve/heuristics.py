@@ -1,8 +1,8 @@
 """Post-retrieval demotion of provisions that an amendment has superseded.
 
-If a provision has been ``bãi bỏ`` (abolished) or ``thay thế`` (replaced) by a
-newer document it should not be cited as current law, so it is pushed below
-still-in-force provisions.
+If a provision has been ``bãi bỏ`` (abolished), ``thay thế`` (replaced),
+``sửa đổi`` (modified), or ``sửa đổi, bổ sung`` by a newer document it should
+not be cited as current law, so it is pushed below still-in-force provisions.
 
 This runs *after* the eligibility filter, not instead of it. The filter already
 removes fully expired documents; this catches provisions whose parent document is
@@ -15,13 +15,10 @@ more specific amendment annotations after retrieval.
 
 from __future__ import annotations
 
-import logging
 from datetime import date
 
 from vtlaw.graph.client import GraphClient
 from vtlaw.retrieve.search import Hit
-
-log = logging.getLogger(__name__)
 
 # Expressed as a FRACTION of the score span of the list being reranked, so the
 # demotion means the same thing whether it is applied to RRF scores (span ~0.3)
@@ -46,11 +43,12 @@ def fetch_abolished_uids(
     *,
     as_of: date | None = None,
 ) -> dict[str, list[str]]:
-    """Check which UIDs have been abolished or replaced.
+    """Check which UIDs have been superseded by an effective amendment.
 
-    Returns a mapping ``uid -> ["bãi bỏ", "thay thế"]`` for UIDs that have
-    at least one such amendment. UIDs with no abolishment are absent from
-    the result.
+    Returns a mapping ``uid -> [amend_type, ...]`` for UIDs that have at least
+    one repeal, replacement, or modifying amendment. ``bổ sung`` alone is not
+    included because it does not supersede the target provision. An amendment
+    aimed at an Article or Clause also applies to its retrieved descendants.
     """
     if not uids:
         return {}
@@ -60,10 +58,23 @@ def fetch_abolished_uids(
         rows = session.run(
             """
             UNWIND $uids AS target_uid
-            MATCH (source)-[r:AMENDS]->(target {uid: target_uid})
+            MATCH (target {uid: target_uid})
+            MATCH (source)-[r:AMENDS]->(amended)
             MATCH (source_document:Document {doc_identity: source.doc_identity})
-            WHERE r.type IN ['bãi bỏ', 'thay thế']
+            WHERE r.type IN ['bãi bỏ', 'thay thế', 'sửa đổi', 'sửa đổi, bổ sung']
               AND source_document.effect_date <= date($as_of)
+              AND (
+                  amended.uid = target.uid
+                  OR EXISTS {
+                      MATCH (amended:Article)-[:HAS_CLAUSE]->(target:Clause)
+                  }
+                  OR EXISTS {
+                      MATCH (amended:Article)-[:HAS_CLAUSE]->(:Clause)-[:HAS_POINT]->(target:Point)
+                  }
+                  OR EXISTS {
+                      MATCH (amended:Clause)-[:HAS_POINT]->(target:Point)
+                  }
+              )
             RETURN target_uid AS uid, collect(DISTINCT r.type) AS types
             """,
             uids=uids,
@@ -79,7 +90,7 @@ def apply_heuristic_rerank(
     *,
     as_of: date | None = None,
 ) -> list[Hit]:
-    """Demote provisions an amendment has abolished or replaced.
+    """Demote provisions an amendment has superseded.
 
     The demotion is a fraction of the list's own score span, so it means the
     same on any score scale. It is deliberately strong: an AMENDS edge is a
@@ -113,7 +124,11 @@ def apply_heuristic_rerank(
         amend_types = abolished_map.get(hit.uid, [])
         if "bãi bỏ" in amend_types:
             score += ABOLISHED_PENALTY * span
-        elif "thay thế" in amend_types:
+        elif (
+            "thay thế" in amend_types
+            or "sửa đổi" in amend_types
+            or "sửa đổi, bổ sung" in amend_types
+        ):
             score += REPLACED_PENALTY * span
 
         adjusted.append(

@@ -20,8 +20,8 @@ UID_SEP = "::"
 
 # Cutoffs the report covers, and the subset precision is meaningful at. Defined
 # once so a row and its aggregate can never disagree about which k exist.
-REPORTED_K = (1, 3, 5, 7, 10)
-PRECISION_K = (1, 3)
+REPORTED_K = (1, 3, 5, 8)
+PRECISION_K = (1, 3, 8)
 
 
 @dataclass
@@ -93,12 +93,13 @@ def compute_row_metrics(
         if top_k is not None and k > top_k:
             continue
         top = retrieved_uids[:k]
-        # Count unique references covered — a reference is "found" once
+        # Recall counts unique references covered — a reference is "found" once.
         found_refs = {ref for uid in top for ref in references if is_relevant(uid, ref)}
         rel_in_k = len(found_refs)
         metrics.recall_at_k[k] = recall_at_k(rel_in_k, total_relevant)
         if k in PRECISION_K:
-            metrics.precision_at_k[k] = precision_at_k(rel_in_k, k)
+            relevant_hits = sum(any(is_relevant(uid, ref) for ref in references) for uid in top)
+            metrics.precision_at_k[k] = precision_at_k(relevant_hits, k)
 
     metrics.mrr = mrr(retrieved_uids, references)
 
