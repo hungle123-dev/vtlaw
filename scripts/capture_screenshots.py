@@ -42,8 +42,7 @@ def main() -> int:
 
         for name, question, profile, history in SHOTS:
             page.goto(BASE, wait_until="load")
-            # The profile control is inside the collapsed settings disclosure.
-            # Set it through the same change handler without altering the UI state.
+            # Set the visible profile control through its normal change handler.
             page.eval_on_selector(
                 "#profile",
                 """(select, value) => {
@@ -64,7 +63,7 @@ def main() -> int:
             page.click("#send")
             # A streamed draft becomes final only after citation verification;
             # response metadata is added in that final UI state.
-            page.wait_for_selector("#messages .response-meta", timeout=90_000)
+            page.wait_for_selector("#messages .answer-inspect", timeout=90_000)
             page.wait_for_function(
                 "() => !document.getElementById('send').disabled", timeout=90_000
             )

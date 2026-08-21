@@ -3,375 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f7f7f4">
+<meta name="theme-color" content="#faf9f6">
 <title>vtlaw | Legal Graph RAG</title>
 <style>
-:root {
-  color-scheme: light dark;
-  --canvas: #f7f7f4;
-  --surface: #ffffff;
-  --surface-muted: #f1f1ed;
-  --surface-assistant: #fbfaf8;
-  --ink: #202026;
-  --muted: #6d6b75;
-  --faint: #96949d;
-  --line: #deddd8;
-  --line-strong: #c8c6bf;
-  --accent: #6547bf;
-  --accent-hover: #5034a6;
-  --accent-soft: #eeeaff;
-  --on-accent: #ffffff;
-  --success: #087443;
-  --warning: #9b5e00;
-  --danger: #b42345;
-  --radius-sm: 10px;
-  --radius: 16px;
-  --shadow: 0 12px 34px rgb(28 27 31 / 8%);
-  --sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --mono: ui-monospace, "SFMono-Regular", "Cascadia Code", Consolas, monospace;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --canvas: #121216;
-    --surface: #1a191f;
-    --surface-muted: #222128;
-    --surface-assistant: #19191e;
-    --ink: #f1f0f3;
-    --muted: #bbb8c2;
-    --faint: #8b8893;
-    --line: #34333b;
-    --line-strong: #4a4853;
-    --accent: #b5a1ff;
-    --accent-hover: #c5b6ff;
-    --accent-soft: #2a2442;
-    --on-accent: #1b1530;
-    --success: #72d6a4;
-    --warning: #f3c66d;
-    --danger: #ff9db1;
-    --shadow: 0 12px 34px rgb(0 0 0 / 20%);
-  }
-}
-
-* { box-sizing: border-box; }
-html { min-height: 100%; }
-body {
-  min-height: 100vh;
-  margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
-  font: 15px/1.55 var(--sans);
-}
-button, input, select, textarea { font: inherit; }
-button { color: inherit; }
-a { color: inherit; text-underline-offset: 3px; }
-
-.app-shell { width: min(1120px, 100%); margin: 0 auto; padding: 0 24px 28px; }
-.topbar {
-  min-height: 72px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  border-bottom: 1px solid var(--line);
-}
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  color: var(--ink);
-  font-size: 17px;
-  font-weight: 760;
-  letter-spacing: -0.03em;
-  text-decoration: none;
-}
-.brand-mark {
-  width: 27px;
-  height: 27px;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font: 800 14px/1 var(--sans);
-}
-.product-name { display: grid; line-height: 1.15; }
-.product-name strong { font-size: 13px; font-weight: 670; }
-.product-name span { color: var(--muted); font-size: 11px; }
-
-.query-settings { position: relative; margin-left: auto; }
-.query-settings summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 36px;
-  padding: 0 11px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--muted);
-  cursor: pointer;
-  list-style: none;
-  font-size: 13px;
-}
-.query-settings summary::-webkit-details-marker { display: none; }
-.query-settings[open] summary { border-color: var(--line-strong); color: var(--ink); }
-.settings-panel {
-  position: absolute;
-  z-index: 3;
-  top: calc(100% + 8px);
-  right: 0;
-  width: min(344px, calc(100vw - 32px));
-  display: grid;
-  gap: 13px;
-  padding: 15px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-.field { display: grid; gap: 5px; color: var(--muted); font-size: 12px; }
-.field input, .field select {
-  width: 100%;
-  min-height: 38px;
-  padding: 7px 9px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--surface-muted);
-  color: var(--ink);
-}
-.field .note { color: var(--faint); font-size: 11px; line-height: 1.4; }
-
-.chat-shell { width: min(790px, 100%); margin: 0 auto; padding: clamp(36px, 7vw, 82px) 0 12px; }
-.welcome { max-width: 660px; margin: 0 auto 26px; text-align: center; }
-.eyebrow {
-  margin: 0 0 10px;
-  color: var(--accent);
-  font: 700 11px/1.2 var(--mono);
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-}
-h1 { max-width: 620px; margin: 0 auto; font-size: clamp(30px, 5vw, 46px); line-height: 1.08; letter-spacing: -0.045em; }
-.welcome-copy { max-width: 570px; margin: 15px auto 0; color: var(--muted); }
-.benchmark {
-  display: flex;
-  justify-content: center;
-  gap: 0;
-  flex-wrap: wrap;
-  margin: 24px auto 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-.benchmark span { padding: 0 11px; border-right: 1px solid var(--line); }
-.benchmark span:last-child { border-right: 0; }
-.benchmark strong { color: var(--ink); font-weight: 700; }
-.benchmark-note { margin: 7px 0 0; color: var(--faint); font-size: 11px; }
-
-.examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 26px auto 0; text-align: left; }
-.example {
-  min-height: 62px;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink);
-  cursor: pointer;
-  text-align: left;
-  font-size: 13px;
-  line-height: 1.35;
-  transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
-}
-.example:hover { border-color: var(--accent); background: var(--accent-soft); }
-.example:active { transform: translateY(1px); }
-
-#messages { display: grid; gap: 20px; }
-#messages:not(:empty) { margin-top: 18px; }
-.message { width: min(100%, 700px); overflow-wrap: anywhere; }
-.message .body { white-space: pre-wrap; }
-.message.user {
-  justify-self: end;
-  max-width: min(88%, 560px);
-  padding: 11px 14px;
-  border-radius: var(--radius) var(--radius) 5px var(--radius);
-  background: var(--accent);
-  color: var(--on-accent);
-}
-.message.assistant {
-  padding: 2px 0 18px;
-  border-bottom: 1px solid var(--line);
-}
-.message.assistant .body { font-size: 15px; }
-.message.assistant.failed .body { color: var(--danger); }
-.stream-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 10px;
-  color: var(--muted);
-  font-size: 12px;
-}
-.stream-state::before {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--accent);
-  content: "";
-}
-.response-note {
-  margin-top: 13px;
-  padding-left: 11px;
-  border-left: 2px solid var(--accent);
-  color: var(--muted);
-  font-size: 12px;
-}
-.response-note strong { color: var(--ink); }
-.response-meta { display: flex; gap: 7px 12px; flex-wrap: wrap; margin-top: 13px; color: var(--faint); font: 11px/1.35 var(--mono); }
-.response-meta .verified { color: var(--success); }
-.response-meta .missing, .response-meta .not_applicable { color: var(--warning); }
-.response-meta .unsupported { color: var(--danger); }
-.evidence { display: grid; gap: 7px; margin-top: 16px; }
-.evidence-label { color: var(--muted); font: 700 11px/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
-details.source { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface-assistant); }
-details.source summary { display: flex; align-items: baseline; gap: 9px; padding: 10px 11px; cursor: pointer; list-style: none; }
-details.source summary::-webkit-details-marker { display: none; }
-details.source summary::before { color: var(--faint); content: "+"; font: 700 14px/1 var(--sans); }
-details.source[open] summary::before { content: "−"; }
-.citation { color: var(--ink); font: 650 12px/1.35 var(--mono); }
-.source-meta { margin-left: auto; color: var(--faint); font: 11px/1.35 var(--mono); text-align: right; }
-.snippet { margin: 0; padding: 0 12px 11px 29px; color: var(--muted); font-size: 12px; white-space: pre-wrap; }
-
-.composer-wrap { position: sticky; bottom: 12px; margin-top: 24px; }
-.composer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
-  align-items: end;
-  padding: 9px;
-  border: 1px solid var(--line-strong);
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-textarea {
-  width: 100%;
-  min-height: 46px;
-  max-height: 180px;
-  padding: 11px 8px;
-  border: 0;
-  outline: 0;
-  resize: vertical;
-  background: transparent;
-  color: var(--ink);
-  line-height: 1.45;
-}
-textarea::placeholder { color: var(--faint); }
-.send {
-  min-height: 40px;
-  padding: 0 15px;
-  border: 0;
-  border-radius: 11px;
-  background: var(--accent);
-  color: var(--on-accent);
-  cursor: pointer;
-  font-weight: 720;
-}
-.send:hover { background: var(--accent-hover); }
-.send:disabled { cursor: wait; opacity: 0.62; }
-.composer-hint { margin: 8px 6px 0; color: var(--faint); font-size: 11px; text-align: center; }
-#error { min-height: 18px; margin: 7px 6px 0; color: var(--danger); font-size: 12px; text-align: center; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
-
-.app-footer { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-top: 22px; border-top: 1px solid var(--line); color: var(--faint); font-size: 11px; }
-.footer-links { display: inline-flex; gap: 12px; }
-
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible, a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .stream-state::before { animation: pulse 1.1s ease-in-out infinite; }
-  @keyframes pulse { 50% { opacity: 0.3; transform: scale(0.72); } }
-}
-@media (max-width: 620px) {
-  .app-shell { padding: 0 15px 22px; }
-  .topbar { min-height: 64px; gap: 10px; }
-  .product-name { display: none; }
-  .chat-shell { padding-top: 42px; }
-  .examples { grid-template-columns: 1fr; }
-  .benchmark span { padding: 0 7px; }
-  .message.user { max-width: 94%; }
-  .composer { grid-template-columns: 1fr; }
-  .send { width: 100%; }
-  .source-meta { display: none; }
-}
+:root{color-scheme:light;--canvas:#faf9f6;--surface:#fffefb;--muted-surface:#f3f2ed;--user:#edf3ed;--ink:#1e2520;--muted:#68716b;--faint:#8a918c;--line:#ddddd5;--line-strong:#c7c9c0;--accent:#075b36;--accent-hover:#034727;--accent-soft:#e6f0e9;--on-accent:#fff;--success:#087443;--warning:#986100;--danger:#b42345;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--serif:Iowan Old Style,Palatino Linotype,Book Antiqua,Georgia,serif;--shadow:0 14px 32px rgb(30 37 32 / 8%)}
+*{box-sizing:border-box}html,body{min-height:100%;background:var(--canvas)}body{margin:0;color:var(--ink);font:15px/1.55 var(--sans)}button,input,select,textarea{font:inherit}button{color:inherit}a{color:inherit;text-underline-offset:3px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.app-layout{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}.app-sidebar{position:sticky;top:0;display:flex;flex-direction:column;height:100vh;padding:25px 12px 16px;border-right:1px solid var(--line);background:#f8f7f2}.brand{display:inline-flex;align-items:center;gap:9px;padding:5px 8px 24px;color:#074d2f;font:700 28px/1 var(--serif);letter-spacing:-.04em;text-decoration:none}.brand-mark{display:grid;width:32px;height:32px;place-items:center;font:28px/1 var(--serif)}
+.new-chat{display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 13px;border:1px solid var(--accent);border-radius:10px;background:var(--accent);color:var(--on-accent);cursor:pointer;font-weight:680}.new-chat:hover,.send:hover{background:var(--accent-hover)}.new-chat .plus{font-size:25px;font-weight:300;line-height:0}.sidebar-section{margin-top:28px}.section-label{margin:0 8px 9px;color:var(--faint);font-size:11px;font-weight:720;letter-spacing:.055em;text-transform:uppercase}#thread-list{display:grid;gap:3px}.thread,.thread-empty{display:block;width:100%;margin:0;padding:9px 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font-size:13px;line-height:1.4;text-align:left}.thread{cursor:pointer}.thread:hover,.thread.active{background:var(--accent-soft);color:#06472b}.thread.active{box-shadow:inset 3px 0 var(--accent)}.thread-empty{color:var(--faint);font-size:12px}.sidebar-footer{display:grid;gap:13px;margin-top:auto;padding:17px 8px 0;border-top:1px solid var(--line)}.corpus-status{display:grid;grid-template-columns:22px minmax(0,1fr);gap:9px;align-items:center}.status-mark{display:grid;width:22px;height:22px;place-items:center;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:800}.corpus-status strong{display:block;font-size:12px}.corpus-status span{color:var(--faint);font-size:11px}.corpus-details{color:var(--muted);font-size:11px}.corpus-details summary{cursor:pointer}.corpus-details p{margin:7px 0 0;line-height:1.5}.corpus-details strong{color:var(--ink)}
+.app-main{display:flex;min-width:0;flex-direction:column}.topbar{display:flex;align-items:center;min-height:76px;gap:13px;padding:0 clamp(20px,4vw,48px);border-bottom:1px solid var(--line);background:rgb(250 249 246 / 92%)}.sidebar-toggle{display:none;width:36px;height:36px;padding:0;border:1px solid var(--line);border-radius:9px;background:var(--surface);cursor:pointer;font-size:18px}.product-name{display:grid;line-height:1.15}.product-name strong{font-size:15px;font-weight:720}.product-name span{color:var(--muted);font-size:11px}.query-settings{position:relative;margin-left:auto}.query-settings summary{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);cursor:pointer;list-style:none;font-size:13px}.query-settings summary::-webkit-details-marker{display:none}.legal-date-label{color:var(--muted)}.settings-panel{position:absolute;z-index:5;top:calc(100% + 8px);right:0;width:min(316px,calc(100vw - 32px));display:grid;gap:13px;padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}.field{display:grid;gap:5px;color:var(--muted);font-size:12px}.field input{width:100%;min-height:38px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--muted-surface);color:var(--ink)}.field .note{color:var(--faint);font-size:11px;line-height:1.4}
+.chat-shell{width:min(900px,100%);flex:1;margin:0 auto;padding:clamp(42px,8vh,94px) clamp(18px,4vw,48px) 10px}.welcome{max-width:710px;margin:0 auto 28px;text-align:center}.eyebrow{margin:0 0 14px;color:var(--accent);font-size:11px;font-weight:750;letter-spacing:.095em;text-transform:uppercase}h1{max-width:700px;margin:0 auto;font:700 clamp(34px,5vw,58px)/1.02 var(--serif);letter-spacing:-.05em}.welcome-copy{max-width:585px;margin:17px auto 0;color:var(--muted)}.examples{display:grid;gap:9px;max-width:650px;margin:31px auto 0;text-align:left}.example{display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer;text-align:left;transition:border-color 150ms ease,background 150ms ease}.example::after{color:var(--accent);content:"→";font-size:19px}.example:hover{border-color:#9aada1;background:#f5f8f4}
+#messages{display:grid;gap:26px}#messages:not(:empty){margin-top:8px}.message{width:min(100%,740px);overflow-wrap:anywhere}.message .body{white-space:pre-wrap}.message.user{justify-self:end;width:fit-content;max-width:min(84%,590px);padding:12px 15px;border:1px solid #d7e2d8;border-radius:16px 16px 4px 16px;background:var(--user)}.message.assistant{display:grid;grid-template-columns:34px minmax(0,1fr);column-gap:15px;padding:1px 0 24px;border-bottom:1px solid var(--line)}.assistant-avatar{display:grid;width:34px;height:34px;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent);font:18px/1 var(--serif)}.message.assistant .body{grid-column:2;font-size:16px;line-height:1.7}.message.assistant.failed .body{color:var(--danger)}.stream-state{grid-column:2;display:inline-flex;align-items:center;gap:8px;margin-top:12px;color:var(--muted);font-size:13px}.stream-state::before{width:7px;height:7px;border-radius:50%;background:var(--accent);content:""}.verification{grid-column:2;display:inline-flex;align-items:center;gap:7px;margin-top:13px;color:var(--success);font-size:12px}.verification::before{content:"✓";font-weight:800}.verification.missing,.verification.not_applicable{color:var(--warning)}.verification.unsupported{color:var(--danger)}
+.evidence{grid-column:2;display:grid;gap:7px;margin-top:15px}.evidence-label{color:var(--muted);font-size:11px;font-weight:740;letter-spacing:.06em;text-transform:uppercase}details.source{border:1px solid var(--line);border-radius:10px;background:var(--surface)}details.source summary{display:flex;align-items:baseline;gap:9px;padding:10px 12px;cursor:pointer;list-style:none}details.source summary::-webkit-details-marker{display:none}details.source summary::before{color:var(--accent);content:"§";font:700 17px/1 var(--serif)}.citation{color:var(--ink);font-size:13px;font-weight:670;line-height:1.4}.source-meta{margin-left:auto;color:var(--faint);font-size:11px;text-align:right}.snippet{margin:0;padding:0 13px 12px 38px;color:var(--muted);font-size:13px;white-space:pre-wrap}.answer-inspect{grid-column:2;margin-top:14px;color:var(--muted);font-size:12px}.answer-inspect summary{cursor:pointer;list-style:none}.answer-inspect summary::-webkit-details-marker{display:none}.answer-inspect summary::before{display:inline-block;margin-right:7px;content:"›";font-size:17px}.trace{display:grid;gap:9px;padding:11px 0 2px}.response-note{padding-left:10px;border-left:2px solid var(--line-strong)}.response-note strong{color:var(--ink)}.response-meta{display:flex;gap:6px 10px;flex-wrap:wrap;color:var(--faint);font-size:11px}.response-meta .verified{color:var(--success)}.response-meta .missing,.response-meta .not_applicable{color:var(--warning)}.response-meta .unsupported{color:var(--danger)}.answer-inspect .evidence{margin-top:2px}
+.composer-wrap{position:sticky;bottom:0;margin-top:30px;padding:18px 0 10px;background:linear-gradient(to bottom,rgb(250 249 246 / 0%),var(--canvas) 34%)}.composer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;padding:8px;border:1px solid var(--line-strong);border-radius:18px;background:var(--surface);box-shadow:var(--shadow)}textarea{width:100%;min-height:46px;max-height:180px;padding:11px 10px;border:0;outline:0;resize:vertical;background:transparent;color:var(--ink);line-height:1.45}textarea::placeholder{color:var(--faint)}.composer-actions{display:flex;align-items:center;gap:7px}.profile-control select{max-width:188px;height:40px;padding:0 29px 0 10px;border:1px solid var(--line);border-radius:9px;background:var(--muted-surface);color:var(--ink);cursor:pointer;font-size:12px}.send{display:grid;width:40px;height:40px;padding:0;place-items:center;border:0;border-radius:50%;background:var(--accent);color:var(--on-accent);cursor:pointer;font-size:21px;font-weight:750}.send:disabled{cursor:wait;opacity:.62}.composer-hint,#error{margin:8px 6px 0;font-size:11px;text-align:center}.composer-hint{color:var(--faint)}#error{min-height:17px;color:var(--danger)}.app-footer{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px clamp(20px,4vw,48px) 19px;color:var(--faint);font-size:11px}.footer-links{display:inline-flex;gap:12px}.sidebar-backdrop,.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:no-preference){.stream-state::before{animation:pulse 1.1s ease-in-out infinite}@keyframes pulse{50%{opacity:.3;transform:scale(.72)}}}@media(max-width:760px){.app-layout{display:block}.app-sidebar{position:fixed;z-index:10;left:0;width:min(290px,calc(100vw - 38px));transform:translateX(-105%);transition:transform 160ms ease;box-shadow:var(--shadow)}.app-layout.sidebar-open .app-sidebar{transform:translateX(0)}.sidebar-backdrop{display:none}.app-layout.sidebar-open .sidebar-backdrop{position:fixed;z-index:9;inset:0;display:block;width:100%;height:100%;margin:0;border:0;background:rgb(18 25 20 / 28%);clip:auto}.sidebar-toggle{display:grid;place-items:center}.topbar{min-height:64px;padding:0 15px}.product-name span,.legal-date-label{display:none}.query-settings summary{padding:0 9px}.chat-shell{padding:48px 15px 8px}h1{font-size:clamp(34px,11vw,48px)}.message.assistant{grid-template-columns:29px minmax(0,1fr);column-gap:11px}.assistant-avatar{width:29px;height:29px;font-size:16px}.message.assistant .body,.stream-state,.verification,.evidence,.answer-inspect{grid-column:2}.source-meta{display:none}.composer-wrap{margin-top:20px}.profile-control select{max-width:132px}}@media(max-width:430px){.product-name strong{font-size:13px}.composer{grid-template-columns:1fr}.composer-actions{justify-content:space-between}.profile-control{flex:1}.profile-control select{width:100%;max-width:none}.send{width:42px;height:42px}.message.user{max-width:94%}}
 </style>
 </head>
 <body>
-<main class="app-shell">
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="vtlaw home"><span class="brand-mark" aria-hidden="true">V</span><span>vtlaw</span></a>
-    <div class="product-name"><strong>Legal Graph RAG</strong><span>Vietnamese traffic law</span></div>
-    <details class="query-settings">
-      <summary>Tuỳ chọn <span aria-hidden="true">⌄</span></summary>
-      <div class="settings-panel">
-        <label class="field">Ngày áp dụng
-          <input id="as-of" type="date">
-          <span class="note">Lọc văn bản theo ngày hiệu lực và hết hiệu lực.</span>
-        </label>
-        <label class="field">Retrieval profile
-          <select id="profile">
-            <option value="baseline">Baseline hybrid retrieval</option>
-            <option value="decomposition">Query composition</option>
-            <option value="rerank">Cross-encoder rerank (experimental)</option>
-            <option value="quality" selected>Best measured: GraphRAG + query composition</option>
-          </select>
-          <span class="note" id="profile-note"></span>
-        </label>
-        <label class="field">API key nếu đã bật
-          <input id="api-key" type="password" autocomplete="off" placeholder="X-API-Key">
-        </label>
-      </div>
-    </details>
-  </header>
-
-  <section class="chat-shell" aria-label="Hội thoại pháp luật">
-    <section class="welcome" id="welcome">
-      <p class="eyebrow">Evidence-first legal research</p>
-      <h1>Hỏi luật giao thông, nhận câu trả lời có nguồn.</h1>
-      <p class="welcome-copy">Tra cứu theo Điều, Khoản, Điểm; theo dõi quan hệ sửa đổi trên graph; và kiểm tra trích dẫn trước khi câu trả lời được chốt.</p>
-      <div class="benchmark" aria-label="Corpus and benchmark summary">
-        <span><strong>7,381</strong> quy định</span>
-        <span><strong>440</strong> liên kết sửa đổi</span>
-        <span><strong>0.9025</strong> QA_NLP Recall@8</span>
-        <span><strong>0.6691</strong> QA Part 2–5 Recall@8</span>
-      </div>
-      <p class="benchmark-note">Label benchmark không áp ngày hiệu lực; ứng dụng vẫn lọc theo ngày bạn chọn.</p>
-      <div class="examples" id="examples" aria-label="Câu hỏi gợi ý"></div>
-    </section>
-
-    <div id="messages" aria-live="polite" aria-busy="false"></div>
-
-    <div class="composer-wrap">
-      <form class="composer" id="chat-form">
-        <label class="sr-only" for="question">Câu hỏi pháp luật</label>
-        <textarea id="question" rows="1" required maxlength="2000" placeholder="Ví dụ: Vượt đèn đỏ xe máy bị phạt bao nhiêu?"></textarea>
-        <button class="send" id="send" type="submit">Gửi</button>
-      </form>
-      <p class="composer-hint">Enter để gửi, Shift + Enter để xuống dòng. Câu trả lời chỉ mang tính tra cứu, không phải tư vấn pháp lý.</p>
-      <div id="error" role="alert"></div>
+<div class="app-layout">
+  <button class="sidebar-backdrop" id="sidebar-backdrop" type="button" aria-label="Đóng menu"></button>
+  <aside class="app-sidebar" aria-label="Điều hướng cuộc trò chuyện">
+    <a class="brand" href="/" aria-label="vtlaw home"><span class="brand-mark" aria-hidden="true">⚖</span><span>vtlaw</span></a>
+    <button class="new-chat" id="new-chat" type="button"><span class="plus" aria-hidden="true">＋</span>Cuộc trò chuyện mới</button>
+    <section class="sidebar-section" aria-label="Cuộc trò chuyện"><p class="section-label">Phiên hiện tại</p><div id="thread-list"><p class="thread-empty">Chưa có cuộc trò chuyện.</p></div></section>
+    <div class="sidebar-footer">
+      <div class="corpus-status"><span class="status-mark" aria-hidden="true">✓</span><div><strong>Corpus luật giao thông</strong><span>Đã nạp dữ liệu cố định</span></div></div>
+      <details class="corpus-details"><summary>Corpus &amp; benchmark</summary><p><strong>0.9025</strong> QA_NLP Recall@8<br><strong>0.6691</strong> QA Part 2–5 Recall@8</p></details>
     </div>
-  </section>
-
-  <footer class="app-footer">
-    <span>Portfolio demo trên corpus luật giao thông cố định.</span>
-    <span class="footer-links"><a href="/docs" target="_blank" rel="noopener">API docs</a><a href="/health" target="_blank" rel="noopener">health</a><a href="/metrics" target="_blank" rel="noopener">metrics</a></span>
-  </footer>
-</main>
-
+  </aside>
+  <main class="app-main">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebar-toggle" type="button" aria-label="Mở cuộc trò chuyện" aria-expanded="false">☰</button>
+      <div class="product-name"><strong>Legal Graph RAG</strong><span>Tra cứu pháp luật giao thông</span></div>
+      <details class="query-settings">
+        <summary><span aria-hidden="true">▣</span><span class="legal-date-label" id="legal-date-label">Ngày hiệu lực</span><span aria-hidden="true">⌄</span></summary>
+        <div class="settings-panel">
+          <label class="field">Ngày áp dụng<input id="as-of" type="date"><span class="note">Lọc văn bản theo ngày hiệu lực và hết hiệu lực.</span></label>
+          <label class="field">API key nếu đã bật<input id="api-key" type="password" autocomplete="off" placeholder="X-API-Key"></label>
+        </div>
+      </details>
+    </header>
+    <section class="chat-shell" aria-label="Hội thoại pháp luật">
+      <section class="welcome" id="welcome">
+        <p class="eyebrow">Evidence-first legal research</p>
+        <h1>Hỏi luật giao thông,<br>có căn cứ rõ ràng.</h1>
+        <p class="welcome-copy">Tra cứu theo Điều, Khoản, Điểm; theo dõi quan hệ sửa đổi trên graph; và kiểm tra trích dẫn trước khi câu trả lời được chốt.</p>
+        <div class="examples" id="examples" aria-label="Câu hỏi gợi ý"></div>
+      </section>
+      <div id="messages" aria-live="polite" aria-busy="false"></div>
+      <div class="composer-wrap">
+        <form class="composer" id="chat-form">
+          <label class="sr-only" for="question">Câu hỏi pháp luật</label>
+          <textarea id="question" rows="1" required maxlength="2000" placeholder="Nhập câu hỏi về luật giao thông của bạn..."></textarea>
+          <div class="composer-actions">
+            <label class="profile-control"><span class="sr-only">Retrieval profile</span><select id="profile">
+              <option value="baseline">Cơ bản: Hybrid</option>
+              <option value="decomposition">Mở rộng truy vấn</option>
+              <option value="rerank">Rerank (thử nghiệm)</option>
+              <option value="quality" selected>Ưu tiên: Chính xác</option>
+            </select></label>
+            <button class="send" id="send" type="submit" aria-label="Gửi câu hỏi">↑</button>
+          </div>
+        </form>
+        <p class="composer-hint" id="profile-note"></p><div id="error" role="alert"></div>
+      </div>
+    </section>
+    <footer class="app-footer"><span>vtlaw có thể mắc lỗi. Vui lòng kiểm tra thông tin quan trọng.</span><span class="footer-links"><a href="/docs" target="_blank" rel="noopener">API docs</a><a href="/health" target="_blank" rel="noopener">health</a><a href="/metrics" target="_blank" rel="noopener">metrics</a></span></footer>
+  </main>
+</div>
 <script>
 const $ = id => document.getElementById(id);
 const chatHistory = [];
 let inFlight = false;
-
 const EXAMPLES = [
   ["Vượt đèn đỏ xe máy bị phạt bao nhiêu?", "Mức phạt"],
   ["Điểm a Khoản 3 Điều 6 168/2024/NĐ-CP", "Tra cứu chính xác"],
@@ -384,99 +86,119 @@ const PROFILE_NOTES = {
   rerank: "Cross-encoder sắp xếp lại candidate. Giữ để thử nghiệm; không thắng benchmark hiện tại.",
   quality: "Mặc định tốt nhất theo benchmark: GraphRAG + query composition, không bật reranker kém hơn.",
 };
-
-for (const [text, label] of EXAMPLES) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "example";
-  button.textContent = text;
-  button.title = label;
-  button.addEventListener("click", () => {
-    $("question").value = text;
-    $("question").focus();
-  });
-  $("examples").append(button);
-}
-
-// Local date, not UTC. `toISOString()` would otherwise select yesterday in
-// Vietnam before 07:00, which changes the effective-date legal filter.
-const now = new Date();
-$("as-of").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
-  .toISOString()
-  .slice(0, 10);
-const syncProfileNote = () => {
-  $("profile-note").textContent = PROFILE_NOTES[$("profile").value] || "";
+const CITATION_STATUS_LABELS = {
+  verified: "Nguồn đã kiểm chứng",
+  missing: "Chưa xác minh được nguồn",
+  not_applicable: "Không cần trích dẫn cho dạng tra cứu này",
+  unsupported: "Trích dẫn chưa được hỗ trợ",
 };
-$("profile").addEventListener("change", syncProfileNote);
-syncProfileNote();
-
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
 }
-
+for (const [text, label] of EXAMPLES) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "example";
+  button.textContent = text;
+  button.title = label;
+  button.addEventListener("click", () => { $("question").value = text; $("question").focus(); });
+  $("examples").append(button);
+}
+// Local date, not UTC. toISOString() would otherwise select yesterday in Vietnam before 07:00.
+const now = new Date();
+$("as-of").value = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+const syncProfileNote = () => { $("profile-note").textContent = PROFILE_NOTES[$("profile").value] || ""; };
+const syncLegalDate = () => {
+  const [year, month, day] = $("as-of").value.split("-");
+  $("legal-date-label").textContent = year ? "Hiệu lực " + day + "/" + month + "/" + year : "Ngày hiệu lực";
+};
+$("profile").addEventListener("change", syncProfileNote);
+$("as-of").addEventListener("change", syncLegalDate);
+syncProfileNote();
+syncLegalDate();
+function setSidebar(open) {
+  document.querySelector(".app-layout").classList.toggle("sidebar-open", open);
+  $("sidebar-toggle").setAttribute("aria-expanded", String(open));
+}
+$("sidebar-toggle").addEventListener("click", () => setSidebar(!document.querySelector(".app-layout").classList.contains("sidebar-open")));
+$("sidebar-backdrop").addEventListener("click", () => setSidebar(false));
+function clearConversation() {
+  if (inFlight) return;
+  chatHistory.length = 0;
+  $("messages").replaceChildren();
+  $("welcome").hidden = false;
+  $("thread-list").replaceChildren(el("p", "thread-empty", "Chưa có cuộc trò chuyện."));
+  $("error").textContent = "";
+  $("question").value = "";
+  setSidebar(false);
+  $("question").focus();
+}
+$("new-chat").addEventListener("click", clearConversation);
+function updateThreadPreview(question) {
+  const preview = el("button", "thread active", question);
+  preview.type = "button";
+  preview.title = "Cuộn đến đầu cuộc trò chuyện hiện tại";
+  preview.addEventListener("click", () => $("messages").scrollIntoView({ block: "start", behavior: "smooth" }));
+  $("thread-list").replaceChildren(preview);
+}
 function scrollToMessage(item) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   item.scrollIntoView({ block: "end", behavior: reducedMotion ? "auto" : "smooth" });
 }
-
 function addMessage(text, role) {
   const item = el("article", "message " + role);
+  if (role === "assistant") item.append(el("span", "assistant-avatar", "⚖"));
   item.append(el("div", "body", text));
   $("messages").append(item);
   scrollToMessage(item);
   return item;
 }
-
-function addResponseNote(item, label, value) {
+function addResponseNote(container, label, value) {
   const note = el("div", "response-note");
   note.append(el("strong", null, label + ": "), document.createTextNode(value));
-  item.append(note);
+  container.append(note);
 }
-
-function renderAssistantDetails(item, data) {
-  if (data.resolved_question) addResponseNote(item, "Câu hỏi đã chuẩn hoá", data.resolved_question);
-  if (data.sub_queries && data.sub_queries.length) addResponseNote(item, "Các truy vấn bổ sung", data.sub_queries.join(" / "));
-  if (data.unsupported_citations && data.unsupported_citations.length) {
-    addResponseNote(item, "Trích dẫn không xác minh được", data.unsupported_citations.join(", "));
+function renderEvidence(label, sources, container) {
+  if (!sources || !sources.length) return;
+  const evidence = el("section", "evidence");
+  evidence.append(el("div", "evidence-label", label + " " + sources.length));
+  for (const source of sources) {
+    const details = el("details", "source");
+    const summary = el("summary");
+    const score = Number(source.score);
+    const scoreLabel = Number.isFinite(score) ? score.toFixed(3) : "n/a";
+    summary.append(el("span", "citation", source.citation));
+    summary.append(el("span", "source-meta", source.doc_identity + " / " + source.label + " / " + scoreLabel));
+    details.append(summary, el("p", "snippet", source.snippet || "Không có nội dung hiển thị."));
+    evidence.append(details);
   }
-
-  const meta = el("div", "response-meta");
-  const addMeta = (value, className) => {
-    if (value) meta.append(el("span", className || "", value));
-  };
-  addMeta(data.intent);
-  addMeta(data.strategy);
-  addMeta(data.profile);
-  addMeta(data.graph_operation);
-  if (data.reranked) addMeta("reranked");
-  else if (data.profile === "rerank") addMeta("rerank skipped");
-  if (data.citation_status) addMeta("citation " + data.citation_status, data.citation_status);
-  for (const [name, seconds] of Object.entries(data.timings || {})) addMeta(name + " " + seconds + "s");
-  if (meta.childElementCount) item.append(meta);
-
-  const renderEvidence = (label, sources) => {
-    if (!sources || !sources.length) return;
-    const evidence = el("section", "evidence");
-    evidence.append(el("div", "evidence-label", label + " " + sources.length));
-    for (const source of sources) {
-      const details = el("details", "source");
-      const summary = el("summary");
-      const score = Number(source.score);
-      const scoreLabel = Number.isFinite(score) ? score.toFixed(3) : "n/a";
-      summary.append(el("span", "citation", source.citation));
-      summary.append(el("span", "source-meta", source.doc_identity + " / " + source.label + " / " + scoreLabel));
-      details.append(summary, el("p", "snippet", source.snippet || "Không có nội dung hiển thị."));
-      evidence.append(details);
-    }
-    item.append(evidence);
-  };
-  renderEvidence("Nguồn đã truy xuất", data.retrieved_candidates);
-  renderEvidence("Nguồn đã viện dẫn", data.cited_sources);
+  container.append(evidence);
 }
-
+function renderAssistantDetails(item, data) {
+  const citationStatus = CITATION_STATUS_LABELS[data.citation_status] || "Trạng thái trích dẫn chưa xác định";
+  if (data.citation_status) item.append(el("div", "verification " + data.citation_status, citationStatus));
+  renderEvidence("Nguồn đã viện dẫn", data.cited_sources, item);
+  const trace = el("div", "trace");
+  if (data.resolved_question) addResponseNote(trace, "Câu hỏi đã chuẩn hoá", data.resolved_question);
+  if (data.sub_queries && data.sub_queries.length) addResponseNote(trace, "Các truy vấn bổ sung", data.sub_queries.join(" / "));
+  if (data.unsupported_citations && data.unsupported_citations.length) addResponseNote(trace, "Trích dẫn không xác minh được", data.unsupported_citations.join(", "));
+  const meta = el("div", "response-meta");
+  const addMeta = (value, className) => { if (value) meta.append(el("span", className || "", value)); };
+  addMeta(data.intent); addMeta(data.strategy); addMeta(data.profile); addMeta(data.graph_operation);
+  if (data.reranked) addMeta("reranked"); else if (data.profile === "rerank") addMeta("rerank skipped");
+  if (data.citation_status) addMeta(citationStatus, data.citation_status);
+  for (const [name, seconds] of Object.entries(data.timings || {})) addMeta(name + " " + seconds + "s");
+  if (meta.childElementCount) trace.append(meta);
+  renderEvidence("Nguồn đã truy xuất", data.retrieved_candidates, trace);
+  if (trace.childElementCount) {
+    const inspect = el("details", "answer-inspect");
+    inspect.append(el("summary", null, "Chi tiết truy xuất"), trace);
+    item.append(inspect);
+  }
+}
 function createAssistantMessage() {
   const item = addMessage("", "assistant");
   item.classList.add("is-streaming");
@@ -484,18 +206,13 @@ function createAssistantMessage() {
   item.append(state);
   return { item, body: item.querySelector(".body"), state };
 }
-
-function setStreamStatus(pending, message) {
-  if (pending.state.isConnected) pending.state.textContent = message;
-}
-
+function setStreamStatus(pending, message) { if (pending.state.isConnected) pending.state.textContent = message; }
 function finishAssistant(pending, data) {
   pending.item.classList.remove("is-streaming");
   pending.state.remove();
   renderAssistantDetails(pending.item, data);
   scrollToMessage(pending.item);
 }
-
 function parseSseEvent(block) {
   let name = "message";
   let payload = "";
@@ -505,40 +222,30 @@ function parseSseEvent(block) {
   }
   return payload ? { name, data: JSON.parse(payload) } : null;
 }
-
 function handleStreamEvent(event, pending) {
-  if (event.name === "status") {
-    setStreamStatus(pending, event.data.message || "Đang xử lý...");
-    return null;
-  }
+  if (event.name === "status") { setStreamStatus(pending, event.data.message || "Đang xử lý..."); return null; }
   if (event.name === "delta") {
     pending.body.textContent += event.data.text || "";
     setStreamStatus(pending, "Đang hiển thị câu trả lời đã xác thực...");
     scrollToMessage(pending.item);
     return null;
   }
-  if (event.name === "final") {
-    finishAssistant(pending, event.data);
-    return event.data;
-  }
+  if (event.name === "final") { finishAssistant(pending, event.data); return event.data; }
   if (event.name === "error") throw new Error(event.data.detail || "Không thể hoàn tất câu trả lời.");
   return null;
 }
-
 async function consumeStream(response, pending) {
   if (!response.body) throw new Error("Trình duyệt không hỗ trợ response streaming.");
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
   let finalData = null;
-
   const consumeBlock = block => {
     const event = parseSseEvent(block);
     if (!event) return;
     const result = handleStreamEvent(event, pending);
     if (result) finalData = result;
   };
-
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
@@ -553,16 +260,10 @@ async function consumeStream(response, pending) {
   if (buffer.trim()) consumeBlock(buffer);
   return finalData;
 }
-
 async function responseError(response) {
-  try {
-    const data = await response.json();
-    return data.detail || "HTTP " + response.status;
-  } catch (_) {
-    return "HTTP " + response.status;
-  }
+  try { const data = await response.json(); return data.detail || "HTTP " + response.status; }
+  catch (_) { return "HTTP " + response.status; }
 }
-
 async function ask(question) {
   if (inFlight) return;
   inFlight = true;
@@ -570,34 +271,25 @@ async function ask(question) {
   $("error").textContent = "";
   $("welcome").hidden = true;
   $("messages").setAttribute("aria-busy", "true");
+  updateThreadPreview(question);
   addMessage(question, "user");
   $("question").value = "";
   $("send").disabled = true;
   const pending = createAssistantMessage();
-
+  setSidebar(false);
   try {
     const headers = { "Content-Type": "application/json" };
     const key = $("api-key").value;
     if (key) headers["X-API-Key"] = key;
     const response = await fetch("/chat/stream", {
-      method: "POST",
-      headers,
-      body: JSON.stringify({
-        question,
-        history: chatHistory,
-        as_of: $("as-of").value || null,
-        profile: $("profile").value,
-      }),
+      method: "POST", headers,
+      body: JSON.stringify({ question, history: chatHistory, as_of: $("as-of").value || null, profile: $("profile").value }),
     });
     if (!response.ok) throw new Error(await responseError(response));
-
     const data = await consumeStream(response, pending);
     if (!data) throw new Error("Máy chủ kết thúc trước khi trả về câu trả lời hoàn chỉnh.");
     completed = true;
-    chatHistory.push(
-      { role: "user", content: question },
-      { role: "assistant", content: data.answer },
-    );
+    chatHistory.push({ role: "user", content: question }, { role: "assistant", content: data.answer });
     chatHistory.splice(0, Math.max(0, chatHistory.length - 12));
   } catch (error) {
     if (!completed) {
@@ -614,13 +306,11 @@ async function ask(question) {
     $("question").focus();
   }
 }
-
 $("chat-form").addEventListener("submit", event => {
   event.preventDefault();
   const question = $("question").value.trim();
   if (question) ask(question);
 });
-
 $("question").addEventListener("keydown", event => {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();

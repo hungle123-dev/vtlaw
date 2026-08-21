@@ -106,6 +106,42 @@ def test_ui_uses_the_streaming_contract_and_current_benchmark_copy():
     assert "0.86" not in page
 
 
+def test_ui_uses_a_conversational_shell_with_a_real_new_chat_action():
+    """The portfolio should feel like a chat product, not a benchmark landing page."""
+    page = TestClient(app).get("/").text
+
+    assert 'class="app-layout"' in page
+    assert 'class="app-sidebar"' in page
+    assert 'id="thread-list"' in page
+    assert 'id="new-chat"' in page
+    assert "function clearConversation()" in page
+    assert '$("messages").replaceChildren()' in page
+    assert "chatHistory.length = 0" in page
+
+
+def test_ui_keeps_retrieval_trace_available_without_overwhelming_the_answer():
+    page = TestClient(app).get("/").text
+
+    assert 'el("details", "answer-inspect")' in page
+    assert "Chi tiết truy xuất" in page
+    assert "Nguồn đã viện dẫn" in page
+
+
+def test_ui_translates_machine_citation_statuses_for_the_reader():
+    page = TestClient(app).get("/").text
+
+    assert "Không cần trích dẫn cho dạng tra cứu này" in page
+    assert '"Trích dẫn " + data.citation_status' not in page
+
+
+def test_screenshot_harness_waits_for_the_visible_final_state():
+    harness = (Path(__file__).parents[2] / "scripts" / "capture_screenshots.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'page.wait_for_selector("#messages .answer-inspect"' in harness
+
+
 def test_public_docs_label_current_and_historical_benchmarks_truthfully():
     readme = (Path(__file__).parents[2] / "README.md").read_text(encoding="utf-8")
 
