@@ -192,8 +192,9 @@ def run_eval(
         decompose: Use LLM-generated query phrasings alongside the original
             question, recording the exact phrasings in the result artifact.
         limit: Score only the first N rows. For a quick check, not a report.
-        as_of: Legal-effective date applied to every retrieval. ``None`` is
-            captured once as the day the benchmark starts and written to output.
+        as_of: Legal-effective date applied to every retrieval. ``None`` runs a
+            label-retrieval benchmark without temporal filtering or amendment
+            demotion because the supplied QA rows have no date of fact.
 
     Returns:
         AggregateMetrics with averaged scores.
@@ -210,7 +211,7 @@ def run_eval(
         log.error("No valid rows found in dataset")
         return AggregateMetrics()
 
-    effective_as_of = as_of or date.today()
+    temporal_graph = as_of is not None
 
     settings = get_settings()
     graph_client = GraphClient(settings=settings)
@@ -248,7 +249,8 @@ def run_eval(
         try:
             search_kwargs: dict[str, Any] = {
                 "strategy": strategy,
-                "as_of": effective_as_of,
+                "as_of": as_of,
+                "temporal": temporal_graph,
             }
             if sub_queries is not None:
                 search_kwargs["sub_queries"] = sub_queries
@@ -258,7 +260,7 @@ def run_eval(
                 k=top_k,
                 rerank_top=effective_rerank_top,
                 rerank_enabled=rerank,
-                heuristic_rerank=True,
+                heuristic_rerank=temporal_graph,
                 **search_kwargs,
             )
         except Exception as e:
@@ -283,7 +285,14 @@ def run_eval(
             "sub_queries": sub_queries,
         })
 
-    label_currency = _label_currency(rows, graph_client, effective_as_of)
+    label_currency = (
+        _label_currency(rows, graph_client, as_of)
+        if temporal_graph
+        else {
+            "status": "not_applicable",
+            "reason": "benchmark_without_as_of",
+        }
+    )
     graph_client.close()
 
     # Aggregate
@@ -309,7 +318,10 @@ def run_eval(
     print(f"Evaluation Results ({label}, k={top_k})")
     print(f"{'=' * 60}")
     print(f"Dataset: {dataset_path}")
-    print(f"As of: {effective_as_of.isoformat()}")
+    if temporal_graph:
+        print(f"As of: {as_of.isoformat()}")
+    else:
+        print("Temporal graph: disabled (benchmark has no as_of date)")
     print(f"Rows: {agg.total_rows}")
     if skipped:
         print(f"Skipped (retrieval error): {len(skipped)} — excluded from every score")
@@ -358,7 +370,8 @@ def run_eval(
                     "sha256": snapshot_manifest_sha256,
                 },
             },
-            "as_of": effective_as_of.isoformat(),
+            "as_of": as_of.isoformat() if as_of else None,
+            "temporal_graph": temporal_graph,
             "label_currency": label_currency,
             "provenance": {
                 "snapshot_manifest_sha256": snapshot_manifest_sha256,
@@ -375,7 +388,8 @@ def run_eval(
                 "embed_model": settings.embed_model,
                 "embed_model_revision": settings.embed_model_revision,
                 "rerank_enabled": rerank,
-                "heuristic_rerank": True,
+                "heuristic_rerank": temporal_graph,
+                "temporal_graph": temporal_graph,
                 "rerank_top": effective_rerank_top,
                 "rerank_model": settings.rerank_model,
                 "rerank_model_revision": settings.rerank_model_revision,

@@ -339,7 +339,7 @@ class TestQueryDecomposition:
             "vượt đèn đỏ xe mô tô",
         ]
 
-    def test_quality_profile_composes_decomposition_and_real_reranking(self):
+    def test_quality_profile_uses_the_measured_composition_configuration(self):
         state = _state(llm=True)
         state.decomposer = MagicMock()
         state.decomposer.decompose.return_value = [{"query": "vượt đèn đỏ xe mô tô"}]
@@ -355,7 +355,7 @@ class TestQueryDecomposition:
             "vượt đèn đỏ phạt thế nào",
             "vượt đèn đỏ xe mô tô",
         ]
-        assert state.retriever.search_and_rerank.call_args.kwargs["rerank_enabled"] is True
+        assert state.retriever.search_and_rerank.call_args.kwargs["rerank_enabled"] is False
 
     def test_baseline_profile_does_not_inherit_experimental_server_flags(self):
         state = _state(llm=True)
@@ -363,7 +363,10 @@ class TestQueryDecomposition:
         state.settings.rerank_enabled = True
         state.decomposer = MagicMock()
         with client_for(state) as client:
-            response = client.post("/chat", json={"question": "vượt đèn đỏ phạt thế nào"})
+            response = client.post(
+                "/chat",
+                json={"question": "vượt đèn đỏ phạt thế nào", "profile": "baseline"},
+            )
 
         assert response.status_code == 200
         assert response.json()["profile"] == "baseline"

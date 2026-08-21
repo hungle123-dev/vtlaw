@@ -429,6 +429,14 @@ class TestVectorSearch:
 
         assert mock_session.run.call_args.kwargs["as_of"] == "2025-01-01"
 
+    def test_benchmark_mode_disables_document_date_filter(self, mock_session, mock_embedder):
+        mock_session.run.return_value = MagicMock(data=lambda: [])
+
+        vector_search(mock_session, mock_embedder, "my query", k=5, temporal=False)
+
+        assert mock_session.run.call_args.kwargs["temporal"] is False
+        assert "WHERE $temporal = false OR" in mock_session.run.call_args.args[0]
+
     def test_empty_results(self, mock_session, mock_embedder):
         mock_session.run.return_value = MagicMock(data=lambda: [])
 
@@ -787,6 +795,22 @@ class TestHybridRetriever:
             )
 
         assert heuristic.call_args.kwargs["as_of"] == date(2025, 1, 1)
+
+    def test_benchmark_mode_skips_temporal_amendment_demotion(self, mock_embedder):
+        hit = make_hit()
+        retriever = HybridRetriever(MagicMock(), mock_embedder, _settings())
+        retriever.search = MagicMock(
+            return_value=SearchResult(query="query", hits=[hit], strategy="hybrid")
+        )
+
+        with patch("vtlaw.retrieve.heuristics.apply_heuristic_rerank") as heuristic:
+            result = retriever.search_and_rerank(
+                "query", heuristic_rerank=True, temporal=False
+            )
+
+        assert result.hits == [hit]
+        assert retriever.search.call_args.kwargs["temporal"] is False
+        heuristic.assert_not_called()
 
     def test_reranker_is_off_by_default(self, mock_embedder):
         hit = make_hit()

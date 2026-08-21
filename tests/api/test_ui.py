@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from vtlaw.api.app import app
+from vtlaw.api.app import ChatRequest, app
 
 
 def test_portfolio_ui_is_available_at_the_root_without_initialising_the_pipeline():
@@ -20,8 +20,6 @@ def test_portfolio_ui_is_available_at_the_root_without_initialising_the_pipeline
 
 def test_ui_offers_every_retrieval_profile_the_api_accepts():
     """A profile the UI cannot select is a profile no reviewer will ever see."""
-    from vtlaw.api.app import ChatRequest
-
     page = TestClient(app).get("/").text
     accepted = ChatRequest.model_fields["profile"].annotation.__args__
 
@@ -29,8 +27,15 @@ def test_ui_offers_every_retrieval_profile_the_api_accepts():
         assert f'value="{profile}"' in page, profile
 
 
+def test_quality_profile_is_the_default_selected_by_the_ui_and_api():
+    page = TestClient(app).get("/").text
+
+    assert ChatRequest(question="q").profile == "quality"
+    assert '<option value="quality" selected>' in page
+
+
 def test_ui_discloses_when_a_requested_rerank_was_not_applied():
-    """A quality profile must not silently present a baseline fallback as reranked."""
+    """A requested rerank must not silently present a baseline fallback as reranked."""
     page = TestClient(app).get("/").text
 
     assert "rerank skipped" in page
@@ -96,9 +101,8 @@ def test_ui_uses_the_streaming_contract_and_current_benchmark_copy():
 
     assert '"/chat/stream"' in page
     assert "getReader()" in page
-    assert re.search(r"0\.2766.*Recall@8", page, re.DOTALL)
-    assert re.search(r"0\.6012.*historical k=5", page, re.DOTALL | re.IGNORECASE)
-    assert "QA_Part2345" in page
+    assert re.search(r"0\.9025.*QA_NLP Recall@8", page, re.DOTALL)
+    assert re.search(r"0\.6716.*QA Part 2–5 Recall@8", page, re.DOTALL)
     assert "0.86" not in page
 
 

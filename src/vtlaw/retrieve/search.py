@@ -198,6 +198,7 @@ def vector_search(
     k: int,
     *,
     as_of: date | None = None,
+    temporal: bool = True,
     overfetch: int = 4,
 ) -> list[Hit]:
     """Vector similarity search against all provision labels."""
@@ -214,8 +215,10 @@ def vector_search(
             CALL db.index.vector.queryNodes($index, $k * $overfetch, $vector)
             YIELD node, score
             MATCH (d:Document {doc_identity: node.doc_identity})
-            WHERE d.effect_date <= date($as_of)
-              AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            WHERE $temporal = false OR (
+                d.effect_date <= date($as_of)
+                AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            )
             RETURN node.uid AS uid, node.doc_identity AS doc_identity,
                    node.content AS content, node.title AS title, score
             ORDER BY score DESC
@@ -226,6 +229,7 @@ def vector_search(
             overfetch=overfetch,
             vector=vector,
             as_of=cutoff,
+            temporal=temporal,
         ).data()
 
         for row in rows:
@@ -278,6 +282,7 @@ def bm25_search(
     k: int,
     *,
     as_of: date | None = None,
+    temporal: bool = True,
     overfetch: int = 4,
 ) -> list[Hit]:
     """BM25 keyword search against all provision labels."""
@@ -295,8 +300,10 @@ def bm25_search(
             CALL db.index.fulltext.queryNodes($index, $search_text)
             YIELD node, score
             MATCH (d:Document {doc_identity: node.doc_identity})
-            WHERE d.effect_date <= date($as_of)
-              AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            WHERE $temporal = false OR (
+                d.effect_date <= date($as_of)
+                AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            )
             RETURN node.uid AS uid, node.doc_identity AS doc_identity,
                    node.content AS content, node.title AS title, score
             ORDER BY score DESC
@@ -306,6 +313,7 @@ def bm25_search(
             search_text=tokenised,
             k=k * overfetch,  # overfetch before filtering
             as_of=cutoff,
+            temporal=temporal,
         ).data()
 
         for row in rows[:k]:
@@ -329,12 +337,13 @@ def citation_search(
     query: str,
     *,
     as_of: date | None = None,
+    temporal: bool = True,
 ) -> CitationLookupResult:
     """Look up an explicit Điều/Khoản/Điểm citation exactly.
 
-    The same document-effective filter as approximate retrieval applies: a
-    citation is not treated as currently applicable before its document takes
-    effect or after the document expires.
+    When ``temporal`` is true, the same document-effective filter as approximate
+    retrieval applies. Label-retrieval benchmarks can disable it explicitly
+    when their questions do not carry a legal date.
     """
     target = resolve_citation(query)
     if target is None:
@@ -346,13 +355,16 @@ def citation_search(
             f"""
             MATCH (n:{target.label} {{uid: $uid}})
             MATCH (d:Document {{doc_identity: n.doc_identity}})
-            WHERE d.effect_date <= date($as_of)
-              AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            WHERE $temporal = false OR (
+                d.effect_date <= date($as_of)
+                AND (d.expire_date IS NULL OR d.expire_date >= date($as_of))
+            )
             RETURN n.uid AS uid, n.doc_identity AS doc_identity,
                    n.content AS content, n.title AS title
             """,
             uid=target.uid,
             as_of=cutoff,
+            temporal=temporal,
         ).data()
 
     return CitationLookupResult(
@@ -505,6 +517,7 @@ class HybridRetriever:
         fetch_k: int | None = None,
         sub_queries: list[str] | None = None,
         as_of: date | None = None,
+        temporal: bool = True,
     ) -> SearchResult:
         """Run retrieval with the chosen strategy.
 
@@ -516,7 +529,9 @@ class HybridRetriever:
         A decomposed question can surface provisions the original wording misses.
         Include the original query in the list to keep its exact terms.
         """
-        citation = citation_search(self._client, query, as_of=as_of)
+        citation = citation_search(
+            self._client, query, as_of=as_of, temporal=temporal
+        )
         if citation.had_full_citation:
             return SearchResult(
                 query=query,
@@ -534,7 +549,7 @@ class HybridRetriever:
                     (
                         vector_search(
                             session, self._embedder, q, pool,
-                            as_of=as_of, overfetch=overfetch,
+                            as_of=as_of, temporal=temporal, overfetch=overfetch,
                         ),
                         1.0,
                     )
@@ -542,7 +557,13 @@ class HybridRetriever:
                 ]
             elif strategy == "bm25":
                 legs = [
-                    (bm25_search(session, q, pool, as_of=as_of, overfetch=overfetch), 1.0)
+                    (
+                        bm25_search(
+                            session, q, pool, as_of=as_of, temporal=temporal,
+                            overfetch=overfetch,
+                        ),
+                        1.0,
+                    )
                     for q in phrasings
                 ]
             else:  # hybrid
@@ -551,12 +572,15 @@ class HybridRetriever:
                     legs.append((
                         vector_search(
                             session, self._embedder, q, pool,
-                            as_of=as_of, overfetch=overfetch,
+                            as_of=as_of, temporal=temporal, overfetch=overfetch,
                         ),
                         self._settings.rrf_vector_weight,
                     ))
                     legs.append((
-                        bm25_search(session, q, pool, as_of=as_of, overfetch=overfetch),
+                        bm25_search(
+                            session, q, pool, as_of=as_of, temporal=temporal,
+                            overfetch=overfetch,
+                        ),
                         self._settings.rrf_bm25_weight,
                     ))
 
@@ -574,6 +598,7 @@ class HybridRetriever:
         rerank_enabled: bool | None = None,
         heuristic_rerank: bool = False,
         as_of: date | None = None,
+        temporal: bool = True,
         sub_queries: list[str] | None = None,
     ) -> RetrievalResult:
         """Retrieve, rerank, and optionally demote superseded provisions.
@@ -590,8 +615,11 @@ class HybridRetriever:
             heuristic_rerank: If True, demote provisions an amendment has
                 abolished or replaced across the candidate pool before returning
                 the requested top-k.
-            as_of: Legal-effective cutoff applied to retrieval and amendment
-                demotion. ``None`` uses the current date.
+            as_of: Legal-effective cutoff applied when ``temporal`` is true.
+                ``None`` then uses the current date.
+            temporal: Enable document-effective filtering and amendment
+                demotion. Disable only for a dated-label benchmark that has no
+                legal date; graph hierarchy and hybrid fusion remain enabled.
             sub_queries: Extra phrasings to retrieve with, fused into one list.
                 See :meth:`search`.
 
@@ -602,7 +630,7 @@ class HybridRetriever:
             self._settings.rerank_enabled if rerank_enabled is None else rerank_enabled
         )
         candidate_k = max(k, rerank_top or self._settings.rerank_top) if should_rerank else k
-        if heuristic_rerank:
+        if heuristic_rerank and temporal:
             candidate_k = max(candidate_k, fetch_k or self._settings.fetch_k)
         result = self.search(
             query,
@@ -611,6 +639,7 @@ class HybridRetriever:
             fetch_k=fetch_k,
             sub_queries=sub_queries,
             as_of=as_of,
+            temporal=temporal,
         )
 
         if not result.hits:
@@ -635,7 +664,7 @@ class HybridRetriever:
             reranked_hits = result.hits
 
         # Demote provisions a later document abolished or replaced.
-        if heuristic_rerank:
+        if heuristic_rerank and temporal:
             from vtlaw.retrieve.heuristics import apply_heuristic_rerank
             reranked_hits = apply_heuristic_rerank(
                 reranked_hits, self._client, as_of=as_of

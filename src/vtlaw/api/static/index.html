@@ -321,8 +321,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
           <select id="profile">
             <option value="baseline">Baseline hybrid retrieval</option>
             <option value="decomposition">Query composition</option>
-            <option value="rerank">Cross-encoder rerank</option>
-            <option value="quality">Compose and rerank</option>
+            <option value="rerank">Cross-encoder rerank (experimental)</option>
+            <option value="quality" selected>Best measured: GraphRAG + query composition</option>
           </select>
           <span class="note" id="profile-note"></span>
         </label>
@@ -341,10 +341,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
       <div class="benchmark" aria-label="Corpus and benchmark summary">
         <span><strong>7,381</strong> quy định</span>
         <span><strong>440</strong> liên kết sửa đổi</span>
-        <span><strong>0.2766</strong> Recall@8</span>
-        <span><strong>0.6012</strong> historical k=5 Recall@5</span>
+        <span><strong>0.9025</strong> QA_NLP Recall@8</span>
+        <span><strong>0.6716</strong> QA Part 2–5 Recall@8</span>
       </div>
-      <p class="benchmark-note">Bản phát hành hash-verified hiện tại: k=8 trên QA_Part2345.</p>
+      <p class="benchmark-note">Label benchmark không áp ngày hiệu lực; ứng dụng vẫn lọc theo ngày bạn chọn.</p>
       <div class="examples" id="examples" aria-label="Câu hỏi gợi ý"></div>
     </section>
 
@@ -379,10 +379,10 @@ const EXAMPLES = [
   ["Lịch sử sửa đổi của 100/2019/NĐ-CP", "Quan hệ sửa đổi"],
 ];
 const PROFILE_NOTES = {
-  baseline: "Current hash-verified QA_Part2345: k=8, Recall@8 0.2766. Historical k=5 Recall@5 0.6012.",
-  decomposition: "Mở rộng truy vấn bằng LLM. Chế độ thử nghiệm.",
-  rerank: "Cross-encoder sắp xếp lại candidate. Chế độ thử nghiệm.",
-  quality: "Query composition kết hợp rerank. Chế độ thử nghiệm.",
+  baseline: "Hybrid GraphRAG xác định, không gọi LLM để mở rộng truy vấn.",
+  decomposition: "Mở rộng truy vấn bằng LLM; cấu hình đã cải thiện Recall@8 trên cả hai tập QA.",
+  rerank: "Cross-encoder sắp xếp lại candidate. Giữ để thử nghiệm; không thắng benchmark hiện tại.",
+  quality: "Mặc định tốt nhất theo benchmark: GraphRAG + query composition, không bật reranker kém hơn.",
 };
 
 for (const [text, label] of EXAMPLES) {
@@ -452,7 +452,7 @@ function renderAssistantDetails(item, data) {
   addMeta(data.profile);
   addMeta(data.graph_operation);
   if (data.reranked) addMeta("reranked");
-  else if (["rerank", "quality"].includes(data.profile)) addMeta("rerank skipped");
+  else if (data.profile === "rerank") addMeta("rerank skipped");
   if (data.citation_status) addMeta("citation " + data.citation_status, data.citation_status);
   for (const [name, seconds] of Object.entries(data.timings || {})) addMeta(name + " " + seconds + "s");
   if (meta.childElementCount) item.append(meta);

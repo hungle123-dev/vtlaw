@@ -242,7 +242,7 @@ class HistoryMessage(BaseModel):
 class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     strategy: Literal["hybrid", "vector", "bm25"] = "hybrid"
-    profile: Literal["baseline", "decomposition", "rerank", "quality"] = "baseline"
+    profile: Literal["baseline", "decomposition", "rerank", "quality"] = "quality"
     as_of: date | None = None
     history: list[HistoryMessage] = Field(default_factory=list, max_length=12)
 
@@ -542,7 +542,7 @@ async def _run_chat(
             k=state.settings.context_k,
             strategy=req.strategy,
             rerank_top=state.settings.rerank_top,
-            rerank_enabled=req.profile in ("rerank", "quality"),
+            rerank_enabled=req.profile == "rerank",
             heuristic_rerank=True,
             as_of=req.as_of,
             sub_queries=sub_queries or None,

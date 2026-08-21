@@ -17,7 +17,7 @@ from vtlaw.eval.runner import run_eval
 from vtlaw.retrieve.search import Hit, SearchResult
 
 
-def test_eval_baseline_uses_served_amends_ranking(tmp_path, monkeypatch, capsys):
+def test_temporal_eval_uses_served_amends_ranking(tmp_path, monkeypatch, capsys):
     dataset = tmp_path / "qa.csv"
     dataset.write_text(
         "question,reference\n"
@@ -73,6 +73,7 @@ def test_eval_baseline_uses_served_amends_ranking(tmp_path, monkeypatch, capsys)
     report = capsys.readouterr().out
     assert received["k"] == 8
     assert received["as_of"] == date(2025, 1, 1)
+    assert received["temporal"] is True
     assert received["rerank_top"] == settings.rerank_top
     assert received["rerank_enabled"] is False
     assert received["heuristic_rerank"] is True
@@ -80,6 +81,68 @@ def test_eval_baseline_uses_served_amends_ranking(tmp_path, monkeypatch, capsys)
     assert "Recall@ 8" in report
     assert "Precision@8" in report
     assert "MRR@8" in report
+
+
+def test_eval_without_as_of_is_a_label_retrieval_benchmark(tmp_path, monkeypatch):
+    """Legacy QA labels must not be demoted merely because the benchmark runs today."""
+    dataset = tmp_path / "qa.csv"
+    dataset.write_text(
+        "question,reference\n"
+        "Mức phạt?,168/2024/NĐ-CP::article::6\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "result.json"
+    received: dict = {}
+
+    class FakeGraphClient:
+        def __init__(self, **_kwargs):
+            pass
+
+        def close(self):
+            pass
+
+    class FakeRetriever:
+        def __init__(self, *_args):
+            pass
+
+        def search_and_rerank(self, _question, **kwargs):
+            received.update(kwargs)
+            return SearchResult(
+                query="Mức phạt?",
+                strategy=kwargs["strategy"],
+                hits=[
+                    Hit(
+                        uid="168/2024/NĐ-CP::article::6",
+                        score=1.0,
+                        doc_identity="168/2024/NĐ-CP",
+                        label="Article",
+                        content="Nội dung",
+                    )
+                ],
+            )
+
+    import vtlaw.embed
+    import vtlaw.eval.runner
+    import vtlaw.graph.client
+    import vtlaw.retrieve.search
+
+    monkeypatch.setattr(
+        vtlaw.eval.runner, "get_settings", lambda: Settings(neo4j_password="test")
+    )
+    monkeypatch.setattr(vtlaw.embed, "Embedder", lambda **_kwargs: object())
+    monkeypatch.setattr(vtlaw.graph.client, "GraphClient", FakeGraphClient)
+    monkeypatch.setattr(vtlaw.retrieve.search, "HybridRetriever", FakeRetriever)
+    monkeypatch.chdir(tmp_path)
+
+    run_eval(dataset, top_k=1, output_path=output)
+
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert received["as_of"] is None
+    assert received["temporal"] is False
+    assert received["heuristic_rerank"] is False
+    assert report["as_of"] is None
+    assert report["temporal_graph"] is False
+    assert report["label_currency"]["status"] == "not_applicable"
 
 
 def test_eval_records_dataset_config_and_as_of(tmp_path, monkeypatch):
