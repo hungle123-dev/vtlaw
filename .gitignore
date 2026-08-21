@@ -11,6 +11,13 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
+# Local tooling and package-build artifacts
+/.superpowers/
+/.uv-cache/
+/dist/
+/out/
+/docs/superpowers/
+
 # Reference repo (read-only study material, not part of this project)
 NLP-LegalQA/
 

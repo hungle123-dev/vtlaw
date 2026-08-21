@@ -614,23 +614,18 @@ def test_release_evidence_output_requires_snapshot_provenance(tmp_path, monkeypa
     assert not output.exists()
 
 
-def test_public_docs_record_measured_currency_stages_and_historical_design():
+def test_public_docs_record_measured_currency_stages():
     root = Path(__file__).parents[2]
     docs = {
         path: (root / path).read_text(encoding="utf-8")
         for path in ("README.md", "docs/benchmark.md", "docs/portfolio-case-study.md")
     }
     public_docs = "\n".join(docs.values())
-    design = (
-        root / "docs/superpowers/specs/2026-08-14-traffic-law-rag-design.md"
-    ).read_text(encoding="utf-8")
-
     assert "16/31 → 8/31 → 2/31" in public_docs
     assert "2026-08-20-citation-currency-before.json" in public_docs
     assert "2026-08-20-citation-currency-after.json" in public_docs
     assert "2026-08-20-citation-currency-hierarchy-fixed.json" in public_docs
     assert "2026-08-20" in public_docs
-    assert "historical" in design[:500].lower()
     assert "python -m vtlaw" not in public_docs
     assert "No `2026-08-21-release-evidence-k8.json` result is claimed here" not in public_docs
     assert "2026-08-21-release-evidence-k8.json" in docs["docs/benchmark.md"]
