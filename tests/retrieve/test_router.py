@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 from vtlaw.retrieve.router import QueryRouter
 
 
-def test_router_accepts_every_nlp_legalqa_intent():
+def test_router_accepts_every_supported_intent():
     llm = MagicMock()
     router = QueryRouter(llm)
 

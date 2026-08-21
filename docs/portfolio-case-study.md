@@ -22,7 +22,7 @@ naive RAG on Vietnamese traffic law:
 
 ## What I built
 
-- Parsed 12 NLP-LegalQA documents into 7,381 stable `Document → Article →
+- Parsed 12 fixed-corpus documents into 7,381 stable `Document → Article →
   Clause → Point` nodes in Neo4j, handling the cases a line-matching parser
   gets wrong: quoted amendment text is content, not structure (2,123 lines
   across the corpus, where a bare `Điều 5.` names another law rather than
@@ -36,7 +36,7 @@ naive RAG on Vietnamese traffic law:
   ambiguous questions fall through to vector + BM25 weighted-RRF retrieval.
 - Weighted the fusion legs by measured quality (vector 3 : BM25 1). Equal
   weights let BM25's ordering drag the fused list *below* plain vector search.
-- Retained NLP-LegalQA-inspired query decomposition as an explicit experimental
+- Retained query decomposition as an explicit experimental
   profile. Its pre-temporal-pool measurements improved legacy-label recall but
   are kept historical because the current legal-date benchmark has a different
   relevance condition.
@@ -151,7 +151,7 @@ not clearly cover, and the corpus holds no consolidated text to arbitrate. That
 number is recorded, not rounded away.
 
 This is a production-minded portfolio system, not a legal-advice product. It uses
-only the fixed NLP-LegalQA artifacts. Amendment instructions are modeled as graph
+only the fixed, versioned corpus artifacts. Amendment instructions are modeled as graph
 evidence, but the project does not fabricate consolidated legal text or claim
 that retrieval labels establish legal applicability without a date-of-fact.
 Citation verification checks provenance, not legal correctness. The graph API

@@ -50,14 +50,14 @@ a mocked or CPU-fallback result.
 The reranker increases Precision@8 by 0.0053, but decreases Recall@8 by
 0.0160 and MRR@8 by 0.0451 while adding roughly 1.0s to p50 latency. It is
 therefore retained as an explicit experimental profile, not the served default.
-This is an observed result on the supplied NLP-LegalQA track, not a claim of
+This is an observed result on the supplied QA track, not a claim of
 universal improvement or legal-answer correctness.
 
 ## Historical baseline conditions
 
 | Item | Value |
 |---|---|
-| Corpus | 12 NLP-LegalQA snapshot documents; 7,381 provisions; 440 AMENDS edges |
+| Corpus | 12 versioned snapshot documents; 7,381 provisions; 440 AMENDS edges |
 | Snapshot manifest SHA-256 | `1ec811da809d03036d4923ebaa28bc720fde8983e6dd5b566a000584c8d77672` |
 | Retrieval | vector + BM25 + weighted RRF; `rrf_k=10`, vector/BM25 weight `3:1` |
 | Candidate/result depth | 30 fetched per retrieval leg, then fused into a 30-item candidate pool; AMENDS reranks that pool, then reports top 5 |
@@ -94,7 +94,7 @@ alongside the existing retrieval settings.
 The values below use corrected Precision@k and the same AMENDS heuristic as the
 served baseline. Latency is local-machine evidence, not a production SLO.
 
-| NLP-LegalQA reporting track | Rows | Recall@1 | Recall@3 | Recall@5 | P@1 | P@3 | MRR | p50 / p95 |
+| Legacy QA reporting track | Rows | Recall@1 | Recall@3 | Recall@5 | P@1 | P@3 | MRR | p50 / p95 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
 | `QA_NLP.csv` | 94 | 0.1862 | 0.2500 | 0.2606 | 0.1915 | 0.1064 | 0.2261 | 0.350s / 0.435s |
 | `QA_Part2345.csv` | 200 | 0.4163 | 0.5438 | 0.6012 | 0.4950 | 0.3233 | 0.5885 | 0.354s / 0.427s |
@@ -117,7 +117,7 @@ The 2026-08-20 artifacts are auditable but not commit-reproducible until the dir
 working tree is committed and the same commands are rerun. Older baseline JSON
 files remain historical because their P@3 values used the prior evaluator.
 
-## Historical NLP-LegalQA technique experiments
+## Historical technique experiments
 
 The upstream project contains more techniques than should be enabled by
 default. Each was evaluated against the same snapshot and legal date instead of

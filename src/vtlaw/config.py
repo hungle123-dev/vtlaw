@@ -96,7 +96,7 @@ class Settings(BaseSettings):
     rrf_k: int = Field(default=10, ge=1, le=100)
 
     # Vector is given the stronger prior; benchmark a proposed change against
-    # the recorded NLP-LegalQA evaluation tracks before making it the default.
+    # the recorded evaluation tracks before making it the default.
     rrf_vector_weight: float = Field(default=3.0, gt=0.0, le=10.0)
     rrf_bm25_weight: float = Field(default=1.0, gt=0.0, le=10.0)
 

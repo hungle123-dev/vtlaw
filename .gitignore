@@ -18,8 +18,8 @@ __pycache__/
 /out/
 /docs/superpowers/
 
-# Reference repo (read-only study material, not part of this project)
-NLP-LegalQA/
+# Optional local reference checkouts are never part of this project.
+/NLP-*/
 
 # Data: the raw corpus and datasets ARE tracked (see data/README.md) so the
 # pipeline is reproducible without network access. Only derived output is not.

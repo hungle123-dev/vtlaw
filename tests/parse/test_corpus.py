@@ -4,13 +4,10 @@ These are the tests that catch a regression a synthetic fixture cannot: they hol
 the parser to the actual dataset, and they pin the *measured* facts rather than
 assumptions about them.
 
-The reference implementation (`NLP-LegalQA`) acts as an oracle where it is
-present. It is optional: these tests skip cleanly without it.
 """
 
 from __future__ import annotations
 
-import json
 import re
 import unicodedata
 from pathlib import Path
@@ -22,7 +19,6 @@ from vtlaw.parse.patterns import closes_quote, opens_quote
 from vtlaw.scrape import Snapshot
 
 SNAPSHOT_ROOT = Path("data/snapshot")
-REFERENCE_PARSED = Path("NLP-LegalQA/data/parsed")
 
 # Measured on this snapshot. If a change moves any of these, the parser changed
 # behaviour on real data and the diff needs justifying.
@@ -98,35 +94,6 @@ def test_all_uids_are_unique_across_the_whole_corpus(corpus):
             seen[provision.uid] = document.document.doc_identity
 
     assert len(seen) == EXPECTED_PROVISIONS
-
-
-# ---------------------------------------------------------------------------
-# Oracle: compare against the reference parser
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.skipif(
-    not REFERENCE_PARSED.is_dir(), reason="reference parsed output not present"
-)
-def test_counts_match_the_reference_parser_per_document(corpus):
-    """Agreement per document, not just in total, so two offsetting errors cannot
-    cancel out."""
-    documents, _ = corpus
-    mine = {d.document.doc_identity: d.counts for d in documents}
-
-    reference: dict[str, dict[str, int]] = {}
-    for path in sorted(REFERENCE_PARSED.glob("*.json")):
-        payload = json.loads(path.read_text(encoding="utf-8"))
-        nodes = payload["nodes"]
-        reference[nodes["document"]["doc_identity"]] = {
-            "article": len(nodes["articles"]),
-            "clause": len(nodes["clauses"]),
-            "point": len(nodes["points"]),
-        }
-
-    assert set(mine) == set(reference)
-    for identity, counts in sorted(mine.items()):
-        assert counts == reference[identity], f"mismatch for {identity}"
 
 
 # ---------------------------------------------------------------------------

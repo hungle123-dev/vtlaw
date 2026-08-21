@@ -1,6 +1,6 @@
 # CLAUDE.md — vtlaw
 
-Vietnamese traffic-law Graph RAG over a fixed NLP-LegalQA corpus. Portfolio
+Vietnamese traffic-law Graph RAG over a fixed, versioned corpus. Portfolio
 system: correctness and honest measurement matter more than feature count.
 
 ## Environment
